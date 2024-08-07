@@ -20,31 +20,37 @@
 - school inventory
 - notifications
 - file uploads(receipts, exams,invoices,assignments)
-
+- printing jobs(have a list of jobs that can be processed for printing)
+- support channel (discord,whatsapp,email,chat,twitter)
 
 ## models
 
-    - `school`
+    - `School`
+
         - id
         - name
         - email 
+        - phone number
         - payment_id
 
-    - `teacher`
+    - `Teacher`
         - id
         - first name
         - last name
         - email
         - phone
         - school_id
-    - `parent `
+
+    - `Parent `
+
         - id
         - first name
         - last name
         - email
         - school_id
 
-    - `student`
+    - `Student`
+
         - first name
         - last name
         - phone
@@ -54,6 +60,7 @@
         - payments_id
     
     - `Grade`
+
         - id
         - subject_id
         - student_id
@@ -62,29 +69,37 @@
         - exam_id
         - score
 
-    - lessons plans
+    - LessonPlan
+
         - id
         - teacher_id
         - subject_id
         - term
         - date
 
-    - inventory 
+    - Examination
+        `provide an editor to write question,add tables,objects,images, final output to be well formatted`
+        - id
+
+    - Inventory 
+
         - id
         - title
         - count
         - update at
         - user_id of who updated
 
-    - payments
+    - Payment
 
         - id
         - invoice_id
         - receipt_id
         - file_id
         
-    - files
+    - File
+
         - id 
         - url
         - name
         - owner_id(who uploaded)
+
