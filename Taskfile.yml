@@ -1,0 +1,28 @@
+version: '3'
+
+tasks:
+  start:
+    desc: "Start the Docker services in detached mode"
+    cmds:
+      - docker-compose up -d
+
+  stop:
+    desc: "Stop the Docker services"
+    cmds:
+      - docker-compose down
+
+  restart:
+    desc: "Restart the Docker services"
+    cmds:
+      - docker-compose down
+      - docker-compose up -d
+
+  logs:
+    desc: "View the logs of the Docker services"
+    cmds:
+      - docker-compose logs
+
+  clean:
+    desc: "Stop and remove Docker services and volumes"
+    cmds:
+      - docker-compose down -v
