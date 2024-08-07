@@ -43,9 +43,6 @@ students = [
 
 
 
-@router.get("/students/all", response_model=typing.List[GetStudent], status_code=status.HTTP_200_OK)
-async def all_students():
-    return students
 
 @router.post("/students/create", status_code=status.HTTP_201_CREATED)
 async def create_student(student: CreateStudent):
@@ -55,9 +52,13 @@ async def create_student(student: CreateStudent):
 async def update_student(student: UpdateStudent):
     return {"message": "Student updated"}
 
-@router.get("/students/{student_id}", status_code=status.HTTP_200_OK)
+@router.get("/students/student-id/{student_id}", status_code=status.HTTP_200_OK)
 async def get_student_by_id(student_id: str):
-    student = next((student for student in students if student.admission_number == student_id), None)
+    student = next((s for s in students if s.admission_number == student_id), None)
     if student:
         return student
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+
+@router.get("/students/list", response_model=typing.List[GetStudent], status_code=status.HTTP_200_OK)
+async def get_all_students():
+    return students
