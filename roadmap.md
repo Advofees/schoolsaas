@@ -32,6 +32,8 @@
         - email 
         - phone number
         - payment_id
+        - logo
+        - website url
 
     - `Teacher`
         - id
