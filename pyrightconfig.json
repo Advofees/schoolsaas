@@ -1,0 +1,10 @@
+{
+  "typeCheckingMode": "standard",
+  "reportUnusedImport": "error",
+  "reportMissingParameterType": "error",
+  "reportMissingSuperCall": "error",
+  "reportUninitializedInstanceVariable": "error",
+  "exclude": [
+    "venv"
+  ]
+}
