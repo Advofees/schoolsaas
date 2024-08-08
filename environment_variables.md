@@ -12,10 +12,11 @@ SECRET_STRING="secret-string"
 JWT_SECRET_KEY=jwt-secret-key
 
 ## Database
-DATABASE_HOST="127.0.0.1"
+DATABASE_HOST="localhost:5433"
 DATABASE_NAME="postgres"
 DATABASE_USER="postgres"
 DATABASE_PASSWORD="postgres"
+
 
 ## MinIO Configuration(local s3)
 MINIO_ACCESS_KEY=minioadmin

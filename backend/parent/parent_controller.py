@@ -1,5 +1,8 @@
 from pydantic import BaseModel
 
+from fastapi import APIRouter
+
+router= APIRouter()
 class GetParent(BaseModel):
     first_name: str
     last_name: str

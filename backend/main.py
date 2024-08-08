@@ -4,9 +4,20 @@ load_dotenv()
 
 import os
 from fastapi import FastAPI
-
 from fastapi.middleware.cors import CORSMiddleware
+
+#---
+from backend.school.school_controller import router as school_router
+from backend.teacher.teacher_controller import router as teacher_router
+from backend.parent.parent_controller import router as parent_router
 from backend.student.student_controllers import router as student_router
+from backend.payment.payment_controller import router as payment_router
+from backend.file.file_controller import router as file_router
+
+
+
+
+#---
 app = FastAPI(docs_url="/")
 
 origins = [os.environ["FRONTEND_URL"]]
@@ -20,7 +31,14 @@ app.add_middleware(
     expose_headers=["X-Authentication-Type"],
 )
 
-app.include_router(student_router)
+#---
+app.include_router(school_router,tags=["School"])
+app.include_router(teacher_router,tags=["Teacher"])
+app.include_router(parent_router,tags=["Parent"])
+app.include_router(student_router,tags=["Student"])
+app.include_router(payment_router,tags=["Payment"])
+app.include_router(file_router,tags=["File"])
+
 
 @app.get("/health")
 def health():
