@@ -1,5 +1,3 @@
-Staging URL: https://api.staging.kanzlei21.com
-
 ## Development
 
 ### Setup
@@ -8,7 +6,8 @@ Staging URL: https://api.staging.kanzlei21.com
 
   - Python 3.10
   - Docker
-
+  - task go `https://taskfile.dev/`
+  
 - Open a terminal in the root of this repository
 
 - Create a Python virtual environment:

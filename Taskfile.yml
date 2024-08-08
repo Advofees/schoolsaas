@@ -4,25 +4,26 @@ tasks:
   start:
     desc: "Start the Docker services in detached mode"
     cmds:
-      - docker-compose up -d
+      - docker compose -f infrastructure_services/docker-compose.dev.yml up 
 
   stop:
     desc: "Stop the Docker services"
     cmds:
-      - docker-compose down
+      - docker compose -f infrastructure_services/docker-compose.dev.yml down
 
   restart:
     desc: "Restart the Docker services"
     cmds:
-      - docker-compose down
-      - docker-compose up -d
+      - docker compose -f infrastructure_services/docker-compose.dev.yml down
+      - docker compose -f infrastructure_services/docker-compose.dev.yml up -d
 
   logs:
     desc: "View the logs of the Docker services"
     cmds:
-      - docker-compose logs
+      - docker compose -f infrastructure_services/docker-compose.dev.yml logs
 
   clean:
     desc: "Stop and remove Docker services and volumes"
     cmds:
-      - docker-compose down -v
+      - docker compose -f infrastructure_services/docker-compose.dev.yml down -v
+
