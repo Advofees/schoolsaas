@@ -12,15 +12,17 @@ class School(Base):
     __tablename__ = "schools"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    name: Mapped[Optional[str]] = mapped_column(String)
+    name: Mapped[str] = mapped_column(String,nullable=False)
     address: Mapped[Optional[str]] = mapped_column(String)
-    country: Mapped[Optional[str]] = mapped_column(String)
-    school_number: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
+    country: Mapped[str] = mapped_column(String)
+    school_number: Mapped[str] = mapped_column(String, unique=True, nullable=False)
 
     # Relationships
     school_parent_associations: Mapped[List["SchoolParentAssociation"]] = relationship("SchoolParentAssociation", back_populates="school")
-    school_parents: Mapped[List["SchoolParent"]] = relationship("SchoolParent", secondary="school_parent_associations", viewonly=True)
     school_students_associations: Mapped[List["SchoolStudentAssociation"]] = relationship("SchoolStudentAssociation", back_populates="school")
+    
+    school_parents: Mapped[List["SchoolParent"]] = relationship("SchoolParent", secondary="school_parent_associations", viewonly=True)
+   
     students: Mapped[List["Student"]] = relationship("Student", secondary="school_student_associations", viewonly=True)
     inventories: Mapped[List["Inventory"]] = relationship("Inventory", back_populates="school")
     files: Mapped[List["File"]] = relationship("File", back_populates="school")
@@ -28,6 +30,20 @@ class School(Base):
     newsletters: Mapped[List["Newsletter"]] = relationship("Newsletter", back_populates="school")
     emails: Mapped[List["Email"]] = relationship("Email", back_populates="school")
     school_staffs: Mapped[List["SchoolStaff"]] = relationship("SchoolStaff", back_populates="school")
+
+    def __init__(self, 
+                 name: str, 
+                 school_number: str,
+                 country: str, 
+                 address: Optional[str], 
+                 ):
+        super().__init__()
+        self.name = name
+        self.school_number = school_number
+        self.country = country
+        self.address = address
+      
+
 
 class Student(Base):
     __tablename__ = "students"
@@ -42,6 +58,11 @@ class Student(Base):
     schools: Mapped[List["School"]] = relationship("School", secondary="school_student_associations", viewonly=True)
     files: Mapped[List["File"]] = relationship("File", back_populates="student")
 
+    def __init__(self, name: str, parent_id: Optional[uuid.UUID] = None):
+        super().__init__()
+        self.name = name
+        self.parent_id = parent_id
+
 class SchoolStudentAssociation(Base):
     __tablename__ = "school_student_associations"
 
@@ -51,6 +72,11 @@ class SchoolStudentAssociation(Base):
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="school_students_associations")
     student: Mapped["Student"] = relationship("Student", back_populates="school_students_associations")
+    
+    def __init__(self, school_id: uuid.UUID, student_id: uuid.UUID):
+        super().__init__()
+        self.school_id = school_id
+        self.student_id = student_id
 
 class SchoolStaff(Base):
     __tablename__ = "school_staffs"
@@ -64,7 +90,15 @@ class SchoolStaff(Base):
     user: Mapped["User"] = relationship("User", back_populates="school_staff", uselist=False)
     school: Mapped["School"] = relationship("School", back_populates="school_staffs")
     school_staff_permission: Mapped["SchoolStaffPermissions"] = relationship("SchoolStaffPermissions", back_populates="school_staff", uselist=False)
-
+    
+    def __init__(self, 
+                 name: Optional[str], 
+                 school_id: uuid.UUID, 
+                 permissions_id: uuid.UUID):
+        super().__init__()
+        self.name = name
+        self.school_id = school_id
+        self.permissions_id = permissions_id
 class SchoolStaffPermissions(Base):
     __tablename__ = "school_staff_permissions"
 
@@ -76,7 +110,16 @@ class SchoolStaffPermissions(Base):
 
     # Relationships
     school_staff: Mapped["SchoolStaff"] = relationship("SchoolStaff", back_populates="school_staff_permission", uselist=False)
-
+    def __init__(self, 
+                 can_add_students: bool, 
+                 can_add_parents: bool, 
+                 can_manage_classes: bool, 
+                 can_view_reports: bool):
+        super().__init__()
+        self.can_add_students = can_add_students
+        self.can_add_parents = can_add_parents
+        self.can_manage_classes = can_manage_classes
+        self.can_view_reports = can_view_reports
 class Inventory(Base):
     __tablename__ = "inventories"
 
@@ -87,6 +130,12 @@ class Inventory(Base):
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="inventories")
     items: Mapped[List["InventoryItem"]] = relationship("InventoryItem", back_populates="inventory")
+    def __init__(self, 
+                 name: str, 
+                 school_id: uuid.UUID):
+        super().__init__()
+        self.name = name
+        self.school_id = school_id
 
 class InventoryItem(Base):
     __tablename__ = "inventory_items"
@@ -97,6 +146,12 @@ class InventoryItem(Base):
 
     # Relationships
     inventory: Mapped["Inventory"] = relationship("Inventory", back_populates="items")
+    def __init__(self, 
+                 name: str, 
+                 inventory_id: uuid.UUID):
+        super().__init__()
+        self.name = name
+        self.inventory_id = inventory_id
 
 class File(Base):
     __tablename__ = "files"
@@ -113,6 +168,18 @@ class File(Base):
     parent: Mapped[Optional["SchoolParent"]] = relationship("SchoolParent", back_populates="files")
     user: Mapped[Optional["User"]] = relationship("User", back_populates="files")
     student: Mapped[Optional["Student"]] = relationship("Student", back_populates="files")
+    def __init__(self, 
+                 file_path: str, 
+                 school_id: Optional[uuid.UUID] = None, 
+                 parent_id: Optional[uuid.UUID] = None, 
+                 user_id: Optional[uuid.UUID] = None, 
+                 student_id: Optional[uuid.UUID] = None):
+        super().__init__()
+        self.file_path = file_path
+        self.school_id = school_id
+        self.parent_id = parent_id
+        self.user_id = user_id
+        self.student_id = student_id
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -124,6 +191,14 @@ class Payment(Base):
 
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="payments")
+    def __init__(self, 
+                 amount: Numeric, 
+                 school_id: uuid.UUID, 
+                 payment_date: Optional[DateTime] = None):
+        super().__init__()
+        self.amount = amount
+        self.school_id = school_id
+        self.payment_date = payment_date
 
 class Newsletter(Base):
     __tablename__ = "newsletters"
@@ -136,6 +211,16 @@ class Newsletter(Base):
 
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="newsletters")
+    def __init__(self, 
+                 title: str, 
+                 content: str, 
+                 school_id: uuid.UUID, 
+                 sent_date: Optional[DateTime] = None):
+        super().__init__()
+        self.title = title
+        self.content = content
+        self.school_id = school_id
+        self.sent_date = sent_date
 
 class Email(Base):
     __tablename__ = "emails"
@@ -148,13 +233,22 @@ class Email(Base):
 
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="emails")
-
+    def __init__(self, 
+                 subject: str, 
+                 body: str, 
+                 school_id: uuid.UUID, 
+                 sent_date: Optional[DateTime] = None):
+        super().__init__()
+        self.subject = subject
+        self.body = body
+        self.school_id = school_id
+        self.sent_date = sent_date
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     username: Mapped[str] = mapped_column(String, unique=True)
-    email: Mapped[str] = mapped_column(String, unique=True)
+    email: Mapped[str] = mapped_column(String, unique=True,nullable=False)
     password_hash: Mapped[str] = mapped_column(String)
     school_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_staffs.id"))
 
@@ -163,6 +257,16 @@ class User(Base):
     files: Mapped[List["File"]] = relationship("File", back_populates="user")
     sessions: Mapped[List["UserSession"]] = relationship("UserSession", back_populates="user")
 
+    def __init__(self, 
+                 username: str, 
+                 email: str, 
+                 password_hash: str, 
+                 school_staff_id: Optional[uuid.UUID] = None):
+        super().__init__()
+        self.username = username
+        self.email = email
+        self.password_hash = password_hash
+        self.school_staff_id = school_staff_id
 class UserSession(Base):
     __tablename__ = "user_sessions"
 
@@ -200,6 +304,25 @@ class SchoolParent(Base):
     students: Mapped[List["Student"]] = relationship("Student", back_populates="parent")
     files: Mapped[List["File"]] = relationship("File", back_populates="parent")
 
+    def __init__(self, 
+                 name: str, 
+                 street_and_building: Optional[str] = None, 
+                 zip_code: Optional[str] = None, 
+                 city: Optional[str] = None, 
+                 passport_number: Optional[str] = None, 
+                 national_id_number: Optional[str] = None, 
+                 notes: Optional[str] = None, 
+                 phone_number: Optional[str] = None):
+        super().__init__()
+        self.name = name
+        self.street_and_building = street_and_building
+        self.zip_code = zip_code
+        self.city = city
+        self.passport_number = passport_number
+        self.national_id_number = national_id_number
+        self.notes = notes
+        self.phone_number = phone_number
+
 class SchoolParentAssociation(Base):
     __tablename__ = "school_parent_associations"
 
@@ -209,3 +332,7 @@ class SchoolParentAssociation(Base):
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="school_parent_associations")
     parent: Mapped["SchoolParent"] = relationship("SchoolParent", back_populates="school_parent_associations")
+    def __init__(self, school_id: uuid.UUID, parent_id: uuid.UUID):
+        super().__init__()
+        self.school_id = school_id
+        self.parent_id = parent_id

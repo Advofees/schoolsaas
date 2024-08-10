@@ -15,7 +15,8 @@ def seed_user(db: Session):
     school = School(
         name="Sample School",
         address="123 School Lane",
-        country="Sample Country"
+        country="Sample Country",
+        school_number="123456",
     )
     db.add(school)
     db.flush()
@@ -24,7 +25,8 @@ def seed_user(db: Session):
     permissions = SchoolStaffPermissions(
         can_add_students=True,
         can_manage_classes=True,
-        can_view_reports=False
+        can_view_reports=False,
+        can_add_parents=True
     )
     db.add(permissions)
     db.flush()

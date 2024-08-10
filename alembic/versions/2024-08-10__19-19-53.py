@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: bc5fb0768475
+Revision ID: 7d05ec5070c2
 Revises: 
-Create Date: 2024-08-10 16:47:18.328696
+Create Date: 2024-08-10 19:19:53.110847
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'bc5fb0768475'
+revision: str = '7d05ec5070c2'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -35,16 +35,17 @@ def upgrade() -> None:
     op.create_table('school_staff_permissions',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('can_add_students', sa.Boolean(), nullable=False),
+    sa.Column('can_add_parents', sa.Boolean(), nullable=False),
     sa.Column('can_manage_classes', sa.Boolean(), nullable=False),
     sa.Column('can_view_reports', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('schools',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
+    sa.Column('name', sa.String(), nullable=False),
     sa.Column('address', sa.String(), nullable=True),
-    sa.Column('country', sa.String(), nullable=True),
-    sa.Column('school_number', sa.String(), nullable=True),
+    sa.Column('country', sa.String(), nullable=False),
+    sa.Column('school_number', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('school_number')
     )
