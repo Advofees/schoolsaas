@@ -1,28 +1,16 @@
-
-from fastapi import APIRouter, HTTPException
-
-from backend.authentication.user_authentication import OptionalUserAuthenticationContextDependency
-from backend.database.database import DatabaseDependency
-from backend.models import  User,UserSession
-
-router = APIRouter()
-
-
-import datetime
 import os
-# from typing import Union
-import uuid
-from fastapi import APIRouter, HTTPException, Response
-from pydantic import BaseModel
-
-
-
-from backend.authentication.passwords import hash_password, verify_password
-
-
-from backend.database.database import DatabaseDependency
-
 import jwt
+import uuid
+import datetime
+from typing import Union
+from pydantic import BaseModel
+from backend.models import  User,UserSession
+from fastapi import APIRouter, HTTPException, Response
+from backend.database.database import DatabaseDependency
+from backend.authentication.passwords import hash_password, verify_password
+from backend.authentication.user_authentication import OptionalUserAuthenticationContextDependency
+
+
 
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 
@@ -35,7 +23,7 @@ class LoginRequestBody(BaseModel):
     password: str
 
 
-@router.post("/auth/staffs/login")
+@router.post("/auth/user/login")
 def login(
     body: LoginRequestBody,
     response: Response,
@@ -94,7 +82,7 @@ def login(
     }
 
 
-@router.post("/auth/staffs/logout")
+@router.post("/auth/user/logout")
 def logout(
     response: Response,
 ):
@@ -104,7 +92,7 @@ def logout(
     return {}
 
 
-@router.get("/auth/school-staff/session")
+@router.get("/auth/user/session")
 def get_user_session(
     db: DatabaseDependency,
     auth_context: OptionalUserAuthenticationContextDependency,
@@ -139,42 +127,42 @@ class TriggerSetPasswordWithIDRequestBody(BaseModel):
     id: uuid.UUID
 
 
-# @router.post("/auth/staffs/trigger_set_password")
-# def trigger_set_password(
-#     db: DatabaseDependency,
-#     email_service: EmailServiceDependency,
-#     body: Union[
-#         TriggerSetPasswordWithEmailRequestBody, TriggerSetPasswordWithIDRequestBody
-#     ],
-# ):
-#     user = db.query(User)
+@router.post("/auth/user/trigger_set_password")
+def trigger_set_password(
+    db: DatabaseDependency,
+    # email_service: EmailServiceDependency,
+    body: Union[
+        TriggerSetPasswordWithEmailRequestBody, TriggerSetPasswordWithIDRequestBody
+    ],
+):
+    user = db.query(User)
 
-#     if isinstance(body, TriggerSetPasswordWithEmailRequestBody):
-#         user = user.filter(User.email == body.email)
-#     elif isinstance(body, TriggerSetPasswordWithIDRequestBody):
-#         user = user.filter(User.id == body.id)
-#     else:
-#         raise Exception()
+    if isinstance(body, TriggerSetPasswordWithEmailRequestBody):
+        user = user.filter(User.email == body.email)
+    elif isinstance(body, TriggerSetPasswordWithIDRequestBody):
+        user = user.filter(User.id == body.id)
+    else:
+        raise Exception()
 
-#     user = user.first()
+    user = user.first()
 
-#     if not user:
-#         raise HTTPException(status_code=404)
+    if not user:
+        raise HTTPException(status_code=404)
 
-#     token = jwt.encode(
-#         {
-#             "ext": str(datetime.datetime.now() + datetime.timedelta(hours=1)),
-#             "user_id": str(user.id),
-#         },
-#         JWT_SECRET_KEY,
-#         algorithm="HS256",
-#     )
+    token = jwt.encode(
+        {
+            "ext": str(datetime.datetime.now() + datetime.timedelta(hours=1)),
+            "user_id": str(user.id),
+        },
+        JWT_SECRET_KEY,
+        algorithm="HS256",
+    )
 
-#     email_service.send_email(
-#         address=user.email,
-#         subject="Set Password",
-#         text=f"Your password reset link: {dashboard_url}/accountant/set-password?token={token}",
-#     )
+    # email_service.send_email(
+    #     address=user.email,
+    #     subject="Set Password",
+    #     text=f"Your password reset link: {dashboard_url}/staff/set-password?token={token}",
+    # )
 
 
 class SetPasswordRequestBody(BaseModel):
@@ -186,7 +174,7 @@ class SetPasswordTokenData(BaseModel):
     user_id: uuid.UUID
 
 
-@router.post("/auth/staffs/set_password")
+@router.post("/auth/user/set_password")
 def set_password(
     db: DatabaseDependency,
     body: SetPasswordRequestBody,

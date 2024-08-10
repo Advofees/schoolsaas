@@ -70,6 +70,7 @@ class SchoolStaffPermissions(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     can_add_students: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    can_add_parents: Mapped[bool] = mapped_column(Boolean, nullable=False)
     can_manage_classes: Mapped[bool] = mapped_column(Boolean, nullable=False)
     can_view_reports: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
