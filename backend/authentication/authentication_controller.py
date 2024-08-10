@@ -4,7 +4,7 @@ import uuid
 import datetime
 from typing import Union
 from pydantic import BaseModel
-from backend.models import  User,UserSession
+from backend.models import  StaffUser ,UserSession
 from fastapi import APIRouter, HTTPException, Response
 from backend.database.database import DatabaseDependency
 from backend.authentication.passwords import hash_password, verify_password
@@ -29,7 +29,7 @@ def login(
     response: Response,
     db: DatabaseDependency,
 ):
-    user = db.query(User).filter(User.email == body.email).first()
+    user = db.query(StaffUser).filter(StaffUser.email == body.email).first()
 
     if not user:
         raise HTTPException(status_code=404)
@@ -39,13 +39,13 @@ def login(
 
 
     db.query(UserSession).filter(
-        UserSession.user_id == user.id,
+        UserSession.staff_user_id == user.id,
         UserSession.expire_at < datetime.datetime.now(),
     ).delete()
 
     db.flush()
 
-    session = UserSession(user_id=user.id)
+    session = UserSession(staff_user_id=user.id)
     db.add(session)
     db.flush()
 
@@ -72,11 +72,11 @@ def login(
     return {
         "access_token": access_token,
         "session": {
-            "user_id": session.user_id,
+            "user_id": session.staff_user_id,
             "permissions": {
-                "can_add_students": session.user.school_staff.school_staff_permission.can_add_students,
-                "can_manage_classes": session.user.school_staff.school_staff_permission.can_manage_classes,
-                "can_view_reports": session.user.school_staff.school_staff_permission.can_view_reports,
+                "can_add_students": session.staff_user.school_staff.school_staff_permission.can_add_students,
+                "can_manage_classes": session.staff_user.school_staff.school_staff_permission.can_manage_classes,
+                "can_view_reports": session.staff_user.school_staff.school_staff_permission.can_view_reports,
             },
         },
     }
@@ -102,7 +102,7 @@ def get_user_session(
         raise HTTPException(status_code=404)
 
     user = (
-        db.query(User).filter(User.id == auth_context.user_id).first()
+        db.query(StaffUser).filter(StaffUser.id == auth_context.user_id).first()
     )
    
     if not user:
@@ -135,12 +135,12 @@ def trigger_set_password(
         TriggerSetPasswordWithEmailRequestBody, TriggerSetPasswordWithIDRequestBody
     ],
 ):
-    user = db.query(User)
+    user = db.query(StaffUser)
 
     if isinstance(body, TriggerSetPasswordWithEmailRequestBody):
-        user = user.filter(User.email == body.email)
+        user = user.filter(StaffUser.email == body.email)
     elif isinstance(body, TriggerSetPasswordWithIDRequestBody):
-        user = user.filter(User.id == body.id)
+        user = user.filter(StaffUser.id == body.id)
     else:
         raise Exception()
 
@@ -191,7 +191,7 @@ def set_password(
     token_data = SetPasswordTokenData.model_validate(raw_payload)
 
     user = (
-        db.query(User).filter(User.id == token_data.user_id).first()
+        db.query(StaffUser).filter(StaffUser.id == token_data.user_id).first()
     )
 
     if not user:

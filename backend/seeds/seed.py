@@ -1,11 +1,11 @@
 from dotenv import load_dotenv
-import sys
+
 load_dotenv()
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 
-from backend.models import User,  SchoolStaff, School,SchoolStaffPermissions
+from backend.models import StaffUser,  SchoolStaff, School,SchoolStaffPermissions
 from backend.authentication.passwords import hash_password
 from sqlalchemy.orm import Session
 from backend.database.database import get_db 
@@ -28,27 +28,44 @@ def seed_user(db: Session):
         can_view_reports=False,
         can_add_parents=True
     )
-    db.add(permissions)
+    permission_2 = SchoolStaffPermissions(
+        can_add_students=True,
+        can_manage_classes=True,
+        can_view_reports=True,
+        can_add_parents=True
+    )
+    db.add_all([permissions, permission_2])
     db.flush()
 
-    # Create school staff
+
     school_staff = SchoolStaff(
         name="Sample Staff",
         school_id=school.id,
         permissions_id=permissions.id,
     )
-    db.add(school_staff)
+    school_staff_1 = SchoolStaff(
+        name="shoooo staff user",
+        school_id=school.id,
+        permissions_id=permissions.id,
+    )
+    db.add_all([school_staff, school_staff_1])
     db.flush()
 
-    # Create user
-    user = User(
+
+    user = StaffUser(
         username="sampleuser",
         email="user@app.com",
         password_hash=hash_password("password123"),
         school_staff_id=school_staff.id
     )
-    db.add(user)
-    
+    user_1 = StaffUser(
+        username="sampleuser",
+        email="user@app.com",
+        password_hash=hash_password("password123"),
+        school_staff_id=school_staff.id
+    )
+    db.add_all([user, user_1])
+    db.flush()
     db.commit()
 
 

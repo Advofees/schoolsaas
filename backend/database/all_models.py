@@ -1,6 +1,6 @@
 from typing import Type,List
 from backend.database.base import Base
-from backend.models import Student,School,SchoolStaff,SchoolParent,Inventory,InventoryItem,File,Payment,Newsletter,Email,SchoolStaffPermissions,User
+from backend.models import Student,School,SchoolStaff,SchoolParent,Inventory,InventoryItem,File,Payment,Newsletter,Email,SchoolStaffPermissions,StaffUser
 
 ALL_MODELS: List[Type[Base]] = [
 
@@ -15,5 +15,5 @@ ALL_MODELS: List[Type[Base]] = [
     Newsletter,
     Email,
     SchoolStaffPermissions,
-    User,
+    StaffUser,
 ]

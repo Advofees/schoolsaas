@@ -51,7 +51,7 @@ def get_user_authentication_context(
             status_code=401, headers={"X-Authentication-Type": "user"}
         )
 
-    return UserAuthenticationContext(user_id=session.user_id)
+    return UserAuthenticationContext(user_id=session.staff_user_id)
 
 UserAuthenticationContextDependency = Annotated[
     UserAuthenticationContext,
