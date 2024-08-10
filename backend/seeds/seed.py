@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
-
+import sys
 load_dotenv()
-
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 
 from backend.models import User,  SchoolStaff, School,SchoolStaffPermissions

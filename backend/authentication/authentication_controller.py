@@ -86,7 +86,9 @@ def login(
         "session": {
             "user_id": session.user_id,
             "permissions": {
-                "can_add_students": session.user.school_staff.school_staff_permission.can_add_students 
+                "can_add_students": session.user.school_staff.school_staff_permission.can_add_students,
+                "can_manage_classes": session.user.school_staff.school_staff_permission.can_manage_classes,
+                "can_view_reports": session.user.school_staff.school_staff_permission.can_view_reports,
             },
         },
     }
@@ -121,8 +123,10 @@ def get_user_session(
     return {
         "user_id": auth_context.user_id,
         "permissions": {
-            "can_add_students": user.school_staff.school_staff_permission.can_add_students 
-        },
+            "can_add_students": user.school_staff.school_staff_permission.can_add_students,
+            "can_manage_classes": user.school_staff.school_staff_permission.can_manage_classes,
+            "can_view_reports": user.school_staff.school_staff_permission.can_view_reports,
+            },
         
     }
 
