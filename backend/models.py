@@ -1,52 +1,13 @@
-from sqlalchemy import ForeignKey, String, UUID ,  DateTime, Numeric
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+import datetime
+from sqlalchemy import String, DateTime, Boolean, Numeric, ForeignKey, UUID, func
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+from typing import List, Optional
 import uuid
-from datetime import datetime
-from typing import Optional, List
+from dateutil.relativedelta import relativedelta
+
 from backend.database.base import Base
 
-# Student-School Association Model
-class StudentSchoolAssociation(Base):
-    __tablename__ = "student_schools"
 
-    student_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("students.id"), primary_key=True)
-    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"), primary_key=True)
-    
-    # Additional columns
-    enrollment_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    status: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    scholarship_amount: Mapped[Optional[Numeric]] = mapped_column(Numeric, nullable=True)
-    extra_notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-
-    # Relationships
-    student: Mapped["Student"] = relationship("Student", back_populates="student_schools")
-    school: Mapped["School"] = relationship("School", back_populates="student_schools")
-
-    def __repr__(self):
-        return (f"<StudentSchoolAssociation(student_id={self.student_id}, "
-                f"school_id={self.school_id}, enrollment_date={self.enrollment_date}, "
-                f"status={self.status}, scholarship_amount={self.scholarship_amount}, "
-                f"extra_notes={self.extra_notes})>")
-
-
-# Student Model
-class Student(Base):
-    __tablename__ = "students"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String)
-    parent_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school_parents.id"))
-
-    # Relationships
-    parent: Mapped["SchoolParent"] = relationship("SchoolParent", back_populates="students")
-    student_schools: Mapped[List["StudentSchoolAssociation"]] = relationship("StudentSchoolAssociation", back_populates="student")
-    files: Mapped[List["File"]] = relationship("File", back_populates="student")
-
-    def __repr__(self):
-        return f"<Student(id={self.id}, name={self.name})>"
-
-
-# School Model
 class School(Base):
     __tablename__ = "schools"
 
@@ -57,58 +18,64 @@ class School(Base):
     school_number: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
 
     # Relationships
-    student_schools: Mapped[List["StudentSchoolAssociation"]] = relationship("StudentSchoolAssociation", back_populates="school")
-    school_staffs: Mapped[List["SchoolStaff"]] = relationship("SchoolStaff", back_populates="school")
-    school_parents: Mapped[List["SchoolParent"]] = relationship("SchoolParent", back_populates="school")
+    school_parent_associations: Mapped[List["SchoolParentAssociation"]] = relationship("SchoolParentAssociation", back_populates="school")
+    school_parents: Mapped[List["SchoolParent"]] = relationship("SchoolParent", secondary="school_parent_associations", viewonly=True)
+    school_students_associations: Mapped[List["SchoolStudentAssociation"]] = relationship("SchoolStudentAssociation", back_populates="school")
+    students: Mapped[List["Student"]] = relationship("Student", secondary="school_student_associations", viewonly=True)
     inventories: Mapped[List["Inventory"]] = relationship("Inventory", back_populates="school")
     files: Mapped[List["File"]] = relationship("File", back_populates="school")
     payments: Mapped[List["Payment"]] = relationship("Payment", back_populates="school")
     newsletters: Mapped[List["Newsletter"]] = relationship("Newsletter", back_populates="school")
     emails: Mapped[List["Email"]] = relationship("Email", back_populates="school")
+    school_staffs: Mapped[List["SchoolStaff"]] = relationship("SchoolStaff", back_populates="school")
 
-    def __repr__(self):
-        return f"<School(id={self.id}, name={self.name})>"
+class Student(Base):
+    __tablename__ = "students"
 
-# SchoolStaff Model
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String)
+    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_parents.id"))
+
+    # Relationships
+    parent: Mapped[Optional["SchoolParent"]] = relationship("SchoolParent", back_populates="students")
+    school_students_associations: Mapped[List["SchoolStudentAssociation"]] = relationship("SchoolStudentAssociation", back_populates="student")
+    schools: Mapped[List["School"]] = relationship("School", secondary="school_student_associations", viewonly=True)
+    files: Mapped[List["File"]] = relationship("File", back_populates="student")
+
+class SchoolStudentAssociation(Base):
+    __tablename__ = "school_student_associations"
+
+    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"), primary_key=True)
+    student_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("students.id"), primary_key=True)
+
+    # Relationships
+    school: Mapped["School"] = relationship("School", back_populates="school_students_associations")
+    student: Mapped["Student"] = relationship("Student", back_populates="school_students_associations")
+
 class SchoolStaff(Base):
     __tablename__ = "school_staffs"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     name: Mapped[Optional[str]] = mapped_column(String)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("users.id"))
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
+    permissions_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school_staff_permissions.id"), unique=True)
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="school_staff")
+    user: Mapped["User"] = relationship("User", back_populates="school_staff", uselist=False)
     school: Mapped["School"] = relationship("School", back_populates="school_staffs")
+    school_staff_permission: Mapped["SchoolStaffPermissions"] = relationship("SchoolStaffPermissions", back_populates="school_staff", uselist=False)
 
-    def __repr__(self):
-        return f"<SchoolStaff(id={self.id}, name={self.name})>"
-
-# SchoolParent Model
-class SchoolParent(Base):
-    __tablename__ = "school_parents"
+class SchoolStaffPermissions(Base):
+    __tablename__ = "school_staff_permissions"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String)
-    street_and_building: Mapped[Optional[str]] = mapped_column(String)
-    zip_code: Mapped[Optional[str]] = mapped_column(String)
-    city: Mapped[Optional[str]] = mapped_column(String)
-    passport_number: Mapped[Optional[str]] = mapped_column(String)
-    national_id_number: Mapped[Optional[str]] = mapped_column(String)
-    notes: Mapped[Optional[str]] = mapped_column(String)
-    phone_number: Mapped[Optional[str]] = mapped_column(String)
-    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
+    can_add_students: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    can_manage_classes: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    can_view_reports: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     # Relationships
-    school: Mapped["School"] = relationship("School", back_populates="school_parents")
-    students: Mapped[List["Student"]] = relationship("Student", back_populates="parent")
-    files: Mapped[List["File"]] = relationship("File", back_populates="parent")
+    school_staff: Mapped["SchoolStaff"] = relationship("SchoolStaff", back_populates="school_staff_permission", uselist=False)
 
-    def __repr__(self):
-        return f"<SchoolParent(id={self.id}, name={self.name})>"
-
-# Inventory Model
 class Inventory(Base):
     __tablename__ = "inventories"
 
@@ -120,10 +87,6 @@ class Inventory(Base):
     school: Mapped["School"] = relationship("School", back_populates="inventories")
     items: Mapped[List["InventoryItem"]] = relationship("InventoryItem", back_populates="inventory")
 
-    def __repr__(self):
-        return f"<Inventory(id={self.id}, name={self.name})>"
-
-# InventoryItem Model
 class InventoryItem(Base):
     __tablename__ = "inventory_items"
 
@@ -133,11 +96,6 @@ class InventoryItem(Base):
 
     # Relationships
     inventory: Mapped["Inventory"] = relationship("Inventory", back_populates="items")
-
-    def __repr__(self):
-        return f"<InventoryItem(id={self.id}, name={self.name})>"
-
-# File Model
 
 class File(Base):
     __tablename__ = "files"
@@ -155,69 +113,98 @@ class File(Base):
     user: Mapped[Optional["User"]] = relationship("User", back_populates="files")
     student: Mapped[Optional["Student"]] = relationship("Student", back_populates="files")
 
-    def __repr__(self):
-        return f"<File(id={self.id}, file_path={self.file_path})>"
-
-
-# Payment Model
 class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     amount: Mapped[Numeric] = mapped_column(Numeric)
-    payment_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    payment_date: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
 
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="payments")
 
-    def __repr__(self):
-        return f"<Payment(id={self.id}, amount={self.amount})>"
-
-# Newsletter Model
 class Newsletter(Base):
     __tablename__ = "newsletters"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(String)
     content: Mapped[str] = mapped_column(String)
-    sent_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    sent_date: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
 
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="newsletters")
 
-    def __repr__(self):
-        return f"<Newsletter(id={self.id}, title={self.title})>"
-
-# Email Model
 class Email(Base):
     __tablename__ = "emails"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     subject: Mapped[str] = mapped_column(String)
     body: Mapped[str] = mapped_column(String)
-    sent_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    sent_date: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
 
     # Relationships
     school: Mapped["School"] = relationship("School", back_populates="emails")
 
-    def __repr__(self):
-        return f"<Email(id={self.id}, subject={self.subject})>"
-
-# User Model
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     username: Mapped[str] = mapped_column(String, unique=True)
-    password: Mapped[str] = mapped_column(String)
-    email: Mapped[Optional[str]] = mapped_column(String, unique=True)
+    email: Mapped[str] = mapped_column(String, unique=True)
+    password_hash: Mapped[str] = mapped_column(String)
+    school_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_staffs.id"))
 
     # Relationships
-    school_staff: Mapped[Optional["SchoolStaff"]] = relationship("SchoolStaff", back_populates="user", uselist=False)
+    school_staff: Mapped["SchoolStaff"] = relationship("SchoolStaff", back_populates="user", uselist=False)
     files: Mapped[List["File"]] = relationship("File", back_populates="user")
+    sessions: Mapped[List["UserSession"]] = relationship("UserSession", back_populates="user")
 
-    def __repr__(self):
-        return f"<User(id={self.id}, username={self.username})>"
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("users.id"),nullable=False)
+    expire_at: Mapped[datetime.datetime] = mapped_column(DateTime,nullable=False)
+    
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="sessions")
+    def __init__(self, user_id: uuid.UUID):
+        super().__init__()
+
+        self.user_id = user_id
+        self.expire_at = datetime.datetime.utcnow() + relativedelta(months=6)
+
+class SchoolParent(Base):
+    __tablename__ = "school_parents"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String)
+    street_and_building: Mapped[Optional[str]] = mapped_column(String)
+    zip_code: Mapped[Optional[str]] = mapped_column(String)
+    city: Mapped[Optional[str]] = mapped_column(String)
+    passport_number: Mapped[Optional[str]] = mapped_column(String)
+    national_id_number: Mapped[Optional[str]] = mapped_column(String)
+    notes: Mapped[Optional[str]] = mapped_column(String)
+    phone_number: Mapped[Optional[str]] = mapped_column(String)
+
+    # Relationships
+    school_parent_associations: Mapped[List["SchoolParentAssociation"]] = relationship("SchoolParentAssociation", back_populates="parent")
+    schools: Mapped[List["School"]] = relationship("School", secondary="school_parent_associations", viewonly=True)
+    students: Mapped[List["Student"]] = relationship("Student", back_populates="parent")
+    files: Mapped[List["File"]] = relationship("File", back_populates="parent")
+
+class SchoolParentAssociation(Base):
+    __tablename__ = "school_parent_associations"
+
+    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"), primary_key=True)
+    parent_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school_parents.id"), primary_key=True)
+
+    # Relationships
+    school: Mapped["School"] = relationship("School", back_populates="school_parent_associations")
+    parent: Mapped["SchoolParent"] = relationship("SchoolParent", back_populates="school_parent_associations")
