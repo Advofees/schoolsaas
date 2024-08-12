@@ -8,7 +8,7 @@ from backend.models import  StaffUser ,UserSession
 from fastapi import APIRouter, HTTPException, Response
 from backend.database.database import DatabaseDependency
 from backend.authentication.passwords import hash_password, verify_password
-from backend.authentication.user_authentication import OptionalUserAuthenticationContextDependency
+from backend.authentication.staff_user.staff_user_authentication import OptionalUserAuthenticationContextDependency
 
 
 
@@ -72,7 +72,7 @@ def login(
     return {
         "access_token": access_token,
         "session": {
-            "user_id": session.staff_user_id,
+            "staff_user_id": session.staff_user_id,
             "permissions": {
                 "can_add_students": session.staff_user.school_staff.school_staff_permission.can_add_students,
                 "can_manage_classes": session.staff_user.school_staff.school_staff_permission.can_manage_classes,
