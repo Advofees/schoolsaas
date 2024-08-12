@@ -32,3 +32,12 @@
   ```bash
   pip install -r requirements.txt
   ```
+- Seed database
+  ```bash
+  python backend/seeds/seed.py
+  ```
+
+- run server
+  ```bash
+   ./backend/start.dev.sh
+   ````

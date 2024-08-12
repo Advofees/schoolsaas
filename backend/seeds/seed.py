@@ -22,7 +22,7 @@ def seed_user(db: Session):
     db.flush()
 
     # Create permissions
-    permissions = SchoolStaffPermissions(
+    permissions_1 = SchoolStaffPermissions(
         can_add_students=True,
         can_manage_classes=True,
         can_view_reports=False,
@@ -34,19 +34,19 @@ def seed_user(db: Session):
         can_view_reports=True,
         can_add_parents=True
     )
-    db.add_all([permissions, permission_2])
+    db.add_all([permissions_1, permission_2])
     db.flush()
 
 
     school_staff = SchoolStaff(
         name="Sample Staff",
         school_id=school.id,
-        permissions_id=permissions.id,
+        permissions_id=permissions_1.id,
     )
     school_staff_1 = SchoolStaff(
         name="shoooo staff user",
         school_id=school.id,
-        permissions_id=permissions.id,
+        permissions_id=permission_2.id,
     )
     db.add_all([school_staff, school_staff_1])
     db.flush()
@@ -59,8 +59,8 @@ def seed_user(db: Session):
         school_staff_id=school_staff.id
     )
     user_1 = StaffUser(
-        username="sampleuser",
-        email="user@app.com",
+        username="sampleuser_2",
+        email="user_2@app.com",
         password_hash=hash_password("password123"),
         school_staff_id=school_staff.id
     )

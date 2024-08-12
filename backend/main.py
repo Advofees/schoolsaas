@@ -44,7 +44,6 @@ app.include_router(file_router,tags=["File"])
 app.include_router(lesson_plan_router,tags=["Lesson Plans"])
 
 
-@app.get("/health")
+@app.get("/health",tags=["Health"])
 def health():
-
     return {"version": os.environ.get("GIT_COMMIT_SHA")}

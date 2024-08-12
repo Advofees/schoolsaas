@@ -31,8 +31,6 @@ class School(Base):
     inventories: Mapped[List["Inventory"]] = relationship("Inventory", back_populates="school")
     files: Mapped[List["File"]] = relationship("File", back_populates="school")
     payments: Mapped[List["Payment"]] = relationship("Payment", back_populates="school")
-    newsletters: Mapped[List["Newsletter"]] = relationship("Newsletter", back_populates="school")
-    emails: Mapped[List["Email"]] = relationship("Email", back_populates="school")
     school_staffs: Mapped[List["SchoolStaff"]] = relationship("SchoolStaff", back_populates="school")
 
     def __init__(self, 
@@ -234,57 +232,7 @@ class Payment(Base):
         self.school_id = school_id
         self.payment_date = payment_date
 
-class Newsletter(Base):
-    __tablename__ = "newsletters"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    title: Mapped[str] = mapped_column(String)
-    content: Mapped[str] = mapped_column(String)
-    sent_date: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)
-    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
-    updated_at: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime, onupdate=func.now(), nullable=True
-    )
-
-    # Relationships
-    school: Mapped["School"] = relationship("School", back_populates="newsletters")
-    def __init__(self, 
-                 title: str, 
-                 content: str, 
-                 school_id: uuid.UUID, 
-                 sent_date: Optional[DateTime] = None):
-        super().__init__()
-        self.title = title
-        self.content = content
-        self.school_id = school_id
-        self.sent_date = sent_date
-
-class Email(Base):
-    __tablename__ = "emails"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    subject: Mapped[str] = mapped_column(String)
-    body: Mapped[str] = mapped_column(String)
-    sent_date: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)
-    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
-    updated_at: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime, onupdate=func.now(), nullable=True
-    )
-
-    # Relationships
-    school: Mapped["School"] = relationship("School", back_populates="emails")
-    def __init__(self, 
-                 subject: str, 
-                 body: str, 
-                 school_id: uuid.UUID, 
-                 sent_date: Optional[DateTime] = None):
-        super().__init__()
-        self.subject = subject
-        self.body = body
-        self.school_id = school_id
-        self.sent_date = sent_date
 class StaffUser(Base):
     __tablename__ = "staff_users"
 
@@ -386,3 +334,5 @@ class SchoolParentAssociation(Base):
         super().__init__()
         self.school_id = school_id
         self.parent_id = parent_id
+
+
