@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import String, DateTime,  Numeric, ForeignKey, UUID, func, Integer, Date
+from sqlalchemy import String, DateTime,  Numeric, ForeignKey, UUID, func, Integer
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
 from dateutil.relativedelta import relativedelta
@@ -15,7 +15,7 @@ class School(Base):
     country: Mapped[str] = mapped_column(String)
     school_number: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
-    updated_at: Mapped[datetime.datetime] = mapped_column(onupdate=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(onupdate=func.now(),nullable=True)
 
 
     school_parent_associations: Mapped[list["SchoolParentAssociation"]] = relationship("SchoolParentAssociation", back_populates="school")
@@ -43,7 +43,7 @@ class Student(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String)
-    date_of_birth: Mapped[Date] = mapped_column(Date)
+    date_of_birth: Mapped[datetime.datetime] = mapped_column()
     gender: Mapped[str] = mapped_column(String)
     grade_level: Mapped[int] = mapped_column(Integer)
     parent_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_parents.id"))
@@ -62,7 +62,7 @@ class Student(Base):
     attendances: Mapped[list["Attendance"]] = relationship("Attendance", back_populates="student")
     exam_results: Mapped[list["ExamResult"]] = relationship("ExamResult", back_populates="student")
 
-    def __init__(self, name: str, date_of_birth: Date, gender: str, grade_level: int, classroom_id: uuid.UUID, parent_id: typing.Optional[uuid.UUID] = None):
+    def __init__(self, name: str, date_of_birth: datetime.datetime, gender: str, grade_level: int, classroom_id: uuid.UUID, parent_id: typing.Optional[uuid.UUID] = None):
         super().__init__()
         self.name = name
         self.date_of_birth = date_of_birth
@@ -184,7 +184,7 @@ class Attendance(Base):
     __tablename__ = "attendances"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    date: Mapped[Date] = mapped_column(Date)
+    date: Mapped[datetime.datetime] = mapped_column()
     status: Mapped[str] = mapped_column(String)  # Present, Absent, Late, etc.
     student_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("students.id"))
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
@@ -194,7 +194,7 @@ class Attendance(Base):
 
     student: Mapped["Student"] = relationship("Student", back_populates="attendances")
 
-    def __init__(self, date: Date, status: str, student_id: uuid.UUID):
+    def __init__(self, date: datetime.datetime, status: str, student_id: uuid.UUID):
         super().__init__()
         self.date = date
         self.status = status
@@ -205,9 +205,9 @@ class AcademicTerm(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String)
-    start_date: Mapped[Date] = mapped_column(Date)
-    end_date: Mapped[Date] = mapped_column(Date)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+    start_date: Mapped[datetime.datetime] = mapped_column()
+    end_date: Mapped[datetime.datetime] = mapped_column()
+    created_at: Mapped[datetime.datetime] = mapped_column( default=func.now(), nullable=False)
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
     )
@@ -218,7 +218,7 @@ class AcademicTerm(Base):
 
     exams: Mapped[list["Exam"]] = relationship("Exam", back_populates="academic_term")
 
-    def __init__(self, name: str, start_date: Date, end_date: Date, school_id: uuid.UUID):
+    def __init__(self, name: str, start_date: datetime.datetime, end_date: datetime.datetime, school_id: uuid.UUID):
         super().__init__()
         self.name = name
         self.start_date = start_date
@@ -253,7 +253,7 @@ class Exam(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String)
-    date: Mapped[Date] = mapped_column(Date)
+    date: Mapped[datetime.datetime] = mapped_column()
     total_marks: Mapped[float] = mapped_column(Numeric, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
@@ -268,7 +268,7 @@ class Exam(Base):
 
     exam_results: Mapped[list["ExamResult"]] = relationship("ExamResult", back_populates="exam")
 
-    def __init__(self, name: str, date: Date, total_marks: float, module_id: uuid.UUID, academic_term_id: uuid.UUID):
+    def __init__(self, name: str, date: datetime.datetime, total_marks: float, module_id: uuid.UUID, academic_term_id: uuid.UUID):
         super().__init__()
         self.name = name
         self.date = date
@@ -339,6 +339,8 @@ class SchoolStaff(Base):
     permissions_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school_staff_permissions.id"), unique=True)
     school_staff_permission: Mapped["SchoolStaffPermissions"] = relationship("SchoolStaffPermissions", back_populates="school_staff", uselist=False)
     
+    files: Mapped[list["File"]] = relationship("File", back_populates="school_staff")
+
 
     def __init__(self, name: str, permissions_id:uuid.UUID, school_id: uuid.UUID):
         super().__init__()
@@ -466,10 +468,14 @@ class File(Base):
     student: Mapped[typing.Optional["Student"]] = relationship("Student", back_populates="files")
 
     staff_user_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("staff_users.id"))
-    staff_user: Mapped[typing.Optional["StaffUser"]] = relationship("Student", back_populates="files")
+    staff_user: Mapped[typing.Optional["StaffUser"]] = relationship("StaffUser", back_populates="files")
+
+    school_staff_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_staffs.id"))
+    school_staff: Mapped[typing.Optional["SchoolStaff"]] = relationship("SchoolStaff", back_populates="files")
 
     def __init__(self, filename: str, file_type: str, file_size: int, file_path: str, school_id: uuid.UUID, 
-                 parent_id: typing.Optional[uuid.UUID] = None, student_id: typing.Optional[uuid.UUID] = None):
+                 parent_id: typing.Optional[uuid.UUID] = None, student_id: typing.Optional[uuid.UUID] = None, 
+                 staff_user_id: typing.Optional[uuid.UUID] = None, school_staff_id: typing.Optional[uuid.UUID] = None):
         super().__init__()
         self.filename = filename
         self.file_type = file_type
@@ -478,13 +484,15 @@ class File(Base):
         self.school_id = school_id
         self.parent_id = parent_id
         self.student_id = student_id
+        self.staff_user_id = staff_user_id
+        self.school_staff_id = school_staff_id
 
 class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     amount: Mapped[float] = mapped_column(nullable=False)
-    payment_date: Mapped[Date] = mapped_column(Date)
+    payment_date: Mapped[datetime.datetime] = mapped_column()
     payment_method: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(onupdate=func.now())
@@ -493,7 +501,7 @@ class Payment(Base):
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
     school: Mapped["School"] = relationship("School", back_populates="payments")
 
-    def __init__(self, amount: float, payment_date: Date, payment_method: str, school_id: uuid.UUID):
+    def __init__(self, amount: float, payment_date: datetime.datetime, payment_method: str, school_id: uuid.UUID):
         super().__init__()
         self.amount = amount
         self.payment_date = payment_date

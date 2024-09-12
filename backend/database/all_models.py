@@ -1,4 +1,4 @@
-from typing import Type,List
+from typing import Type
 from backend.database.base import Base
 from backend.models import (Student,School,SchoolStaff,SchoolParent,Inventory,File,
                             Payment,SchoolStaffPermissions,StaffUser,Grade,Teacher,
@@ -6,7 +6,7 @@ from backend.models import (Student,School,SchoolStaff,SchoolParent,Inventory,Fi
                             AcademicTerm,SchoolParentAssociation,
                             SchoolStudentAssociation,TeacherModuleAssociation)
 
-ALL_MODELS: List[Type[Base]] = [
+def get_all_models() -> list[Type[Base]]: return [
     Student,
     School,
     SchoolStaff,

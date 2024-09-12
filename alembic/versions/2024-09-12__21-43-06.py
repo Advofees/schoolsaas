@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: e1d4551c2a08
+Revision ID: 3c3a162d0715
 Revises: 
-Create Date: 2024-09-12 19:51:12.974838
+Create Date: 2024-09-12 21:43:06.168959
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e1d4551c2a08'
+revision: str = '3c3a162d0715'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -68,8 +68,8 @@ def upgrade() -> None:
     op.create_table('academic_terms',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('start_date', sa.Date(), nullable=False),
-    sa.Column('end_date', sa.Date(), nullable=False),
+    sa.Column('start_date', sa.DateTime(), nullable=False),
+    sa.Column('end_date', sa.DateTime(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('school_id', sa.UUID(), nullable=False),
@@ -99,8 +99,8 @@ def upgrade() -> None:
     )
     op.create_table('payments',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('amount', sa.Numeric(), nullable=False),
-    sa.Column('payment_date', sa.Date(), nullable=False),
+    sa.Column('amount', sa.Float(), nullable=False),
+    sa.Column('payment_date', sa.DateTime(), nullable=False),
     sa.Column('payment_method', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
@@ -155,7 +155,7 @@ def upgrade() -> None:
     op.create_table('exams',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('date', sa.Date(), nullable=False),
+    sa.Column('date', sa.DateTime(), nullable=False),
     sa.Column('total_marks', sa.Numeric(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
@@ -189,7 +189,7 @@ def upgrade() -> None:
     op.create_table('students',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('date_of_birth', sa.Date(), nullable=False),
+    sa.Column('date_of_birth', sa.DateTime(), nullable=False),
     sa.Column('gender', sa.String(), nullable=False),
     sa.Column('grade_level', sa.Integer(), nullable=False),
     sa.Column('parent_id', sa.UUID(), nullable=True),
@@ -210,7 +210,7 @@ def upgrade() -> None:
     )
     op.create_table('attendances',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('date', sa.Date(), nullable=False),
+    sa.Column('date', sa.DateTime(), nullable=False),
     sa.Column('status', sa.String(), nullable=False),
     sa.Column('student_id', sa.UUID(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
@@ -241,8 +241,10 @@ def upgrade() -> None:
     sa.Column('parent_id', sa.UUID(), nullable=True),
     sa.Column('student_id', sa.UUID(), nullable=True),
     sa.Column('staff_user_id', sa.UUID(), nullable=True),
+    sa.Column('school_staff_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['parent_id'], ['school_parents.id'], ),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.ForeignKeyConstraint(['school_staff_id'], ['school_staffs.id'], ),
     sa.ForeignKeyConstraint(['staff_user_id'], ['staff_users.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
     sa.PrimaryKeyConstraint('id')
