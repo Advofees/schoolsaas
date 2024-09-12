@@ -36,11 +36,16 @@
   ```bash
   ./run-migrations.sh
   ```
+
 - To generate migrations make sure the model is added in backend/database/all_models.py then run the following commands
   ```bash
   ./generate-migrations
   ./run-migrations.sh
   ```
+- seed database
+```bash
+./seed-database.sh
+```
 - run server
   ```bash
    ./backend/start.dev.sh
