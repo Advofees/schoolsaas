@@ -428,7 +428,7 @@ class Inventory(Base):
     item_name: Mapped[str] = mapped_column(String)
     quantity: Mapped[int] = mapped_column(Integer)
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
     )
@@ -451,7 +451,7 @@ class File(Base):
     file_size: Mapped[int] = mapped_column(Integer)
     file_path: Mapped[str] = mapped_column(String)
     
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
     )
@@ -483,7 +483,7 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    amount: Mapped[float] = mapped_column(Numeric, nullable=False)
+    amount: Mapped[float] = mapped_column(nullable=False)
     payment_date: Mapped[Date] = mapped_column(Date)
     payment_method: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
@@ -501,7 +501,7 @@ class Payment(Base):
         self.school_id = school_id
 
 class TeacherModuleAssociation(Base):
-    
+
     __tablename__ = "teacher_module_association"
 
     teacher_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("teachers.id"), primary_key=True)
