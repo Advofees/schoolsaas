@@ -98,7 +98,6 @@ def get_user_session(
     auth_context: OptionalUserAuthenticationContextDependency,
 ):
     if not auth_context:
-        print("auth_context")
         raise HTTPException(status_code=404)
 
     user = (

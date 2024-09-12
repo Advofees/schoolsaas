@@ -137,6 +137,7 @@ class SchoolStaffPermissions(Base):
         self.can_add_parents = can_add_parents
         self.can_manage_classes = can_manage_classes
         self.can_view_reports = can_view_reports
+
 class Inventory(Base):
     __tablename__ = "inventories"
 
@@ -335,10 +336,4 @@ class SchoolParentAssociation(Base):
         self.school_id = school_id
         self.parent_id = parent_id
 
-
-class Grade(Base):
-
-    __tablename__ = 'grades'
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
 
