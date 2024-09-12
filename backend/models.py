@@ -1,39 +1,37 @@
 import datetime
 from sqlalchemy import String, DateTime,  Numeric, ForeignKey, UUID, func, Integer, Date
 from sqlalchemy.orm import relationship, mapped_column, Mapped
-from typing import List, Optional
 import uuid
 from dateutil.relativedelta import relativedelta
 from backend.database.base import Base
+import typing
 
 class School(Base):
     __tablename__ = "schools"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    address: Mapped[Optional[str]] = mapped_column(String)
+    address: Mapped[typing.Optional[str]] = mapped_column(String)
     country: Mapped[str] = mapped_column(String)
     school_number: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
-    updated_at: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime, onupdate=func.now(), nullable=True
-    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(onupdate=func.now())
 
-    # Relationships
-    school_parent_associations: Mapped[List["SchoolParentAssociation"]] = relationship("SchoolParentAssociation", back_populates="school")
-    school_students_associations: Mapped[List["SchoolStudentAssociation"]] = relationship("SchoolStudentAssociation", back_populates="school")
-    school_parents: Mapped[List["SchoolParent"]] = relationship("SchoolParent", secondary="school_parent_associations", viewonly=True)
-    students: Mapped[List["Student"]] = relationship("Student", secondary="school_student_associations", viewonly=True)
-    inventories: Mapped[List["Inventory"]] = relationship("Inventory", back_populates="school")
-    files: Mapped[List["File"]] = relationship("File", back_populates="school")
-    payments: Mapped[List["Payment"]] = relationship("Payment", back_populates="school")
-    school_staffs: Mapped[List["SchoolStaff"]] = relationship("SchoolStaff", back_populates="school")
-    teachers: Mapped[List["Teacher"]] = relationship("Teacher", back_populates="school")
-    classrooms: Mapped[List["Classroom"]] = relationship("Classroom", back_populates="school")
-    academic_terms: Mapped[List["AcademicTerm"]] = relationship("AcademicTerm", back_populates="school")
-    grades: Mapped[List["Grade"]] = relationship("Grade", back_populates="school")
 
-    def __init__(self, name: str, school_number: str, country: str, address: Optional[str] = None):
+    school_parent_associations: Mapped[list["SchoolParentAssociation"]] = relationship("SchoolParentAssociation", back_populates="school")
+    school_students_associations: Mapped[list["SchoolStudentAssociation"]] = relationship("SchoolStudentAssociation", back_populates="school")
+    school_parents: Mapped[list["SchoolParent"]] = relationship("SchoolParent", secondary="school_parent_associations", viewonly=True)
+    students: Mapped[list["Student"]] = relationship("Student", secondary="school_student_associations", viewonly=True)
+    inventories: Mapped[list["Inventory"]] = relationship("Inventory", back_populates="school")
+    files: Mapped[list["File"]] = relationship("File", back_populates="school")
+    payments: Mapped[list["Payment"]] = relationship("Payment", back_populates="school")
+    school_staffs: Mapped[list["SchoolStaff"]] = relationship("SchoolStaff", back_populates="school")
+    teachers: Mapped[list["Teacher"]] = relationship("Teacher", back_populates="school")
+    classrooms: Mapped[list["Classroom"]] = relationship("Classroom", back_populates="school")
+    academic_terms: Mapped[list["AcademicTerm"]] = relationship("AcademicTerm", back_populates="school")
+    grades: Mapped[list["Grade"]] = relationship("Grade", back_populates="school")
+
+    def __init__(self, name: str, school_number: str, country: str, address: typing.Optional[str] = None):
         super().__init__()
         self.name = name
         self.school_number = school_number
@@ -48,23 +46,23 @@ class Student(Base):
     date_of_birth: Mapped[Date] = mapped_column(Date)
     gender: Mapped[str] = mapped_column(String)
     grade_level: Mapped[int] = mapped_column(Integer)
-    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_parents.id"))
+    parent_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_parents.id"))
     classroom_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("classrooms.id"))
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
     )
 
-    # Relationships
-    parent: Mapped[Optional["SchoolParent"]] = relationship("SchoolParent", back_populates="students")
-    school_students_associations: Mapped[List["SchoolStudentAssociation"]] = relationship("SchoolStudentAssociation", back_populates="student")
-    schools: Mapped[List["School"]] = relationship("School", secondary="school_student_associations", viewonly=True)
-    files: Mapped[List["File"]] = relationship("File", back_populates="student")
-    classroom: Mapped["Classroom"] = relationship("Classroom", back_populates="students")
-    attendances: Mapped[List["Attendance"]] = relationship("Attendance", back_populates="student")
-    exam_results: Mapped[List["ExamResult"]] = relationship("ExamResult", back_populates="student")
 
-    def __init__(self, name: str, date_of_birth: Date, gender: str, grade_level: int, classroom_id: uuid.UUID, parent_id: Optional[uuid.UUID] = None):
+    parent: Mapped[typing.Optional["SchoolParent"]] = relationship("SchoolParent", back_populates="students")
+    school_students_associations: Mapped[list["SchoolStudentAssociation"]] = relationship("SchoolStudentAssociation", back_populates="student")
+    schools: Mapped[list["School"]] = relationship("School", secondary="school_student_associations", viewonly=True)
+    files: Mapped[list["File"]] = relationship("File", back_populates="student")
+    classroom: Mapped["Classroom"] = relationship("Classroom", back_populates="students")
+    attendances: Mapped[list["Attendance"]] = relationship("Attendance", back_populates="student")
+    exam_results: Mapped[list["ExamResult"]] = relationship("ExamResult", back_populates="student")
+
+    def __init__(self, name: str, date_of_birth: Date, gender: str, grade_level: int, classroom_id: uuid.UUID, parent_id: typing.Optional[uuid.UUID] = None):
         super().__init__()
         self.name = name
         self.date_of_birth = date_of_birth
@@ -81,27 +79,27 @@ class SchoolParent(Base):
     name: Mapped[str] = mapped_column(String)
     gender: Mapped[str] = mapped_column(String)
     email: Mapped[str] = mapped_column(String, unique=True)
-    street_and_building: Mapped[Optional[str]] = mapped_column(String)
-    zip_code: Mapped[Optional[str]] = mapped_column(String)
-    city: Mapped[Optional[str]] = mapped_column(String)
-    passport_number: Mapped[Optional[str]] = mapped_column(String)
-    national_id_number: Mapped[Optional[str]] = mapped_column(String)
-    notes: Mapped[Optional[str]] = mapped_column(String)
-    phone_number: Mapped[Optional[str]] = mapped_column(String)
+    street_and_building: Mapped[typing.Optional[str]] = mapped_column(String)
+    zip_code: Mapped[typing.Optional[str]] = mapped_column(String)
+    city: Mapped[typing.Optional[str]] = mapped_column(String)
+    passport_number: Mapped[typing.Optional[str]] = mapped_column(String)
+    national_id_number: Mapped[typing.Optional[str]] = mapped_column(String)
+    notes: Mapped[typing.Optional[str]] = mapped_column(String)
+    phone_number: Mapped[typing.Optional[str]] = mapped_column(String)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
     )
 
-    # Relationships
-    school_parent_associations: Mapped[List["SchoolParentAssociation"]] = relationship("SchoolParentAssociation", back_populates="parent")
-    schools: Mapped[List["School"]] = relationship("School", secondary="school_parent_associations", viewonly=True)
-    students: Mapped[List["Student"]] = relationship("Student", back_populates="parent")
-    files: Mapped[List["File"]] = relationship("File", back_populates="parent")
 
-    def __init__(self, name: str, gender: str, email: str, phone_number: Optional[str] = None, street_and_building: Optional[str] = None, 
-                 zip_code: Optional[str] = None, city: Optional[str] = None, passport_number: Optional[str] = None, 
-                 national_id_number: Optional[str] = None, notes: Optional[str] = None):
+    school_parent_associations: Mapped[list["SchoolParentAssociation"]] = relationship("SchoolParentAssociation", back_populates="parent")
+    schools: Mapped[list["School"]] = relationship("School", secondary="school_parent_associations", viewonly=True)
+    students: Mapped[list["Student"]] = relationship("Student", back_populates="parent")
+    files: Mapped[list["File"]] = relationship("File", back_populates="parent")
+
+    def __init__(self, name: str, gender: str, email: str, phone_number: typing.Optional[str] = None, street_and_building: typing.Optional[str] = None, 
+                 zip_code: typing.Optional[str] = None, city: typing.Optional[str] = None, passport_number: typing.Optional[str] = None, 
+                 national_id_number: typing.Optional[str] = None, notes: typing.Optional[str] = None):
         super().__init__()
         self.name = name
         self.gender = gender
@@ -115,24 +113,25 @@ class SchoolParent(Base):
         self.notes = notes
 
 class Teacher(Base):
+
     __tablename__ = "teachers"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String)
     email: Mapped[str] = mapped_column(String, unique=True)
-    phone_number: Mapped[Optional[str]] = mapped_column(String)
+    phone_number: Mapped[typing.Optional[str]] = mapped_column(String)
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
     )
 
-    # Relationships
-    school: Mapped["School"] = relationship("School", back_populates="teachers")
-    classrooms: Mapped[List["Classroom"]] = relationship("Classroom", back_populates="teacher")
-    modules: Mapped[List["Module"]] = relationship("Module", secondary="teacher_module_association", back_populates="teachers")
 
-    def __init__(self, name: str, email: str, school_id: uuid.UUID, phone_number: Optional[str] = None):
+    school: Mapped["School"] = relationship("School", back_populates="teachers")
+    classrooms: Mapped[list["Classroom"]] = relationship("Classroom", back_populates="teacher")
+    modules: Mapped[list["Module"]] = relationship("Module", secondary="teacher_module_association", back_populates="teachers")
+
+    def __init__(self, name: str, email: str, school_id: uuid.UUID, phone_number: typing.Optional[str] = None):
         super().__init__()
         self.name = name
         self.email = email
@@ -156,7 +155,7 @@ class Classroom(Base):
     teacher_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("teachers.id"))
     teacher: Mapped["Teacher"] = relationship("Teacher", back_populates="classrooms")
 
-    students: Mapped[List["Student"]] = relationship("Student", back_populates="classroom")
+    students: Mapped[list["Student"]] = relationship("Student", back_populates="classroom")
 
     def __init__(self, name: str, grade_level: int, school_id: uuid.UUID, teacher_id: uuid.UUID):
         super().__init__()
@@ -170,13 +169,13 @@ class Module(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String, unique=True)
-    description: Mapped[Optional[str]] = mapped_column(String)
+    description: Mapped[typing.Optional[str]] = mapped_column(String)
 
-    # Relationships
-    teachers: Mapped[List["Teacher"]] = relationship("Teacher", secondary="teacher_module_association", back_populates="modules")
-    exams: Mapped[List["Exam"]] = relationship("Exam", back_populates="module")
+ 
+    teachers: Mapped[list["Teacher"]] = relationship("Teacher", secondary="teacher_module_association", back_populates="modules")
+    exams: Mapped[list["Exam"]] = relationship("Exam", back_populates="module")
 
-    def __init__(self, name: str, description: Optional[str] = None):
+    def __init__(self, name: str, description: typing.Optional[str] = None):
         super().__init__()
         self.name = name
         self.description = description
@@ -193,7 +192,6 @@ class Attendance(Base):
         DateTime, onupdate=func.now(), nullable=True
     )
 
-    # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="attendances")
 
     def __init__(self, date: Date, status: str, student_id: uuid.UUID):
@@ -218,7 +216,7 @@ class AcademicTerm(Base):
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
     school: Mapped["School"] = relationship("School", back_populates="academic_terms")
 
-    exams: Mapped[List["Exam"]] = relationship("Exam", back_populates="academic_term")
+    exams: Mapped[list["Exam"]] = relationship("Exam", back_populates="academic_term")
 
     def __init__(self, name: str, start_date: Date, end_date: Date, school_id: uuid.UUID):
         super().__init__()
@@ -235,13 +233,13 @@ class Grade(Base):
     min_score: Mapped[float] = mapped_column(Numeric, nullable=False)
     max_score: Mapped[float] = mapped_column(Numeric, nullable=False)
     gpa_point: Mapped[float] = mapped_column(Numeric, nullable=False)  # e.g., 4.0, 3.0, 2.0, 1.0, 0.0
-    description: Mapped[Optional[str]] = mapped_column(String)
+    description: Mapped[typing.Optional[str]] = mapped_column(String)
 
     # Relationships
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
     school: Mapped["School"] = relationship("School", back_populates="grades")
 
-    def __init__(self, name: str, min_score: float, max_score: float, gpa_point: float, school_id: uuid.UUID, description: Optional[str] = None):
+    def __init__(self, name: str, min_score: float, max_score: float, gpa_point: float, school_id: uuid.UUID, description: typing.Optional[str] = None):
         super().__init__()
         self.name = name
         self.min_score = min_score
@@ -268,7 +266,7 @@ class Exam(Base):
     academic_term_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("academic_terms.id"))
     academic_term: Mapped["AcademicTerm"] = relationship("AcademicTerm", back_populates="exams")
 
-    exam_results: Mapped[List["ExamResult"]] = relationship("ExamResult", back_populates="exam")
+    exam_results: Mapped[list["ExamResult"]] = relationship("ExamResult", back_populates="exam")
 
     def __init__(self, name: str, date: Date, total_marks: float, module_id: uuid.UUID, academic_term_id: uuid.UUID):
         super().__init__()
@@ -307,7 +305,7 @@ class SchoolParentAssociation(Base):
     parent_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school_parents.id"), primary_key=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
 
-    # Relationships
+  
     school: Mapped["School"] = relationship("School", back_populates="school_parent_associations")
     parent: Mapped["SchoolParent"] = relationship("SchoolParent", back_populates="school_parent_associations")
 
@@ -318,7 +316,7 @@ class SchoolStudentAssociation(Base):
     student_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("students.id"), primary_key=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
 
-    # Relationships
+
     school: Mapped["School"] = relationship("School", back_populates="school_students_associations")
     student: Mapped["Student"] = relationship("Student", back_populates="school_students_associations")
 
@@ -361,17 +359,17 @@ class StaffUser(Base):
         DateTime, onupdate=func.now(), nullable=True
     )
 
-    school_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_staffs.id"))
+    school_staff_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_staffs.id"))
     school_staff: Mapped["SchoolStaff"] = relationship("SchoolStaff", back_populates="staff_user", uselist=False)
 
-    files: Mapped[List["File"]] = relationship("File", back_populates="staff_user")
-    sessions: Mapped[List["UserSession"]] = relationship("UserSession", back_populates="staff_user")
+    files: Mapped[list["File"]] = relationship("File", back_populates="staff_user")
+    sessions: Mapped[list["UserSession"]] = relationship("UserSession", back_populates="staff_user")
 
     def __init__(self, 
                  username: str, 
                  email: str, 
                  password_hash: str, 
-                 school_staff_id: Optional[uuid.UUID] = None):
+                 school_staff_id: typing.Optional[uuid.UUID] = None):
         super().__init__()
         self.username = username
         self.email = email
@@ -461,17 +459,17 @@ class File(Base):
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
     school: Mapped["School"] = relationship("School", back_populates="files")
 
-    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_parents.id"))
-    parent: Mapped[Optional["SchoolParent"]] = relationship("SchoolParent", back_populates="files")
+    parent_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("school_parents.id"))
+    parent: Mapped[typing.Optional["SchoolParent"]] = relationship("SchoolParent", back_populates="files")
 
-    student_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("students.id"))
-    student: Mapped[Optional["Student"]] = relationship("Student", back_populates="files")
+    student_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("students.id"))
+    student: Mapped[typing.Optional["Student"]] = relationship("Student", back_populates="files")
 
-    staff_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("staff_users.id"))
-    staff_user: Mapped[Optional["StaffUser"]] = relationship("Student", back_populates="files")
+    staff_user_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(UUID, ForeignKey("staff_users.id"))
+    staff_user: Mapped[typing.Optional["StaffUser"]] = relationship("Student", back_populates="files")
 
     def __init__(self, filename: str, file_type: str, file_size: int, file_path: str, school_id: uuid.UUID, 
-                 parent_id: Optional[uuid.UUID] = None, student_id: Optional[uuid.UUID] = None):
+                 parent_id: typing.Optional[uuid.UUID] = None, student_id: typing.Optional[uuid.UUID] = None):
         super().__init__()
         self.filename = filename
         self.file_type = file_type
@@ -503,6 +501,7 @@ class Payment(Base):
         self.school_id = school_id
 
 class TeacherModuleAssociation(Base):
+    
     __tablename__ = "teacher_module_association"
 
     teacher_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("teachers.id"), primary_key=True)
