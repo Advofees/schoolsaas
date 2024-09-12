@@ -336,3 +336,9 @@ class SchoolParentAssociation(Base):
         self.parent_id = parent_id
 
 
+class Grade(Base):
+
+    __tablename__ = 'grades'
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
+

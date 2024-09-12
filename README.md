@@ -32,11 +32,15 @@
   ```bash
   pip install -r requirements.txt
   ```
-- Seed database
+- Run migrations
   ```bash
-  python backend/seeds/seed.py
+  ./run-migrations.sh
   ```
-
+- To generate migrations make sure the model is added in backend/database/all_models.py then run the following commands
+  ```bash
+  ./generate-migrations
+  ./run-migrations.sh
+  ```
 - run server
   ```bash
    ./backend/start.dev.sh
