@@ -23,6 +23,7 @@
   ```
 
   - For Windows and git bash users
+
     ```bash
     source venv/Scripts/activate
     ```
@@ -33,20 +34,24 @@
   pip install -r requirements.txt
   ```
 - Run migrations
+
   ```bash
   ./run-migrations.sh
   ```
 
 - To generate migrations make sure the model is added in backend/database/all_models.py then run the following commands
+
   ```bash
   ./generate-migrations
   ./run-migrations.sh
   ```
 - seed database
-```bash
-./seed-database.sh
-```
+
+  ```bash
+  ./seed-database.sh
+  ```
 - run server
+
   ```bash
    ./backend/start.dev.sh
    ````
