@@ -5,7 +5,9 @@ import uuid
 from dateutil.relativedelta import relativedelta
 from backend.database.base import Base
 import typing
+from sqlalchemy.dialects.postgresql import JSONB
 
+from backend.permissions.permissions_schemas import ALL_KNOWN_PERMISSIONS
 
 #
 class School(Base):
@@ -627,10 +629,7 @@ class UserPermissions(Base):
     __tablename__ = "user_permissions"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    can_add_students: Mapped[bool] = mapped_column(nullable=False)
-    can_add_parents: Mapped[bool] = mapped_column(nullable=False)
-    can_manage_classes: Mapped[bool] = mapped_column(nullable=False)
-    can_view_reports: Mapped[bool] = mapped_column(nullable=False)
+    permissions: Mapped[dict] = mapped_column(JSONB, nullable=False)  
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )
@@ -642,18 +641,10 @@ class UserPermissions(Base):
         "User", back_populates="user_permission", uselist=False
     )
 
-    def __init__(
-        self,
-        can_add_students: bool,
-        can_add_parents: bool,
-        can_manage_classes: bool,
-        can_view_reports: bool,
-    ):
+    def __init__(self, permissions: dict):
         super().__init__()
-        self.can_add_students = can_add_students
-        self.can_add_parents = can_add_parents
-        self.can_manage_classes = can_manage_classes
-        self.can_view_reports = can_view_reports
+        validated_permissions = ALL_KNOWN_PERMISSIONS.validate_permissions(permissions)
+        self.permissions = validated_permissions.dict()
 
 
 class Inventory(Base):
