@@ -46,7 +46,6 @@ def seed_user(db: Session):
 
 
     user = User(
-        name=faker.name(),
         username=faker.user_name(),
         email="user@app.com",
         password_hash=hash_password("password123"),
@@ -80,7 +79,7 @@ def seed_user(db: Session):
         db.flush()
 
         for j in range(5):  # Ensure at least 5 students per classroom
-            student = Student(name=faker.name(), date_of_birth=datetime.datetime(2005, 1, 1), gender=faker.random_element(elements=("M","F")), grade_level=i+1, classroom_id=classroom.id)
+            student = Student(first_name=faker.name(),last_name=faker.last_name(), date_of_birth=datetime.datetime(2005, 1, 1), gender=faker.random_element(elements=("M","F")), grade_level=i+1, classroom_id=classroom.id)
             db.add(student)
             db.flush()
 

@@ -1,10 +1,8 @@
 from sqlalchemy import String, Numeric, ForeignKey, UUID
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
-
 from backend.database.base import Base
 import typing
-
 if typing.TYPE_CHECKING:
     from backend.models import School
 
