@@ -23,15 +23,13 @@ class School(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(
         onupdate=func.now(), nullable=True
     )
-    school_students_associations: Mapped[list["SchoolStudentAssociation"]] = relationship(
-    "SchoolStudentAssociation", back_populates="school")   
-
+    school_students_associations: Mapped[list["SchoolStudentAssociation"]] = (
+        relationship("SchoolStudentAssociation", back_populates="school")
+    )
 
     students: Mapped[list["Student"]] = relationship(
         "Student", secondary="school_student_associations", viewonly=True
     )
-
-
 
     school_parent_associations: Mapped[list["SchoolParentAssociation"]] = relationship(
         "SchoolParentAssociation", back_populates="school"
@@ -84,8 +82,7 @@ class Student(Base):
         DateTime, onupdate=func.now(), nullable=True
     )
 
-
-    #---
+    # ---
     parent_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(
         UUID, ForeignKey("school_parents.id")
     )
@@ -96,8 +93,6 @@ class Student(Base):
     classroom: Mapped["Classroom"] = relationship(
         "Classroom", back_populates="students"
     )
-
-
 
     school_students_associations: Mapped[list["SchoolStudentAssociation"]] = (
         relationship("SchoolStudentAssociation", back_populates="student")
@@ -115,7 +110,9 @@ class Student(Base):
         "ExamResult", back_populates="student"
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="student_user", uselist=False)
+    user: Mapped["User"] = relationship(
+        "User", back_populates="student_user", uselist=False
+    )
 
     def __init__(
         self,
@@ -221,8 +218,10 @@ class Teacher(Base):
     user: Mapped["User"] = relationship(
         "User", back_populates="teacher_user", uselist=False
     )
-    
-    payments: Mapped[list["Payment"]] = relationship("Payment", back_populates="teacher")
+
+    payments: Mapped[list["Payment"]] = relationship(
+        "Payment", back_populates="teacher"
+    )
 
     def __init__(
         self,
@@ -475,7 +474,6 @@ class SchoolParentAssociation(Base):
     )
 
 
-
 class SchoolStudentAssociation(Base):
     __tablename__ = "school_student_associations"
 
@@ -492,6 +490,7 @@ class SchoolStudentAssociation(Base):
     student: Mapped["Student"] = relationship(
         "Student", back_populates="school_students_associations"
     )
+
 
 class User(Base):
     __tablename__ = "users"
@@ -534,7 +533,9 @@ class User(Base):
     )
     # ---
 
-    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
+    school_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(
+        UUID, ForeignKey("schools.id")
+    )
     school: Mapped["School"] = relationship("School", back_populates="users")
 
     # ---
@@ -555,18 +556,27 @@ class User(Base):
         self,
         name: str,
         permissions_id: uuid.UUID,
-        school_id: uuid.UUID,
         email: str,
         username: str,
         password_hash: str,
+        school_id: typing.Optional[uuid.UUID] = None,
+        student_id: typing.Optional[uuid.UUID] = None,
+        parent_id: typing.Optional[uuid.UUID] = None,
+        teacher_id: typing.Optional[uuid.UUID] = None,
     ):
         super().__init__()
+        ids = [student_id, parent_id, teacher_id]
+        if sum(x is not None for x in ids) > 1:
+            raise ValueError(
+                "A user can only be either a student, teacher, or parent, but not multiple roles at the same time."
+            )
+
         self.name = name
         self.permissions_id = permissions_id
-        self.school_id = school_id
         self.email = email
         self.username = username
         self.password_hash = password_hash
+        self.school_id = school_id
 
 
 class UserSession(Base):
@@ -681,7 +691,9 @@ class File(Base):
     teacher_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(
         UUID, ForeignKey("teachers.id")
     )
-    teacher: Mapped[typing.Optional["Teacher"]] = relationship(Teacher, back_populates="files")
+    teacher: Mapped[typing.Optional["Teacher"]] = relationship(
+        Teacher, back_populates="files"
+    )
 
     def __init__(
         self,

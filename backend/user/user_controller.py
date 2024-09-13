@@ -10,8 +10,6 @@ from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
 from backend.user.user_authentication import OptionalUserAuthenticationContextDependency
 
-
-
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 
 
@@ -50,10 +48,22 @@ def login(
     db.flush()
 
     # ---
+    if user.student_id:
+        user_role = "student"
+    elif user.teacher_id:
+        user_role = "teacher"
+    elif user.parent_id:
+        user_role = "parent"
+    elif user.school_id:
+        user_role = "school"
+    else:
+        raise Exception()
+
 
     access_token = jwt.encode(
         {
             "session_id": str(session.id),
+            "user_role": user_role,
         },
         JWT_SECRET_KEY,
         algorithm="HS256",
@@ -73,10 +83,12 @@ def login(
         "access_token": access_token,
         "session": {
             "user_id": session.user_id,
+            "user_role": user_role,
             "permissions": {
                 "can_add_students": session.user.user_permission.can_add_students,
                 "can_manage_classes": session.user.user_permission.can_manage_classes,
                 "can_view_reports": session.user.user_permission.can_view_reports,
+                
             },
         },
     }
