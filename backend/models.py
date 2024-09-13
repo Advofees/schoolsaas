@@ -560,7 +560,14 @@ class User(Base):
     user_permission: Mapped["UserPermissions"] = relationship(
         "UserPermissions", back_populates="user", uselist=False
     )
+    #---
+    super_admin_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(
+        UUID, ForeignKey("super_admins.id")
+    )
 
+    super_admin_user: Mapped[typing.Optional["SuperAdmin"]] = relationship(
+        "SuperAdmin", back_populates="user", uselist=False
+    )
     # ---
 
     sessions: Mapped[list["UserSession"]] = relationship(
@@ -578,6 +585,7 @@ class User(Base):
         student_id: typing.Optional[uuid.UUID] = None,
         parent_id: typing.Optional[uuid.UUID] = None,
         teacher_id: typing.Optional[uuid.UUID] = None,
+
     ):
         super().__init__()
         ids = [student_id, parent_id, teacher_id]
@@ -777,3 +785,25 @@ class TeacherModuleAssociation(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )
+
+class SuperAdmin(Base):
+
+    __tablename__ = "super_admins"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime, onupdate=func.now(), nullable=True
+    )
+    user: Mapped["User"] = relationship(
+        "User", back_populates="super_admin_user", uselist=False
+    )
+
+    def __init__(self, email: str, password_hash: str):
+        super().__init__()
+        self.email = email
+        self.password_hash = password_hash
