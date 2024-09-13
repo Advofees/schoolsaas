@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: 3c3a162d0715
+Revision ID: 6e3830ef8e61
 Revises: 
-Create Date: 2024-09-12 21:43:06.168959
+Create Date: 2024-09-13 13:16:31.992373
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3c3a162d0715'
+revision: str = '6e3830ef8e61'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -44,16 +44,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
-    op.create_table('school_staff_permissions',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('can_add_students', sa.Boolean(), nullable=False),
-    sa.Column('can_add_parents', sa.Boolean(), nullable=False),
-    sa.Column('can_manage_classes', sa.Boolean(), nullable=False),
-    sa.Column('can_view_reports', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('schools',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
@@ -64,6 +54,16 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('school_number')
+    )
+    op.create_table('user_permissions',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('can_add_students', sa.Boolean(), nullable=False),
+    sa.Column('can_add_parents', sa.Boolean(), nullable=False),
+    sa.Column('can_manage_classes', sa.Boolean(), nullable=False),
+    sa.Column('can_view_reports', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('academic_terms',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -97,36 +97,13 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('payments',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('payment_date', sa.DateTime(), nullable=False),
-    sa.Column('payment_method', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('school_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('school_parent_associations',
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('school_id', sa.UUID(), nullable=False),
     sa.Column('parent_id', sa.UUID(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['parent_id'], ['school_parents.id'], ),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.PrimaryKeyConstraint('school_id', 'parent_id')
-    )
-    op.create_table('school_staffs',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.Column('school_id', sa.UUID(), nullable=False),
-    sa.Column('permissions_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['permissions_id'], ['school_staff_permissions.id'], ),
-    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('permissions_id')
     )
     op.create_table('teachers',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -165,18 +142,18 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['module_id'], ['modules.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('staff_users',
+    op.create_table('payments',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('username', sa.String(), nullable=False),
-    sa.Column('email', sa.String(), nullable=False),
-    sa.Column('password_hash', sa.String(), nullable=False),
+    sa.Column('amount', sa.Float(), nullable=False),
+    sa.Column('payment_date', sa.DateTime(), nullable=False),
+    sa.Column('payment_method', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.Column('school_staff_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['school_staff_id'], ['school_staffs.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('username')
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('school_id', sa.UUID(), nullable=False),
+    sa.Column('teacher_id', sa.UUID(), nullable=True),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.ForeignKeyConstraint(['teacher_id'], ['teachers.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('teacher_module_association',
     sa.Column('teacher_id', sa.UUID(), nullable=False),
@@ -192,20 +169,12 @@ def upgrade() -> None:
     sa.Column('date_of_birth', sa.DateTime(), nullable=False),
     sa.Column('gender', sa.String(), nullable=False),
     sa.Column('grade_level', sa.Integer(), nullable=False),
-    sa.Column('parent_id', sa.UUID(), nullable=True),
-    sa.Column('classroom_id', sa.UUID(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('parent_id', sa.UUID(), nullable=True),
+    sa.Column('classroom_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['classroom_id'], ['classrooms.id'], ),
     sa.ForeignKeyConstraint(['parent_id'], ['school_parents.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('user_sessions',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('expire_at', sa.DateTime(), nullable=False),
-    sa.Column('staff_user_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['staff_user_id'], ['staff_users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('attendances',
@@ -240,47 +209,74 @@ def upgrade() -> None:
     sa.Column('school_id', sa.UUID(), nullable=False),
     sa.Column('parent_id', sa.UUID(), nullable=True),
     sa.Column('student_id', sa.UUID(), nullable=True),
-    sa.Column('staff_user_id', sa.UUID(), nullable=True),
-    sa.Column('school_staff_id', sa.UUID(), nullable=True),
+    sa.Column('teacher_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['parent_id'], ['school_parents.id'], ),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
-    sa.ForeignKeyConstraint(['school_staff_id'], ['school_staffs.id'], ),
-    sa.ForeignKeyConstraint(['staff_user_id'], ['staff_users.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
+    sa.ForeignKeyConstraint(['teacher_id'], ['teachers.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('school_student_associations',
     sa.Column('school_id', sa.UUID(), nullable=False),
     sa.Column('student_id', sa.UUID(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
     sa.PrimaryKeyConstraint('school_id', 'student_id')
+    )
+    op.create_table('users',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('username', sa.String(), nullable=False),
+    sa.Column('email', sa.String(), nullable=False),
+    sa.Column('password_hash', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('student_id', sa.UUID(), nullable=True),
+    sa.Column('parent_id', sa.UUID(), nullable=True),
+    sa.Column('teacher_id', sa.UUID(), nullable=True),
+    sa.Column('school_id', sa.UUID(), nullable=False),
+    sa.Column('permissions_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['parent_id'], ['school_parents.id'], ),
+    sa.ForeignKeyConstraint(['permissions_id'], ['user_permissions.id'], ),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
+    sa.ForeignKeyConstraint(['teacher_id'], ['teachers.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('permissions_id'),
+    sa.UniqueConstraint('username')
+    )
+    op.create_table('user_sessions',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('expire_at', sa.DateTime(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('user_sessions')
+    op.drop_table('users')
     op.drop_table('school_student_associations')
     op.drop_table('files')
     op.drop_table('exam_results')
     op.drop_table('attendances')
-    op.drop_table('user_sessions')
     op.drop_table('students')
     op.drop_table('teacher_module_association')
-    op.drop_table('staff_users')
+    op.drop_table('payments')
     op.drop_table('exams')
     op.drop_table('classrooms')
     op.drop_table('teachers')
-    op.drop_table('school_staffs')
     op.drop_table('school_parent_associations')
-    op.drop_table('payments')
     op.drop_table('inventories')
     op.drop_table('grades')
     op.drop_table('academic_terms')
+    op.drop_table('user_permissions')
     op.drop_table('schools')
-    op.drop_table('school_staff_permissions')
     op.drop_table('school_parents')
     op.drop_table('modules')
     # ### end Alembic commands ###

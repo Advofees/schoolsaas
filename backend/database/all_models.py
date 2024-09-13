@@ -1,7 +1,7 @@
 from typing import Type
 from backend.database.base import Base
-from backend.models import (Student,School,SchoolStaff,SchoolParent,Inventory,File,
-                            Payment,SchoolStaffPermissions,StaffUser,Grade,Teacher,
+from backend.models import (Student,School,SchoolParent,Inventory,File,
+                            Payment,UserPermissions,User,Grade,Teacher,
                             ExamResult,Exam,Classroom,Module,Attendance,
                             AcademicTerm,SchoolParentAssociation,
                             SchoolStudentAssociation,TeacherModuleAssociation)
@@ -9,13 +9,12 @@ from backend.models import (Student,School,SchoolStaff,SchoolParent,Inventory,Fi
 def get_all_models() -> list[Type[Base]]: return [
     Student,
     School,
-    SchoolStaff,
     SchoolParent,
     Inventory,
     File,
     Payment,
-    SchoolStaffPermissions,
-    StaffUser,
+    UserPermissions,
+    User,
     Grade,
     Teacher,
     ExamResult,

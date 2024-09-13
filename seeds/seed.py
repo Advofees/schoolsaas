@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 
-from backend.models import StaffUser, SchoolStaff, School, SchoolStaffPermissions, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm
+from backend.models import User, School, UserPermissions, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm
 from backend.authentication.passwords import hash_password
 from sqlalchemy.orm import Session
 from backend.database.database import get_db
@@ -28,13 +28,13 @@ def seed_user(db: Session):
     db.flush()
 
     # Create permissions
-    permissions_1 = SchoolStaffPermissions(
+    permissions_1 = UserPermissions(
         can_add_students=True,
         can_manage_classes=True,
         can_view_reports=False,
         can_add_parents=True
     )
-    permission_2 = SchoolStaffPermissions(
+    permission_2 = UserPermissions(
         can_add_students=True,
         can_manage_classes=True,
         can_view_reports=True,
@@ -43,33 +43,17 @@ def seed_user(db: Session):
     db.add_all([permissions_1, permission_2])
     db.flush()
 
-    # Create staff users
-    school_staff = SchoolStaff(
-        name=faker.name(),
-        school_id=school.id,
-        permissions_id=permissions_1.id,
-    )
-    school_staff_1 = SchoolStaff(
-        name=faker.name(),
-        school_id=school.id,
-        permissions_id=permission_2.id,
-    )
-    db.add_all([school_staff, school_staff_1])
-    db.flush()
 
-    user = StaffUser(
+
+    user = User(
+        name=faker.name(),
         username=faker.user_name(),
         email="user@app.com",
         password_hash=hash_password("password123"),
-        school_staff_id=school_staff.id
+        permissions_id=permissions_1.id,
+        school_id=school.id
     )
-    user_1 = StaffUser(
-        username=faker.user_name(),
-        email=faker.email(),
-        password_hash=hash_password("password123"),
-        school_staff_id=school_staff.id
-    )
-    db.add_all([user, user_1])
+    db.add(user)
     db.flush()
 
     # Create teachers and their modules
