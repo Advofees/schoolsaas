@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 #---
-from backend.authentication.staff_user.staff_user_controller import router as authentication_router
+from backend.user.user_controller import router as authentication_router
 from backend.school.school_controller import router as school_router
 from backend.teacher.teacher_controller import router as teacher_router
 from backend.parent.parent_controller import router as parent_router

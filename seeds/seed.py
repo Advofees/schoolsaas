@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 
 from backend.models import User, School, UserPermissions, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm
-from backend.authentication.passwords import hash_password
+from backend.user.passwords import hash_password
 from sqlalchemy.orm import Session
 from backend.database.database import get_db
 import datetime

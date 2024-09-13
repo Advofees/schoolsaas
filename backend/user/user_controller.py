@@ -7,8 +7,8 @@ from pydantic import BaseModel
 from backend.models import  User ,UserSession
 from fastapi import APIRouter, HTTPException, Response
 from backend.database.database import DatabaseDependency
-from backend.authentication.passwords import hash_password, verify_password
-from backend.authentication.staff_user.staff_user_authentication import OptionalUserAuthenticationContextDependency
+from backend.user.passwords import hash_password, verify_password
+from backend.user.user_authentication import OptionalUserAuthenticationContextDependency
 
 
 
@@ -72,7 +72,7 @@ def login(
     return {
         "access_token": access_token,
         "session": {
-            "staff_user_id": session.user_id,
+            "user_id": session.user_id,
             "permissions": {
                 "can_add_students": session.user.user_permission.can_add_students,
                 "can_manage_classes": session.user.user_permission.can_manage_classes,
@@ -160,7 +160,7 @@ def trigger_set_password(
     # email_service.send_email(
     #     address=user.email,
     #     subject="Set Password",
-    #     text=f"Your password reset link: {dashboard_url}/staff/set-password?token={token}",
+    #     text=f"Your password reset link: {dashboard_url}/user/set-password?token={token}",
     # )
 
 
