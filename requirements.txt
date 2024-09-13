@@ -20,3 +20,4 @@ python-multipart==0.0.*
 python-magic==0.4.*
 email-validator==2.1.*
 pyotp==2.9.*
+Faker==28.4.*
