@@ -3,7 +3,7 @@ import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 from backend.database.database import DatabaseDependency
-from backend.models import ParentStudentAssociation, SchoolParent, Student, User
+from backend.models import Classroom, ParentStudentAssociation, SchoolParent, Student, User
 from backend.user.user_authentication import UserAuthenticationContextDependency
 router = APIRouter()
 
@@ -16,8 +16,6 @@ class CreateStudent(BaseModel):
     gender: str
     grade_level: int
     classroom_id:uuid.UUID
-
-
 
 
 
@@ -34,6 +32,10 @@ async def create_student(db:DatabaseDependency,body: CreateStudent,auth_context:
     if not parent :
         raise HTTPException(status_code=404, detail="Parent  not found")
     
+    class_room=db.query(Classroom).filter(Classroom.id == body.classroom_id).first()
+
+    if not class_room:
+        raise HTTPException(status_code=404, detail="Classroom not found")
     #--
     
     student = Student(
@@ -42,7 +44,7 @@ async def create_student(db:DatabaseDependency,body: CreateStudent,auth_context:
         date_of_birth=body.date_of_birth,
         gender=body.gender,
         grade_level=body.grade_level,
-        classroom_id=body.classroom_id
+        classroom_id=class_room.id
 
     )
 
