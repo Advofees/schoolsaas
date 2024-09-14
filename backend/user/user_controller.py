@@ -4,7 +4,7 @@ import uuid
 import datetime
 from typing import Union
 from pydantic import BaseModel
-from backend.models import Role, User, UserPermission, UserSession
+from backend.models import User,  UserSession
 from fastapi import APIRouter, HTTPException, Response
 from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
@@ -101,20 +101,12 @@ def get_user_session(
     if not user.roles:
         raise Exception()
     
-    permissions = (
-        db.query(UserPermission.permission_description)
-        .join(Role)
-        .join(User)
-        .filter(User.id == auth_context.user_id)
-        .all()
-    )
-    if not permissions:
-        raise Exception()
+
 
     return {
         "user_id": auth_context.user_id,
         "roles": user.roles,
-        "permissions": permissions,
+
     }
 
 

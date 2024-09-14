@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 from backend.database.database import DatabaseDependency
-from backend.models import SchoolParent, User, UserPermissions
+from backend.models import SchoolParent, User
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
 router = APIRouter()
@@ -58,16 +58,10 @@ async def create_parent(
         email=parent.email,
         gender=parent.gender,
     )
-    default_parent_permissions=UserPermissions(
-        can_add_parents=True,
-        can_add_students=True,
-        can_manage_classes=True,
-        can_view_reports=False,
-        )
+
     parent_user_account= User(
         email=parent.email,
         school_id=user.school_id,
-        permissions_id=default_parent_permissions.id,
         username=parent.email,
         password_hash="",
     )
