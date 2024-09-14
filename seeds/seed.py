@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 
-from backend.models import User, School, UserPermissions, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm
+from backend.models import Role, RoleType, User, School, UserPermission, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm, UserRoleAssociation
 from backend.user.passwords import hash_password
 from sqlalchemy.orm import Session
 from backend.database.database import get_db
@@ -28,31 +28,33 @@ def seed_user(db: Session):
     db.flush()
 
     # Create permissions
-    permissions_1 = UserPermissions(
-        can_add_students=True,
-        can_manage_classes=True,
-        can_view_reports=False,
-        can_add_parents=True
-    )
-    permission_2 = UserPermissions(
-        can_add_students=True,
-        can_manage_classes=True,
-        can_view_reports=True,
-        can_add_parents=True
-    )
-    db.add_all([permissions_1, permission_2])
+
+    permissions = {
+        "can_view_grades": True,
+        "can_edit_grades": False,
+        "can_view_attendance": True,
+        "can_edit_attendance": False,
+    }
+    user_permission = UserPermission(permission_description=permissions)
+    db.add(user_permission)
     db.flush()
-
-
+        # Create a role and associate it with the permissions
+    role = Role(name="TeacherRole", type=RoleType.TEACHER)
+    role.user_permissions.append(user_permission)
+    db.add(role)
+    db.flush()
 
     user = User(
         username=faker.user_name(),
         email="user@app.com",
         password_hash=hash_password("password123"),
-        permissions_id=permissions_1.id,
         school_id=school.id
     )
     db.add(user)
+    db.flush()
+    
+    user_role_association = UserRoleAssociation(user_id=user.id, role_id=role.id)
+    db.add(user_role_association)
     db.flush()
 
     # Create teachers and their modules

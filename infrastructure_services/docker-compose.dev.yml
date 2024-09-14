@@ -10,26 +10,26 @@ services:
       - "5432:5432"
     networks:
       - app_network
-  minio:
-    image: 'minio/minio:latest'
-    ports:
-      - '${FORWARD_MINIO_PORT:-9000}:9000'
-      - '${FORWARD_MINIO_CONSOLE_PORT:-9090}:9090'
-    environment:
-      MINIO_ROOT_USER: 'root'
-      MINIO_ROOT_PASSWORD: 'password'
-    volumes:
-      - 'minio:/data/minio'
-    command: minio server /data/minio --console-address ":9090"
+  # minio:
+  #   image: 'minio/minio:latest'
+  #   ports:
+  #     - '${FORWARD_MINIO_PORT:-9000}:9000'
+  #     - '${FORWARD_MINIO_CONSOLE_PORT:-9090}:9090'
+  #   environment:
+  #     MINIO_ROOT_USER: 'root'
+  #     MINIO_ROOT_PASSWORD: 'password'
+  #   volumes:
+  #     - 'minio:/data/minio'
+  #   command: minio server /data/minio --console-address ":9090"
 
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: mailhog
-    ports:
-      - "1025:1025"  # SMTP server
-      - "8025:8025"  # Web UI
-    networks:
-      - app_network
+  # mailhog:
+  #   image: mailhog/mailhog:latest
+  #   container_name: mailhog
+  #   ports:
+  #     - "1025:1025"  # SMTP server
+  #     - "8025:8025"  # Web UI
+  #   networks:
+  #     - app_network
 
 networks:
   app_network:
