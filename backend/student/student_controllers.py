@@ -1,64 +1,63 @@
+import datetime
+import uuid
 from pydantic import BaseModel
-from fastapi import APIRouter,status, HTTPException
-import typing
+from fastapi import APIRouter, HTTPException
+from backend.database.database import DatabaseDependency
+from backend.models import Classroom, ParentStudentAssociation, SchoolParent, Student, User
+from backend.user.user_authentication import UserAuthenticationContextDependency
 router = APIRouter()
-class GetStudent(BaseModel):
-    first_name: str
-    last_name: str
-    phone: str
-    admission_number: str
-    parent_id:str
-    class_id: str
-    payments_id: str
+
 
 class CreateStudent(BaseModel):
     first_name: str
     last_name: str
-    phone: str
-    admission_number: str
     parent_id:str
-    class_id: str
-    payments_id: str
-
-class UpdateStudent(BaseModel):
-    email: str
-    first_name: str
-    last_name: str
-    phone: str
-    admission_number: str
-    parent_id:str
-    class_id: str
-
-class DeleteStudent(BaseModel):
-    student_id: str
-
-students = [
-        GetStudent(first_name="John", last_name="Doe", phone="1234567890", admission_number="1234", parent_id="5678", class_id="9A", payments_id="abcd1234"),
-        GetStudent(first_name="John", last_name="Doe", phone="1234567890", admission_number="1235", parent_id="5678", class_id="9A", payments_id="abcd1234"),
-        GetStudent(first_name="John", last_name="Doe", phone="1234567890", admission_number="1236", parent_id="5678", class_id="9A", payments_id="abcd1234"),
-        GetStudent(first_name="John", last_name="Doe", phone="1234567890", admission_number="1237", parent_id="5678", class_id="9A", payments_id="abcd1234"),
-        GetStudent(first_name="John", last_name="Doe", phone="1234567890", admission_number="1238", parent_id="5678", class_id="9A", payments_id="abcd1234")
-    ]
+    date_of_birth: datetime.datetime
+    gender: str
+    grade_level: int
+    classroom_id:uuid.UUID
 
 
 
+@router.post("/students/create")
+async def create_student(db:DatabaseDependency,body: CreateStudent,auth_context: UserAuthenticationContextDependency):
+    
+    user= db.query(User).filter(User.id == auth_context.user_id).first()
 
+    if not user:
+        raise HTTPException(status_code=403)
+    
+    parent = db.query(SchoolParent).filter(SchoolParent.id == body.parent_id).first()
 
-@router.post("/students/create", status_code=status.HTTP_201_CREATED)
-async def create_student(student: CreateStudent):
+    if not parent :
+        raise HTTPException(status_code=404, detail="Parent  not found")
+    
+    class_room=db.query(Classroom).filter(Classroom.id == body.classroom_id).first()
+
+    if not class_room:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+    #--
+    
+    student = Student(
+        first_name=body.first_name,
+        last_name=body.last_name,
+        date_of_birth=body.date_of_birth,
+        gender=body.gender,
+        grade_level=body.grade_level,
+        classroom_id=class_room.id
+
+    )
+
+    db.add(student)
+    db.flush()
+    # ---
+    parent_student_association = ParentStudentAssociation(
+        parent_id=body.parent_id,
+        student_id=student.id
+    )
+    db.add(parent_student_association)
+    db.flush()
+    db.commit()
+
     return {}
 
-@router.patch("/students/update", status_code=status.HTTP_200_OK)
-async def update_student(student: UpdateStudent):
-    return {}
-
-@router.get("/students/student-id/{student_id}", status_code=status.HTTP_200_OK)
-async def get_student_by_id(student_id: str):
-    student = next((s for s in students if s.admission_number == student_id), None)
-    if student:
-        return student
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-@router.get("/students/list", response_model=typing.List[GetStudent], status_code=status.HTTP_200_OK)
-async def get_all_students():
-    return students

@@ -1,14 +1,11 @@
 from dotenv import load_dotenv
 from faker import Faker
 load_dotenv()
-import sys
-import os
 import random
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
-
-from backend.models import User, School, UserPermissions, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm
+from backend.permissions.permissions_schemas import PERMISSIONS, ParentPermissions, StudentPermissions
+from backend.models import Role, RoleType, User, School, UserPermission, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm, UserRoleAssociation
 from backend.user.passwords import hash_password
 from sqlalchemy.orm import Session
 from backend.database.database import get_db
@@ -17,7 +14,7 @@ import datetime
 faker = Faker()
 
 def seed_user(db: Session):
-    # Create a school
+
     school = School(
         name=faker.name(),
         address=faker.address(),
@@ -27,36 +24,37 @@ def seed_user(db: Session):
     db.add(school)
     db.flush()
 
-    # Create permissions
-    permissions_1 = UserPermissions(
-        can_add_students=True,
-        can_manage_classes=True,
-        can_view_reports=False,
-        can_add_parents=True
+    parent_management_permission_definition = PERMISSIONS(
+        parent_permissions=ParentPermissions(can_add_parents=True, can_edit_parents=True, can_view_parents=True, can_delete_parents=True),
+        student_permissions=StudentPermissions(can_add_students=True, can_edit_students=True, can_view_students=True, can_delete_students=True,),
+        
     )
-    permission_2 = UserPermissions(
-        can_add_students=True,
-        can_manage_classes=True,
-        can_view_reports=True,
-        can_add_parents=True
-    )
-    db.add_all([permissions_1, permission_2])
+
+    parent_management_permission_user_permission = UserPermission(permission_description=parent_management_permission_definition)
+    
+    db.add(parent_management_permission_user_permission)   
     db.flush()
 
+    role = Role(name="SchoolRole", type=RoleType.SCHOOL_ADMIN)
+    role.user_permissions.append(parent_management_permission_user_permission)
 
+    db.add(role)
+    db.flush()
 
     user = User(
-        name=faker.name(),
         username=faker.user_name(),
-        email="user@app.com",
+        email="phantomschool@app.com",
         password_hash=hash_password("password123"),
-        permissions_id=permissions_1.id,
         school_id=school.id
     )
     db.add(user)
     db.flush()
+    
+    user_role_association = UserRoleAssociation(user_id=user.id, role_id=role.id)
+    db.add(user_role_association)
+    db.flush()
 
-    # Create teachers and their modules
+
     teachers = []
     for i in range(7):
         teacher = Teacher(name=faker.name(), email=faker.email(), school_id=school.id)
@@ -80,7 +78,7 @@ def seed_user(db: Session):
         db.flush()
 
         for j in range(5):  # Ensure at least 5 students per classroom
-            student = Student(name=faker.name(), date_of_birth=datetime.datetime(2005, 1, 1), gender=faker.random_element(elements=("M","F")), grade_level=i+1, classroom_id=classroom.id)
+            student = Student(first_name=faker.name(),last_name=faker.last_name(), date_of_birth=datetime.datetime(2005, 1, 1), gender=faker.random_element(elements=("M","F")), grade_level=i+1, classroom_id=classroom.id)
             db.add(student)
             db.flush()
 

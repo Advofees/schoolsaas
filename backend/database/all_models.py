@@ -1,19 +1,13 @@
 from typing import Type
 from backend.database.base import Base
-from backend.models import (Student,School,SchoolParent,Inventory,File,
-                            Payment,UserPermissions,User,Grade,Teacher,
-                            ExamResult,Exam,Classroom,Module,Attendance,
-                            AcademicTerm,SchoolParentAssociation,
-                            SchoolStudentAssociation,TeacherModuleAssociation)
-
-def get_all_models() -> list[Type[Base]]: return [
+from backend.models import (
     Student,
     School,
     SchoolParent,
     Inventory,
     File,
     Payment,
-    UserPermissions,
+    UserPermission,
     User,
     Grade,
     Teacher,
@@ -25,5 +19,35 @@ def get_all_models() -> list[Type[Base]]: return [
     AcademicTerm,
     SchoolParentAssociation,
     SchoolStudentAssociation,
-    TeacherModuleAssociation
-]
+    TeacherModuleAssociation,
+    Role,
+    RolePermissionAssociation,
+    UserRoleAssociation,
+)
+
+
+def get_all_models() -> list[Type[Base]]:
+    return [
+        Student,
+        School,
+        SchoolParent,
+        Inventory,
+        File,
+        Payment,
+        UserPermission,
+        User,
+        Grade,
+        Teacher,
+        ExamResult,
+        Exam,
+        Classroom,
+        Module,
+        Attendance,
+        AcademicTerm,
+        SchoolParentAssociation,
+        SchoolStudentAssociation,
+        TeacherModuleAssociation,
+        Role,
+        RolePermissionAssociation,
+        UserRoleAssociation,
+    ]

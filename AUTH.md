@@ -11,5 +11,10 @@
 - school can add staff_users
 - school assign permissions to staff users
 
-# permissions
-    ~ this are actions possible in the system like add students, add parents ,delete students
+# Authorization
+- request for an action say create add_teachers, will need:
+    - authenticated user
+    - user with a role 
+    - the role id must return a permission with add_teacher as true for that request to be completed
+
+  
