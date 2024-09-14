@@ -1,7 +1,8 @@
+import uuid
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException,status
 from backend.database.database import DatabaseDependency
-from backend.models import RolePermissionAssociation,  User, UserPermission
+from backend.models import RolePermissionAssociation, SchoolParent,  UserPermission, UserRoleAssociation
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
 router = APIRouter()
@@ -21,8 +22,8 @@ class CreateParent(BaseModel):
     phone_number: str
     gender: str
     email: str
-    student_id: str
     role_id: str
+    national_id_number: str
 
 
 class UpdateParent(BaseModel):
@@ -30,55 +31,56 @@ class UpdateParent(BaseModel):
     last_name: str
     phone: str
     email: str
-    student_id: str
-    role_id: str
+    student_id: uuid.UUID
+    role_id: uuid.UUID
 
 
 class DeleteParent(BaseModel):
     parent_id: str
 
 
-@router.post("/parent/create")
+@router.post("/parent/create",status_code=status.HTTP_201_CREATED)
 async def create_parent(
     auth_context: UserAuthenticationContextDependency,
     db: DatabaseDependency,
     body: CreateParent,
+
 ):
-  
-    user=db.query(User).filter(User.id == auth_context.user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=404)
+    
+    role= db.query(RolePermissionAssociation).filter(UserRoleAssociation.user_id==auth_context.user_id).first()
+    if not role:
+        raise HTTPException(status_code=403, detail="User does not have a role")
     # ---
-    associated_permissions= db.query(RolePermissionAssociation).filter(RolePermissionAssociation.role_id == body.role_id).first()
+    required_associated_permissions= db.query(RolePermissionAssociation).filter(RolePermissionAssociation.role_id == body.role_id).first()
 
-    if not associated_permissions:
+    if not required_associated_permissions:
         raise HTTPException(status_code=404)
 
-    user_permissions= db.query(UserPermission).filter(UserPermission.id == associated_permissions.user_permission_id).first()
+    user_permissions= db.query(UserPermission).filter(UserPermission.id == required_associated_permissions.user_permission_id).first()
 
     if not user_permissions:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="User permission not found")
     
     if not user_permissions.permissions.parent_permissions.can_add_parents:
         raise HTTPException(status_code=403)
+    
+    school_parent= db.query(SchoolParent).filter(SchoolParent.email == body.email,SchoolParent.national_id_number==body.national_id_number).first()
 
-    # school_parent= SchoolParent(
-    #     first_name=body.first_name,
-    #     last_name=body.last_name,
-    #     phone_number=body.phone_number,
-    #     email=body.email,
-    #     gender=body.gender,
-    # )
+    if school_parent:
+        raise HTTPException(status_code=409, detail="School Parent already exists")
+    
+    new_school_parent= SchoolParent(
+        first_name=body.first_name,
+        last_name=body.last_name,
+        phone_number=body.phone_number,
+        email=body.email,
+        gender=body.gender,
+        national_id_number=body.national_id_number,
+    )
 
-    # parent_user_account= User(
-    #     email=body.email,
-    #     school_id=user.school_id,
-    #     username=body.email,
-    #     password_hash="",
-    # )
-
-    # db.add(school_parent)
-    # db.flush()
-    # db.commit()
-    return {}
+    db.add(new_school_parent)
+    db.flush()
+    db.commit()
+    return {
+        "message": "School Parent created successfully",
+      }

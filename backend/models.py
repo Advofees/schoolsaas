@@ -156,7 +156,7 @@ class SchoolParent(Base):
     zip_code: Mapped[typing.Optional[str]] = mapped_column(String)
     city: Mapped[typing.Optional[str]] = mapped_column(String)
     passport_number: Mapped[typing.Optional[str]] = mapped_column(String)
-    national_id_number: Mapped[typing.Optional[str]] = mapped_column(String)
+    national_id_number: Mapped[str] = mapped_column(String)
     notes: Mapped[typing.Optional[str]] = mapped_column(String)
     phone_number: Mapped[typing.Optional[str]] = mapped_column(String)
     created_at: Mapped[datetime.datetime] = mapped_column(
@@ -189,12 +189,13 @@ class SchoolParent(Base):
         last_name: str,
         gender: str,
         email: str,
+        national_id_number: str,
         phone_number: typing.Optional[str] = None,
         street_and_building: typing.Optional[str] = None,
         zip_code: typing.Optional[str] = None,
         city: typing.Optional[str] = None,
         passport_number: typing.Optional[str] = None,
-        national_id_number: typing.Optional[str] = None,
+        
         notes: typing.Optional[str] = None,
     ):
         super().__init__()
