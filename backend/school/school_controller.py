@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from fastapi import APIRouter
 
+from backend.database.database import DatabaseDependency
+
 router=APIRouter()
 class GetSchool(BaseModel):
     name: str
@@ -30,7 +32,7 @@ class DeleteSchool(BaseModel):
     school_id: str
 
 @router.get("/school/list")
-def get_school():
+def get_school(db:DatabaseDependency, ):
     pass
 
 @router.post("/school/create")

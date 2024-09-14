@@ -84,3 +84,54 @@ async def create_parent(
     return {
         "message": "School Parent created successfully",
       }
+
+from fastapi import Query
+
+@router.get("/parent/list",status_code=status.HTTP_200_OK)
+async def get_parent(
+    auth_context: UserAuthenticationContextDependency,
+    db: DatabaseDependency,
+    limit: int = Query(10, ge=1),  
+    offset: int = Query(0, ge=0)   
+):
+ 
+    role = db.query(RolePermissionAssociation).filter(
+        UserRoleAssociation.user_id == auth_context.user_id
+    ).first()
+
+    if not role:
+        raise HTTPException(status_code=403, detail="User does not have a role")
+    
+
+    required_associated_permissions = db.query(RolePermissionAssociation).filter(
+        RolePermissionAssociation.role_id == role.role_id
+    ).first()
+    if not required_associated_permissions:
+        raise HTTPException(status_code=404)
+
+
+    user_permissions = db.query(UserPermission).filter(
+        UserPermission.id == required_associated_permissions.user_permission_id
+    ).first()
+
+    if not user_permissions:
+        raise HTTPException(status_code=404, detail="User permission not found")
+
+
+    if not user_permissions.permissions.parent_permissions.can_view_parents:
+        raise HTTPException(status_code=403)
+
+
+    total_parents = db.query(SchoolParent).count()
+
+    parents = db.query(SchoolParent).offset(offset).limit(limit).all()
+    next_offset = offset + limit
+    has_next = next_offset < total_parents
+
+    return {
+        "total": total_parents,
+        "limit": limit,
+        "offset": offset,
+        "next": f"/parent/list?limit={limit}&offset={next_offset}" if has_next else None,
+        "parents": parents,
+    }
