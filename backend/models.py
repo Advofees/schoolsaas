@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import enum
+
 from sqlalchemy import String, DateTime, Numeric, ForeignKey, UUID, func, Integer
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
@@ -723,20 +724,17 @@ class User(Base):
         school_id: typing.Optional[uuid.UUID] = None,
         student_id: typing.Optional[uuid.UUID] = None,
         parent_id: typing.Optional[uuid.UUID] = None,
-        teacher_id: typing.Optional[uuid.UUID] = None,
+     
     ):
         super().__init__()
-        ids = [student_id, parent_id, teacher_id]
-        if sum(x is not None for x in ids) > 1:
-            raise ValueError(
-                "A user can only be either a student, teacher, or parent, but not all at the same time."
-            )
 
         self.email = email
         self.username = username
         self.password_hash = password_hash
         self.school_id = school_id
-
+        self.student_id = student_id
+        self.parent_id = parent_id
+    
 
 class UserSession(Base):
     __tablename__ = "user_sessions"
