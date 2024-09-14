@@ -70,7 +70,7 @@ def login(
         "access_token": access_token,
         "session": {
             "user_id": session.user_id,
-            "user_roles": user.roles,
+            "roles": user.roles,
         },
     }
 

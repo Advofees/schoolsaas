@@ -1,5 +1,7 @@
 from dotenv import load_dotenv
 from faker import Faker
+
+
 load_dotenv()
 import sys
 import os
@@ -7,7 +9,7 @@ import random
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
-
+from backend.permissions.permissions_schemas import PERMISSIONS, ParentPermissions
 from backend.models import Role, RoleType, User, School, UserPermission, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm, UserRoleAssociation
 from backend.user.passwords import hash_password
 from sqlalchemy.orm import Session
@@ -28,14 +30,10 @@ def seed_user(db: Session):
     db.flush()
 
     # Create permissions
-
-    permissions = {
-        "can_view_grades": True,
-        "can_edit_grades": False,
-        "can_view_attendance": True,
-        "can_edit_attendance": False,
-    }
-    user_permission = UserPermission(permission_description=permissions)
+    permission = PERMISSIONS(
+        parent_permissions=ParentPermissions(can_add_parents=True, can_edit_parents=True)
+    )
+    user_permission = UserPermission(permission_description=permission)
     db.add(user_permission)
     db.flush()
         # Create a role and associate it with the permissions

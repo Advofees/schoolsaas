@@ -58,7 +58,7 @@ class SchoolEventPermissions(BaseModel):
     can_view_school_events: bool = False
     
 
-class ALL_KNOWN_PERMISSIONS(BaseModel):
+class PERMISSIONS(BaseModel):
     student_permissions: StudentPermissions = StudentPermissions()
     parent_permissions: ParentPermissions = ParentPermissions()
     class_permissions: ClassPermissions = ClassPermissions()
@@ -71,6 +71,3 @@ class ALL_KNOWN_PERMISSIONS(BaseModel):
     timetable_permissions: TimetablePermissions = TimetablePermissions()
     school_event_permissions: SchoolEventPermissions = SchoolEventPermissions()
     
-    @classmethod
-    def validate_permissions(cls, permissions: dict):
-        return cls(**permissions)

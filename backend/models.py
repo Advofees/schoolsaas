@@ -9,7 +9,7 @@ from backend.database.base import Base
 import typing
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import Enum
-from backend.permissions.permissions_schemas import ALL_KNOWN_PERMISSIONS
+from backend.permissions.permissions_schemas import  PERMISSIONS
 
 class RoleType(enum.Enum):
     SUPER_ADMIN = "super_admin"
@@ -774,11 +774,14 @@ class UserPermission(Base):
     roles: Mapped[list["Role"]] = relationship(
         "Role", secondary='role_permission_associations', back_populates="user_permissions"
     )
+    @property
+    def permissions(self):
+        return PERMISSIONS.model_validate(self.permission_description)
 
-    def __init__(self, permission_description: dict):
+    def __init__(self, permission_description: PERMISSIONS):
         super().__init__()
-        ALL_KNOWN_PERMISSIONS.validate_permissions(permission_description)
-        self.permission_description = permission_description
+        self.permission_description = PERMISSIONS.model_validate(permission_description).dict(exclude_unset=True)
+        
 
 class RolePermissionAssociation(Base):
     __tablename__ = 'role_permission_associations'
