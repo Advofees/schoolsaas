@@ -17,7 +17,6 @@ from backend.file.file_controller import router as file_router
 from backend.lesson_plan.lesson_plan_controller import router as lesson_plan_router
 
 
-
 #---
 app = FastAPI(docs_url="/")
 

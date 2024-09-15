@@ -4,6 +4,7 @@ import uuid
 import datetime
 from typing import Union
 from pydantic import BaseModel
+from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
 from backend.models import School, User, UserSession
 from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
@@ -11,7 +12,7 @@ from backend.user.passwords import hash_password, verify_password
 from backend.user.user_authentication import OptionalUserAuthenticationContextDependency
 
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
-
+dashboard_url = os.environ["DASHBOARD_URL"]
 
 router = APIRouter()
 
@@ -169,7 +170,7 @@ class TriggerSetPasswordWithIDRequestBody(BaseModel):
 @router.post("/auth/user/trigger_set_password")
 def trigger_set_password(
     db: DatabaseDependency,
-    # email_service: EmailServiceDependency,
+    email_service: EmailServiceDependency,
     body: Union[
         TriggerSetPasswordWithEmailRequestBody, TriggerSetPasswordWithIDRequestBody
     ],
@@ -196,12 +197,12 @@ def trigger_set_password(
         JWT_SECRET_KEY,
         algorithm="HS256",
     )
-
-    # email_service.send_email(
-    #     address=user.email,
-    #     subject="Set Password",
-    #     text=f"Your password reset link: {dashboard_url}/user/set-password?token={token}",
-    # )
+    email_params=SendEmailParams(
+        email=user.email,
+        subject="Set Password",
+        message=f"Your password reset link: {dashboard_url}/user/set-password?token={token}",
+    )
+    email_service.send(email_params)
 
 
 class SetPasswordRequestBody(BaseModel):
