@@ -43,7 +43,7 @@ def seed_user(db: Session):
 
     user = User(
         username=faker.user_name(),
-        email="phantomschool@app.com",
+        email="school@app.com",
         password_hash=hash_password("password123"),
         school_id=school.id
     )

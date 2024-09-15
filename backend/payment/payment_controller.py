@@ -24,10 +24,6 @@ class UpdatePayment(BaseModel):
     payment_method: str
     payment_status: str
 
-class DeletePayment(BaseModel):
-    payment_id: str
-
-
 @router.get("/payment/list")
 def get_payments():
     pass
