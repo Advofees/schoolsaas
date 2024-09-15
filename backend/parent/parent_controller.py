@@ -2,7 +2,7 @@ import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException,status,Query
 from backend.database.database import DatabaseDependency
-from backend.models import RolePermissionAssociation, SchoolParent,  UserPermission, UserRoleAssociation
+from backend.models import SchoolParent, User
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
 router = APIRouter()
@@ -23,24 +23,19 @@ async def create_parent(
     body: CreateParent,
 
 ):
-    
-    role= db.query(RolePermissionAssociation).filter(UserRoleAssociation.user_id==auth_context.user_id).first()
-    if not role:
-        raise HTTPException(status_code=403, detail="User does not have a role")
-    # ---
-    required_associated_permissions= db.query(RolePermissionAssociation).filter(RolePermissionAssociation.role_id == body.role_id).first()
+    user=db.query(User).filter(User.id==auth_context.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    if not required_associated_permissions:
-        raise HTTPException(status_code=404)
-
-    user_permissions= db.query(UserPermission).filter(UserPermission.id == required_associated_permissions.user_permission_id).first()
-
-    if not user_permissions:
-        raise HTTPException(status_code=404, detail="User permission not found")
     
-    if not user_permissions.permissions.parent_permissions.can_add_parents:
-        raise HTTPException(status_code=403)
-    
+    if not any(
+        permission.permissions.parent_permissions.can_add_parents
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     school_parent= db.query(SchoolParent).filter(SchoolParent.email == body.email,SchoolParent.national_id_number==body.national_id_number).first()
 
     if school_parent:
@@ -70,33 +65,18 @@ async def get_parent(
     limit: int = Query(10, ge=1),  
     offset: int = Query(0, ge=0)   
 ):
- 
-    role = db.query(RolePermissionAssociation).filter(
-        UserRoleAssociation.user_id == auth_context.user_id
-    ).first()
-
-    if not role:
-        raise HTTPException(status_code=403, detail="User does not have a role")
     
+    user= db.query(User).filter(User.id == auth_context.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    required_associated_permissions = db.query(RolePermissionAssociation).filter(
-        RolePermissionAssociation.role_id == role.role_id
-    ).first()
-    if not required_associated_permissions:
-        raise HTTPException(status_code=404)
-
-
-    user_permissions = db.query(UserPermission).filter(
-        UserPermission.id == required_associated_permissions.user_permission_id
-    ).first()
-
-    if not user_permissions:
-        raise HTTPException(status_code=404, detail="User permission not found")
-
-
-    if not user_permissions.permissions.parent_permissions.can_view_parents:
-        raise HTTPException(status_code=403)
-
+    if not any(
+        permission.permissions.parent_permissions.can_view_parents
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     total_parents = db.query(SchoolParent).count()
 
@@ -128,29 +108,17 @@ async def update_parent(
     db: DatabaseDependency,
     body: UpdateParent,
 ):
-    role = db.query(RolePermissionAssociation).filter(
-        UserRoleAssociation.user_id == auth_context.user_id
-    ).first()
-
-    if not role:
-        raise HTTPException(status_code=403, detail="User does not have a role")
-
-    required_associated_permissions = db.query(RolePermissionAssociation).filter(
-        RolePermissionAssociation.role_id == role.role_id
-    ).first()
-
-    if not required_associated_permissions:
-        raise HTTPException(status_code=404)
-
-    user_permissions = db.query(UserPermission).filter(
-        UserPermission.id == required_associated_permissions.user_permission_id
-    ).first()
-
-    if not user_permissions:
-        raise HTTPException(status_code=404, detail="User permission not found")
-
-    if not user_permissions.permissions.parent_permissions.can_edit_parents:
-        raise HTTPException(status_code=403)
+    user= db.query(User).filter(User.id == auth_context.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not any(
+        permission.permissions.parent_permissions.can_edit_parents
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     school_parent = db.query(SchoolParent).filter(SchoolParent.id == body.student_id).first()
 
@@ -174,29 +142,18 @@ async def delete_parent(
     db: DatabaseDependency,
     school_parent_id: uuid.UUID,
 ):
-    role = db.query(RolePermissionAssociation).filter(
-        UserRoleAssociation.user_id == auth_context.user_id
-    ).first()
+    user= db.query(User).filter(User.id == auth_context.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not any(
+        permission.permissions.parent_permissions.can_delete_parents
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
-    if not role:
-        raise HTTPException(status_code=403, detail="User does not have a role")
-
-    required_associated_permissions = db.query(RolePermissionAssociation).filter(
-        RolePermissionAssociation.role_id == role.role_id
-    ).first()
-
-    if not required_associated_permissions:
-        raise HTTPException(status_code=404)
-
-    user_permissions = db.query(UserPermission).filter(
-        UserPermission.id == required_associated_permissions.user_permission_id
-    ).first()
-
-    if not user_permissions:
-        raise HTTPException(status_code=404, detail="User permission not found")
-
-    if not user_permissions.permissions.parent_permissions.can_delete_parents:
-        raise HTTPException(status_code=403)
 
     school_parent = db.query(SchoolParent).filter(SchoolParent.id == school_parent_id).first()
 
