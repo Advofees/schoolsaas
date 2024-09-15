@@ -55,3 +55,9 @@
   ```bash
    ./backend/start.dev.sh
    ````
+   or 
+
+  ```bash
+  
+  task server
+  ```
