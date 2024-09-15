@@ -37,7 +37,14 @@ async def create_student(db:DatabaseDependency,body: CreateStudent,auth_context:
     if not class_room:
         raise HTTPException(status_code=404, detail="Classroom not found")
     #--
-    
+    if not any(
+        permission.permissions.student_permissions.can_add_students
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     student = Student(
         first_name=body.first_name,
         last_name=body.last_name,

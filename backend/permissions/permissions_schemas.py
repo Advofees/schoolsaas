@@ -56,7 +56,13 @@ class TimetablePermissions(BaseModel):
 class SchoolEventPermissions(BaseModel):
     can_manage_school_events: bool = False
     can_view_school_events: bool = False
-    
+
+class SchoolPermissions(BaseModel):
+    can_manage_school: bool = False
+    can_view_school: bool = False
+    can_add_school: bool = False
+    can_edit_school: bool = False
+    can_delete_school: bool = False 
 
 class PERMISSIONS(BaseModel):
     student_permissions: StudentPermissions = StudentPermissions()
@@ -70,4 +76,5 @@ class PERMISSIONS(BaseModel):
     library_permissions: LibraryPermissions = LibraryPermissions()
     timetable_permissions: TimetablePermissions = TimetablePermissions()
     school_event_permissions: SchoolEventPermissions = SchoolEventPermissions()
+    school_permissions: SchoolPermissions = SchoolPermissions()
     

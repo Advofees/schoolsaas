@@ -4,8 +4,8 @@ import uuid
 import datetime
 from typing import Union
 from pydantic import BaseModel
-from backend.models import User,  UserSession
-from fastapi import APIRouter, HTTPException, Response
+from backend.models import School, User, UserSession
+from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
 from backend.user.user_authentication import OptionalUserAuthenticationContextDependency
@@ -21,7 +21,57 @@ class LoginRequestBody(BaseModel):
     password: str
 
 
-@router.post("/auth/user/login")
+class RegisterRequestBody(BaseModel):
+    email: str
+    password: str
+    username: str
+    name: str
+    school_number: str
+    country: str
+
+
+@router.post("/auth/user/register", status_code=status.HTTP_201_CREATED)
+def register(
+    body: RegisterRequestBody,
+    db: DatabaseDependency,
+):
+    school_user = db.query(User).filter(User.email == body.email).first()
+
+    if school_user:
+        raise HTTPException(
+            status_code=409, detail="School with that email already exists"
+        )
+
+    school = db.query(School).filter(School.school_number == body.school_number).first()
+    if school:
+        raise HTTPException(
+            status_code=409, detail="School with that number already exists"
+        )
+
+    new_school = School(
+        name=body.name,
+        school_number=body.school_number,
+        country=body.country,
+    )
+    db.add(new_school)
+    db.flush()
+    user = User(
+        email=body.email,
+        password_hash=hash_password(body.password),
+        username=body.username,
+        school_id=new_school.id,
+        student_id=None,
+        parent_id=None,
+    )
+
+    db.add(user)
+    db.flush()
+    db.commit()
+
+    return {"message": "School registered successfully"}
+
+
+@router.post("/auth/user/login",status_code=status.HTTP_200_OK)
 def login(
     body: LoginRequestBody,
     response: Response,
@@ -75,7 +125,7 @@ def login(
     }
 
 
-@router.post("/auth/user/logout")
+@router.post("/auth/user/logout",status_code=status.HTTP_204_NO_CONTENT)
 def logout(
     response: Response,
 ):
@@ -85,10 +135,11 @@ def logout(
     return {}
 
 
-@router.get("/auth/user/session")
+@router.get("/auth/user/session",status_code=status.HTTP_200_OK)
 def get_user_session(
     db: DatabaseDependency,
     auth_context: OptionalUserAuthenticationContextDependency,
+
 ):
     if not auth_context:
         raise HTTPException(status_code=404)
@@ -100,13 +151,10 @@ def get_user_session(
 
     if not user.roles:
         raise Exception()
-    
-
 
     return {
         "user_id": auth_context.user_id,
         "roles": user.roles,
-
     }
 
 
@@ -165,7 +213,7 @@ class SetPasswordTokenData(BaseModel):
     user_id: uuid.UUID
 
 
-@router.post("/auth/user/set_password")
+@router.post("/auth/user/set_password",status_code=status.HTTP_201_CREATED)
 def set_password(
     db: DatabaseDependency,
     body: SetPasswordRequestBody,
@@ -189,3 +237,4 @@ def set_password(
     user.password_hash = hash_password(body.password)
 
     db.commit()
+    return {}
