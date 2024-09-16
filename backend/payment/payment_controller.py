@@ -1,14 +1,12 @@
 from pydantic import BaseModel
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+
+from backend.database.database import DatabaseDependency
+from backend.models import User
+from backend.user.user_authentication import UserAuthenticationContextDependency
 
 router = APIRouter()
-class GetPayment(BaseModel):
-    amount: str
-    student_id: str
-    payment_date: str
-    payment_method: str
-    payment_status: str
-    
+
 class CreatePayment(BaseModel):
     amount: str
     student_id: str
@@ -17,7 +15,6 @@ class CreatePayment(BaseModel):
     payment_status: str
 
 class UpdatePayment(BaseModel):
-
     amount: str
     student_id: str
     payment_date: str
@@ -25,8 +22,13 @@ class UpdatePayment(BaseModel):
     payment_status: str
 
 @router.get("/payment/list")
-def get_payments():
-    pass
+def get_payments(db:DatabaseDependency,auth_context: UserAuthenticationContextDependency):
+
+    user= db.query(User).filter(User.id==auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
 
 @router.post("/payment/create")
 def create_payment():

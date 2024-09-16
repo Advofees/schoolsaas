@@ -446,7 +446,6 @@ class Exam(Base):
     exam_results: Mapped[list["ExamResult"]] = relationship(
         "ExamResult", back_populates="exam"
     )
-
     def __init__(
         self,
         name: str,
@@ -467,7 +466,8 @@ class ExamResult(Base):
     __tablename__ = "exam_results"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    marks_obtained: Mapped[float] = mapped_column(Numeric, nullable=False)
+    marks_obtained: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
+    comments: Mapped[typing.Optional[str]] = mapped_column()
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )
@@ -480,16 +480,24 @@ class ExamResult(Base):
 
     student_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("students.id"))
     student: Mapped["Student"] = relationship("Student", back_populates="exam_results")
+    class_room_id:Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("classrooms.id"))
+    module_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("modules.id"))
 
+    
+    @property
+    def percentage(self):
+        return (self.marks_obtained/100)*100
+    @property
+    def grade(self):
+        pass
     def __init__(
-        self, marks_obtained: float, exam_id: uuid.UUID, student_id: uuid.UUID
+        self, marks_obtained: decimal.Decimal, exam_id: uuid.UUID, student_id: uuid.UUID
     ):
         super().__init__()
         self.marks_obtained = marks_obtained
         self.exam_id = exam_id
         self.student_id = student_id
-
-
+  
 class SchoolParentAssociation(Base):
     __tablename__ = "school_parent_associations"
 
