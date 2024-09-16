@@ -72,6 +72,7 @@ def get_exam_results_for_classroom(
         for permission in role.user_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
+    
     result = (
         db.query(ExamResult)
         .join(Exam)
