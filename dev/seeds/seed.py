@@ -1,3 +1,4 @@
+import decimal
 from dotenv import load_dotenv
 from faker import Faker
 load_dotenv()
@@ -15,14 +16,7 @@ faker = Faker()
 
 def seed_user(db: Session):
 
-    school = School(
-        name=faker.name(),
-        address=faker.address(),
-        country=faker.country(),
-        school_number=str(faker.random_number(digits=6, fix_len=True)),
-    )
-    db.add(school)
-    db.flush()
+
 
     parent_management_permission_definition = PERMISSIONS(
         parent_permissions=ParentPermissions(can_add_parents=True, can_edit_parents=True, can_view_parents=True, can_delete_parents=True),
@@ -45,11 +39,19 @@ def seed_user(db: Session):
         username=faker.user_name(),
         email="school@app.com",
         password_hash=hash_password("password123"),
-        school_id=school.id
+
     )
     db.add(user)
     db.flush()
-    
+    school = School(
+        name=faker.name(),
+        address=faker.address(),
+        country=faker.country(),
+        school_number=str(faker.random_number(digits=6, fix_len=True)),
+        user_id=user.id
+    )
+    db.add(school)
+    db.flush()
     user_role_association = UserRoleAssociation(user_id=user.id, role_id=role.id)
     db.add(user_role_association)
     db.flush()
@@ -57,7 +59,14 @@ def seed_user(db: Session):
 
     teachers = []
     for i in range(7):
-        teacher = Teacher(name=faker.name(), email=faker.email(), school_id=school.id)
+        teacher_user=User(
+            username=faker.user_name(),
+            email=faker.email(),
+            password_hash=hash_password("password123"),
+        )
+        db.add(teacher_user)
+        db.flush()
+        teacher = Teacher(first_name=faker.first_name(),last_name=faker.last_name(), email=faker.email(), school_id=school.id,user_id=teacher_user.id)
         db.add(teacher)
         db.flush()
         module = Module(name=f"Module {i+1}", description=faker.text())
@@ -69,7 +78,7 @@ def seed_user(db: Session):
 
     # Create students and their exam results
     for i in range(5):
-        classroom = Classroom(name=f"Classroom {i+1}", grade_level=i+1, school_id=school.id, teacher_id=teachers[i].id)
+        classroom = Classroom(name=f"Classroom {i+1}", grade_level=i+1, school_id=school.id,)
         db.add(classroom)
         db.flush()
 
@@ -78,7 +87,14 @@ def seed_user(db: Session):
         db.flush()
 
         for j in range(5):  # Ensure at least 5 students per classroom
-            student = Student(first_name=faker.name(),last_name=faker.last_name(), date_of_birth=datetime.datetime(2005, 1, 1), gender=faker.random_element(elements=("M","F")), grade_level=i+1, classroom_id=classroom.id)
+            student_user = User(
+                username=faker.user_name(),
+                email=faker.email(),
+                password_hash=hash_password("password123"),
+            )
+            db.add(student_user)
+            db.flush()
+            student = Student(first_name=faker.name(),last_name=faker.last_name(), date_of_birth=datetime.datetime(2005, 1, 1), gender=faker.random_element(elements=("M","F")), grade_level=i+1, classroom_id=classroom.id,user_id=student_user.id)
             db.add(student)
             db.flush()
 
@@ -88,7 +104,7 @@ def seed_user(db: Session):
                     db.add(exam)
                     db.flush()
 
-                    exam_result = ExamResult(marks_obtained=random.randint(40, 100), exam_id=exam.id, student_id=student.id)
+                    exam_result = ExamResult(marks_obtained=decimal.Decimal(random.randint(40, 100)), exam_id=exam.id, student_id=student.id,class_room_id=classroom.id,module_id=module.id)
                     db.add(exam_result)
                     db.flush()
 
