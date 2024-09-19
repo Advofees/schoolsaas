@@ -36,7 +36,7 @@ def seed_user(db: Session):
     db.flush()
 
     user = User(
-        username=faker.user_name(),
+        username="school",
         email="school@app.com",
         password_hash=hash_password("password123"),
 
