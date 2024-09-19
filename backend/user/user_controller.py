@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 class LoginRequestBody(BaseModel):
-    email: str
+    identity: str
     password: str
 
 
@@ -49,23 +49,22 @@ def register(
             status_code=409, detail="School with that number already exists"
         )
 
-    new_school = School(
-        name=body.name,
-        school_number=body.school_number,
-        country=body.country,
-    )
-    db.add(new_school)
-    db.flush()
     user = User(
         email=body.email,
         password_hash=hash_password(body.password),
         username=body.username,
-        school_id=new_school.id,
-        student_id=None,
-        parent_id=None,
     )
 
     db.add(user)
+    db.flush()
+
+    new_school = School(
+        name=body.name,
+        school_number=body.school_number,
+        country=body.country,
+        user_id=user.id,
+    )
+    db.add(new_school)
     db.flush()
     db.commit()
 
@@ -78,13 +77,15 @@ def login(
     response: Response,
     db: DatabaseDependency,
 ):
-    user = db.query(User).filter(User.email == body.email).first()
+    user = db.query(User).filter(
+        (User.email == body.identity) | (User.username == body.identity)
+    ).first()
 
     if not user:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="User not found")
 
     if not verify_password(body.password, user.password_hash):
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Invalid password or username")
 
     db.query(UserSession).filter(
         UserSession.user_id == user.id,
@@ -148,10 +149,10 @@ def get_user_session(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise Exception()
+        raise HTTPException(status_code=404, detail="User not found")
 
     if not user.roles:
-        raise Exception()
+        raise HTTPException(status_code=403, detail="You don't have permission")
 
     return {
         "user_id": auth_context.user_id,

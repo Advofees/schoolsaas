@@ -68,3 +68,106 @@ async def create_student(db:DatabaseDependency,body: CreateStudent,auth_context:
 
     return {}
 
+@router.get("/students/{student_id}")
+async def get_student(db:DatabaseDependency,student_id:uuid.UUID,auth_context: UserAuthenticationContextDependency):
+    user= db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=403)
+    
+    student = db.query(Student).filter(Student.id == student_id).first()
+
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    if not any(
+        permission.permissions.student_permissions.can_view_students
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
+    return student
+
+@router.get("/students/{student_id}/parents")
+async def get_student_parents(db:DatabaseDependency,student_id:uuid.UUID,auth_context: UserAuthenticationContextDependency):
+
+    user= db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=403)
+    
+    student = db.query(Student).filter(Student.id == student_id).first()
+
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    if not any(
+        permission.permissions.student_permissions.can_view_students
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    if not any(
+        permission.permissions.parent_permissions.can_view_parents
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
+    parents = db.query(SchoolParent).join(ParentStudentAssociation).filter(ParentStudentAssociation.student_id == student_id).all()
+
+    return parents
+
+@router.get("/students/{student_id}/classroom")
+async def get_student_classroom(db:DatabaseDependency,student_id:uuid.UUID,auth_context: UserAuthenticationContextDependency):
+
+    user= db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=403)
+    
+    student = db.query(Student).filter(Student.id == student_id).first()
+
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    if not any(
+        permission.permissions.student_permissions.can_view_students
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    classroom = db.query(Classroom).filter(Classroom.id == student.classroom_id).first()
+
+    return classroom
+
+@router.get("/students/{class_room_id}")
+async def get_students_in_classroom(db:DatabaseDependency,class_room_id:uuid.UUID,auth_context: UserAuthenticationContextDependency):
+    user= db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=403)
+    
+    class_room = db.query(Classroom).filter(Classroom.id == class_room_id).first()
+
+    if not class_room:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+
+    if not any(
+        permission.permissions.student_permissions.can_view_students
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
+    students = db.query(Student).filter(Student.classroom_id == class_room_id).all()
+
+    return students

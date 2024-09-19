@@ -64,6 +64,11 @@ class SchoolPermissions(BaseModel):
     can_edit_school: bool = False
     can_delete_school: bool = False 
 
+class ExamResultPermissions(BaseModel):
+    can_manage_exam_results: bool = False
+    can_view_exam_results: bool = False
+    can_add_exam_results: bool = False
+    can_edit_exam_results: bool = False
 class PERMISSIONS(BaseModel):
     student_permissions: StudentPermissions = StudentPermissions()
     parent_permissions: ParentPermissions = ParentPermissions()
@@ -77,4 +82,5 @@ class PERMISSIONS(BaseModel):
     timetable_permissions: TimetablePermissions = TimetablePermissions()
     school_event_permissions: SchoolEventPermissions = SchoolEventPermissions()
     school_permissions: SchoolPermissions = SchoolPermissions()
+    exam_result_permissions: ExamResultPermissions = ExamResultPermissions()
     
