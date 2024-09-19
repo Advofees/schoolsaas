@@ -16,14 +16,8 @@ class JWTPayload(BaseModel):
     session_id: uuid.UUID
 
 @dataclass
-class AccountantUserAuthenticationContext:
-    user_id: uuid.UUID #points to id in session
-    staff_id: uuid.UUID # points to the id the school table
-
-@dataclass
 class UserAuthenticationContext:
     user_id: uuid.UUID
-
 
 
 
