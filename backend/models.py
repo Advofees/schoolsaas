@@ -683,8 +683,8 @@ class User(Base):
     student_user: Mapped["Student"] = relationship(Student, back_populates="user", uselist=False)
     school_parent_user: Mapped["SchoolParent"] = relationship(SchoolParent, back_populates="user", uselist=False)
     teacher_user: Mapped["Teacher"] = relationship(Teacher, back_populates="user", uselist=False)
-
-
+    
+  
     def __init__(
         self,
         email: str,
@@ -698,8 +698,11 @@ class User(Base):
         self.username = username
         self.password_hash = password_hash
         self.secret_key = pyotp.random_base32()
-   
     
+    def has_role_type(self, role_type: RoleType) -> bool:
+        return any(role.type == role_type for role in self.roles)
+    
+
 
 class UserSession(Base):
     __tablename__ = "user_sessions"
@@ -715,7 +718,7 @@ class UserSession(Base):
         UUID, ForeignKey("users.id"), nullable=False
     )
     user: Mapped["User"] = relationship("User", back_populates="sessions")
-
+    
     def __init__(self, user_id: uuid.UUID):
         super().__init__()
 
