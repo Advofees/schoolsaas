@@ -35,6 +35,10 @@ class School(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(
         onupdate=func.now(), nullable=True
     )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("users.id"))
+    user: Mapped["User"] = relationship(
+        "User", back_populates="school_user", uselist=False
+    )
     school_students_associations: Mapped[list["SchoolStudentAssociation"]] = (
         relationship("SchoolStudentAssociation", back_populates="school")
     )
@@ -55,7 +59,7 @@ class School(Base):
     )
     files: Mapped[list["File"]] = relationship("File", back_populates="school")
     payments: Mapped[list["Payment"]] = relationship("Payment", back_populates="school")
-    users: Mapped[list["User"]] = relationship("User", back_populates="school")
+    
     teachers: Mapped[list["Teacher"]] = relationship("Teacher", back_populates="school")
     classrooms: Mapped[list["Classroom"]] = relationship(
         "Classroom", back_populates="school"
@@ -70,13 +74,16 @@ class School(Base):
         name: str,
         school_number: str,
         country: str,
+        user_id: uuid.UUID,
         address: typing.Optional[str] = None,
+
     ):
         super().__init__()
         self.name = name
         self.school_number = school_number
         self.country = country
         self.address = address
+        self.user_id = user_id
 
 
 class Student(Base):
@@ -678,6 +685,7 @@ class User(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    username:Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
@@ -707,7 +715,6 @@ class User(Base):
         email: str,
         username: str,
         password_hash: str,
-
      
     ):
         super().__init__()
