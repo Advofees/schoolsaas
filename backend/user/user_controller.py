@@ -3,6 +3,8 @@ import jwt
 import uuid
 import datetime
 from typing import Union
+import hashlib
+
 from pydantic import BaseModel
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
 from backend.models import School, User, UserSession
@@ -10,16 +12,13 @@ from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
 from backend.user.user_authentication import OptionalUserAuthenticationContextDependency
-
+from pyotp import TOTP
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 dashboard_url = os.environ["DASHBOARD_URL"]
 
 router = APIRouter()
 
 
-class LoginRequestBody(BaseModel):
-    identity: str
-    password: str
 
 
 class RegisterRequestBody(BaseModel):
@@ -36,7 +35,7 @@ def register(
     body: RegisterRequestBody,
     db: DatabaseDependency,
 ):
-    school_user = db.query(User).filter(User.email == body.email).first()
+    school_user = db.query(User).filter((User.email == body.email) | (User.username == body.username)).first()
 
     if school_user:
         raise HTTPException(
@@ -69,6 +68,10 @@ def register(
     db.commit()
 
     return {"message": "School registered successfully"}
+
+class LoginRequestBody(BaseModel):
+    identity: str
+    password: str
 
 
 @router.post("/auth/user/login",status_code=status.HTTP_200_OK)
@@ -161,7 +164,7 @@ def get_user_session(
 
 
 class TriggerSetPasswordWithEmailRequestBody(BaseModel):
-    email: str
+    identity: str
 
 
 class TriggerSetPasswordWithIDRequestBody(BaseModel):
@@ -179,7 +182,7 @@ def trigger_set_password(
     user = db.query(User)
 
     if isinstance(body, TriggerSetPasswordWithEmailRequestBody):
-        user = user.filter(User.email == body.email)
+        user = user.filter((User.email == body.identity) | (User.username == body.identity))
     elif isinstance(body, TriggerSetPasswordWithIDRequestBody):
         user = user.filter(User.id == body.id)
     else:
@@ -190,25 +193,26 @@ def trigger_set_password(
     if not user:
         raise HTTPException(status_code=404)
 
-    token = jwt.encode(
-        {
-            "ext": str(datetime.datetime.now() + datetime.timedelta(hours=1)),
-            "user_id": str(user.id),
-        },
-        JWT_SECRET_KEY,
-        algorithm="HS256",
-    )
+
+    otp = TOTP(
+        user.secret_key,
+        digest=hashlib.sha256,
+        digits=6,
+        interval=300,
+    ).now()
+
     email_params=SendEmailParams(
         email=user.email,
         subject="Set Password",
-        message=f"Your password reset link: {dashboard_url}/user/set-password?token={token}",
+        message=f"Your password reset code is {otp}",
     )
     email_service.send(email_params)
 
 
 class SetPasswordRequestBody(BaseModel):
+    identity: str
     password: str
-    token: str
+    otp: str
 
 
 class SetPasswordTokenData(BaseModel):
@@ -219,24 +223,24 @@ class SetPasswordTokenData(BaseModel):
 def set_password(
     db: DatabaseDependency,
     body: SetPasswordRequestBody,
-):
-    try:
-        raw_payload = jwt.decode(
-            body.token,
-            JWT_SECRET_KEY,
-            algorithms=["HS256"],
-        )
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=409, detail="expired-token")
+):  
 
-    token_data = SetPasswordTokenData.model_validate(raw_payload)
-
-    user = db.query(User).filter(User.id == token_data.user_id).first()
+    user = db.query(User).filter((User.email == body.identity) | (User.username == body.identity)).first()
 
     if not user:
         raise HTTPException(status_code=404)
+    
+    if not TOTP(
+        user.secret_key,
+        digest=hashlib.sha256,
+        digits=6,
+        interval=300,
+    ).verify(body.otp):
+        raise HTTPException(status_code=404, detail="invalid-totp-code")
 
     user.password_hash = hash_password(body.password)
-
     db.commit()
-    return {}
+
+    return {
+        "message": "Password reset successfully"
+    }

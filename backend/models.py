@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import enum
-
+import pyotp
 from sqlalchemy import String, DateTime, Numeric, ForeignKey, UUID, func, Integer
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
@@ -663,6 +663,7 @@ class User(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )
+    secret_key: Mapped[str] = mapped_column()
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
     )
@@ -696,6 +697,7 @@ class User(Base):
         self.email = email
         self.username = username
         self.password_hash = password_hash
+        self.secret_key = pyotp.random_base32()
    
     
 
