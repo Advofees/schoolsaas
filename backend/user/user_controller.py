@@ -89,7 +89,7 @@ def login(
 
     if not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=404, detail="Invalid password or username")
-
+    
     db.query(UserSession).filter(
         UserSession.user_id == user.id,
         UserSession.expire_at < datetime.datetime.now(),
@@ -193,7 +193,7 @@ def trigger_set_password(
     if not user:
         raise HTTPException(status_code=404)
 
-
+    
     otp = TOTP(
         user.secret_key,
         digest=hashlib.sha256,
@@ -228,7 +228,7 @@ def set_password(
     user = db.query(User).filter((User.email == body.identity) | (User.username == body.identity)).first()
 
     if not user:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="User not found")
     
     if not TOTP(
         user.secret_key,
