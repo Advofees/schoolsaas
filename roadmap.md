@@ -27,7 +27,12 @@
     - support channel (discord,whatsapp,email,chat,twitter)
 
 # MVP
-- school
+
+- login
+- register
+- landing page
+
+- school view
 
     - school can register to the system
     - school can add teachers
@@ -35,7 +40,7 @@
     - school can students to the parents
     - school can manage permissions for a teacher
 
-- teacher
+- teacher view
 
     - teacher can add exam results for a student
     - teacher can view all results for a specific Module
@@ -47,13 +52,14 @@
     - teacher can export specific student report card as pdf
     - teacher can email results of a specific student to their parents
 
-- student
+- student view
 
     - student can view grades for all the modules they are enrolled in
     - student can change password
     - student can upload assignments(incase of essays)
 
-- parents
+- parents view
+
     - parents can view exam results of their student
     - parents can upload bank payment receipts file for the school
     - parents can view school communication

@@ -132,6 +132,18 @@ class Student(Base):
     parents: Mapped[list["SchoolParent"]] = relationship(
         "SchoolParent", secondary="parent_student_associations", viewonly=True
     )
+    
+    module_enrollments: Mapped[list["ModuleEnrollment"]] = relationship(
+        "ModuleEnrollment",
+        back_populates="student",
+        cascade="all, delete-orphan"
+    )
+    modules: Mapped[list["Module"]] = relationship(
+        "Module",
+        secondary="module_enrollments",
+        back_populates="students",
+        viewonly=True,
+    )
 
     def __init__(
         self,
@@ -355,7 +367,7 @@ class Module(Base):
 
     students: Mapped[list["Student"]] = relationship(
         "Student",
-        secondary="enrollments",
+        secondary="module_enrollments",
         back_populates="modules",
         viewonly=True,
     )
@@ -366,7 +378,7 @@ class Module(Base):
         self.description = description
 
 class ModuleEnrollment(Base):
-    __tablename__ = "enrollments"
+    __tablename__ = "module_enrollments"
 
     student_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("students.id"), primary_key=True
@@ -375,8 +387,9 @@ class ModuleEnrollment(Base):
         UUID(as_uuid=True), ForeignKey("modules.id"), primary_key=True
     )
 
-    student: Mapped["Student"] = relationship("Student", back_populates="enrollments")
-    module: Mapped["Module"] = relationship("Module", back_populates="enrollments")
+
+    student: Mapped["Student"] = relationship("Student", back_populates="module_enrollments")
+    module: Mapped["Module"] = relationship("Module", back_populates="module_enrollments")
 
     def __init__(self, student_id:uuid.UUID, module_id:uuid.UUID):
         super().__init__()
