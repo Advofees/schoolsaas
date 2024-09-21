@@ -28,17 +28,17 @@
 
 # MVP
 
-- login
-- register
-- landing page
+- [ ] Login
+- [ ] Register
+- [ ] Landing page
 
 - school view
 
-    - school can register to the system
-    - school can add teachers
-    - school can add parents
-    - school can students to the parents
-    - school can manage permissions for a teacher
+    - [ ] school can register to the system
+    - [ ] school can add teachers
+    - [ ] school can add parents
+    - [ ] school can students to the parents
+    - [ ] school can manage permissions for a teacher
 
 - teacher view
 
