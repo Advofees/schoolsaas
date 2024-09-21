@@ -34,10 +34,12 @@ app.add_middleware(
 #---
 app.include_router(authentication_router,tags=["Authentication"])
 #---
+app.include_router(exam_result_router,tags=["Exam Results"])
+
 app.include_router(permission_router,tags=["Permissions"])
 app.include_router(school_router,tags=["School"])
 app.include_router(teacher_router,tags=["Teacher"])
-app.include_router(exam_result_router,tags=["Exam Results"])
+
 app.include_router(parent_router,tags=["Parent"])
 app.include_router(student_router,tags=["Student"])
 app.include_router(payment_router,tags=["Payment"])

@@ -37,6 +37,7 @@ def exam_result_response(exam_result: ExamResult) -> dict:
         "student_id": exam_result.student_id,
         "class_room_id": exam_result.class_room_id,
         "module_id": exam_result.module_id,
+        "module_name": exam_result.get_module_name,
         "percentage": exam_result.percentage,
         "grade_obtained": exam_result.grade_obtained,
     }
@@ -64,6 +65,40 @@ def get_module_exam_result_for_classroom(
     exam_results = (
         db.query(ExamResult)
         .filter(ExamResult.class_room_id == classroom_id, ExamResult.exam_id == exam_id)
+        .all()
+    )
+    results = [exam_result_response(result) for result in exam_results]
+
+    return results
+
+
+@router.get("/school/student/classroom/{classroom_id}/{exam_id}/{student_id}")
+def get_module_exam_result_for_student_in_a_classroom(
+    db: DatabaseDependency,
+    auth_context: UserAuthenticationContextDependency,
+    classroom_id: uuid.UUID,
+    exam_id: uuid.UUID,
+    student_id: uuid.UUID,
+):
+
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not any(
+        permission.permissions.exam_result_permissions.can_view_exam_results
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+    exam_results = (
+        db.query(ExamResult)
+        .filter(
+            ExamResult.class_room_id == classroom_id,
+            ExamResult.exam_id == exam_id,
+            ExamResult.student_id == student_id,
+        )
         .all()
     )
     results = [exam_result_response(result) for result in exam_results]

@@ -516,6 +516,7 @@ class ExamResult(Base):
 
     class_room_id:Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("classrooms.id"))
     module_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("modules.id"))
+    module: Mapped["Module"] = relationship("Module")
 
     
     @property
@@ -536,6 +537,9 @@ class ExamResult(Base):
             return "D"
         else:
             return "F"
+    @property
+    def get_module_name(self):
+        return self.module.name
     
     def __init__(
         self, marks_obtained: decimal.Decimal, exam_id: uuid.UUID, student_id: uuid.UUID,class_room_id:uuid.UUID,module_id:uuid.UUID
