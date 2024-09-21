@@ -15,7 +15,7 @@ from backend.student.student_controllers import router as student_router
 from backend.payment.payment_controller import router as payment_router
 from backend.file.file_controller import router as file_router
 from backend.lesson_plan.lesson_plan_controller import router as lesson_plan_router
-
+from backend.permissions.permission_controller import router as permission_router
 
 #---
 app = FastAPI(docs_url="/")
@@ -34,6 +34,7 @@ app.add_middleware(
 #---
 app.include_router(authentication_router,tags=["Authentication"])
 #---
+app.include_router(permission_router,tags=["Permissions"])
 app.include_router(school_router,tags=["School"])
 app.include_router(teacher_router,tags=["Teacher"])
 app.include_router(parent_router,tags=["Parent"])

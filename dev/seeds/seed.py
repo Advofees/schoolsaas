@@ -5,7 +5,7 @@ load_dotenv()
 import random
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
-from backend.permissions.permissions_schemas import PERMISSIONS, ParentPermissions, StudentPermissions
+from backend.permissions.permissions_schemas import PERMISSIONS, ParentPermissions, SchoolPermissions, StudentPermissions
 from backend.models import Role, RoleType, User, School, UserPermission, Teacher, Module, Student, Exam, ExamResult, Classroom, AcademicTerm, UserRoleAssociation
 from backend.user.passwords import hash_password
 from sqlalchemy.orm import Session
@@ -21,7 +21,7 @@ def seed_user(db: Session):
     parent_management_permission_definition = PERMISSIONS(
         parent_permissions=ParentPermissions(can_add_parents=True, can_edit_parents=True, can_view_parents=True, can_delete_parents=True),
         student_permissions=StudentPermissions(can_add_students=True, can_edit_students=True, can_view_students=True, can_delete_students=True,),
-        
+        school_permissions=SchoolPermissions(can_manage_school=True, can_view_school=True, can_add_school=True, can_edit_school=True, can_delete_school=True, can_manage_permissions=True), 
     )
 
     parent_management_permission_user_permission = UserPermission(permission_description=parent_management_permission_definition)
