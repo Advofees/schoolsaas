@@ -19,6 +19,7 @@ from backend.models import (
     ModuleEnrollment,
     Role,
     RoleType,
+    SchoolStudentAssociation,
     User,
     School,
     UserPermission,
@@ -209,6 +210,12 @@ def seed_user(db: Session):
             user_id=student_user.id,
         )
         students.append(student)
+        school_student_association=SchoolStudentAssociation(
+            student_id=student.id,
+            school_id=school.id
+        )
+        db.add(school_student_association)
+        db.flush()
 
     db.add_all(students)
     db.flush()

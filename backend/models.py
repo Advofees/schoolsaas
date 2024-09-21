@@ -2,7 +2,7 @@ import datetime
 import decimal
 import enum
 import pyotp
-from sqlalchemy import String, DateTime, Numeric, ForeignKey, UUID, func, Integer
+from sqlalchemy import String, DateTime, Numeric, ForeignKey, UUID, func, Integer,Index
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
 from dateutil.relativedelta import relativedelta
@@ -11,7 +11,7 @@ import typing
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import Enum
 from backend.permissions.permissions_schemas import  PERMISSIONS
-
+from sqlalchemy.dialects.postgresql import TSVECTOR
 class RoleType(enum.Enum):
     SUPER_ADMIN = "super_admin"
     SCHOOL_ADMIN = "school_admin"
@@ -143,6 +143,15 @@ class Student(Base):
         secondary="module_enrollments",
         back_populates="students",
         viewonly=True,
+    )
+    search_vector: Mapped[str] = mapped_column(TSVECTOR)
+        
+    __table_args__ = (
+        Index(
+            'ix_students_search_vector',
+            'search_vector',
+            postgresql_using='gin'
+        ),
     )
 
     def __init__(
@@ -626,10 +635,10 @@ class File(Base):
     __tablename__ = "files"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    filename: Mapped[str] = mapped_column(String)
-    file_type: Mapped[str] = mapped_column(String)
-    file_size: Mapped[int] = mapped_column(Integer)
-    file_path: Mapped[str] = mapped_column(String)
+    name: Mapped[str] = mapped_column()
+    type: Mapped[str] = mapped_column()
+    size: Mapped[int] = mapped_column()
+    path: Mapped[str] = mapped_column()
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
@@ -661,8 +670,9 @@ class Payment(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     amount: Mapped[float] = mapped_column(nullable=False)
-    payment_date: Mapped[datetime.datetime] = mapped_column()
-    payment_method: Mapped[str] = mapped_column(String)
+    date: Mapped[datetime.datetime] = mapped_column()
+    method: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column()
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(onupdate=func.now())
 
@@ -680,14 +690,14 @@ class Payment(Base):
     def __init__(
         self,
         amount: float,
-        payment_date: datetime.datetime,
-        payment_method: str,
+        date: datetime.datetime,
+        method: str,
         school_id: uuid.UUID,
     ):
         super().__init__()
         self.amount = amount
-        self.payment_date = payment_date
-        self.payment_method = payment_method
+        self.date = date
+        self.method = method
         self.school_id = school_id
 
 

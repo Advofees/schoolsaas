@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: 65123bb74132
+Revision ID: 2ec90408127c
 Revises: 
-Create Date: 2024-09-21 21:30:10.046595
+Create Date: 2024-09-21 21:52:51.521715
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '65123bb74132'
+revision: str = '2ec90408127c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -56,10 +56,10 @@ def upgrade() -> None:
     )
     op.create_table('files',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('filename', sa.String(), nullable=False),
-    sa.Column('file_type', sa.String(), nullable=False),
-    sa.Column('file_size', sa.Integer(), nullable=False),
-    sa.Column('file_path', sa.String(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('type', sa.String(), nullable=False),
+    sa.Column('size', sa.Integer(), nullable=False),
+    sa.Column('path', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('user_id', sa.UUID(), nullable=False),
@@ -194,8 +194,9 @@ def upgrade() -> None:
     op.create_table('payments',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('payment_date', sa.DateTime(), nullable=False),
-    sa.Column('payment_method', sa.String(), nullable=False),
+    sa.Column('date', sa.DateTime(), nullable=False),
+    sa.Column('method', sa.String(), nullable=False),
+    sa.Column('description', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.Column('school_id', sa.UUID(), nullable=False),
@@ -215,9 +216,31 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('classroom_id', sa.UUID(), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('search_vector', postgresql.TSVECTOR(), nullable=False),
     sa.ForeignKeyConstraint(['classroom_id'], ['classrooms.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_students_search_vector', 'students', ['search_vector'], unique=False, postgresql_using='gin')
+    op.execute(
+        """
+        CREATE FUNCTION students_search_vector_update() RETURNS trigger AS $$
+        BEGIN
+          NEW.search_vector :=
+            setweight(to_tsvector('pg_catalog.english', NEW.id::text), 'A') ||
+            setweight(to_tsvector('pg_catalog.english', coalesce(NEW.first_name, '')), 'A') ||
+            setweight(to_tsvector('pg_catalog.english', coalesce(NEW.last_name, '')), 'A') ||
+            setweight(to_tsvector('pg_catalog.english', coalesce(NEW.gender, '')), 'B') ||
+            setweight(to_tsvector('pg_catalog.english', coalesce(NEW.grade_level::text, '')), 'B') ||
+            setweight(to_tsvector('pg_catalog.english', coalesce(NEW.date_of_birth::text, '')), 'C');
+          RETURN NEW;
+        END
+        $$ LANGUAGE plpgsql;
+
+        CREATE TRIGGER students_vector_update
+        BEFORE INSERT OR UPDATE ON students
+        FOR EACH ROW EXECUTE FUNCTION students_search_vector_update();
+        """
     )
     op.create_table('teacher_module_association',
     sa.Column('teacher_id', sa.UUID(), nullable=False),
@@ -285,6 +308,9 @@ def downgrade() -> None:
     op.drop_table('exam_results')
     op.drop_table('attendances')
     op.drop_table('teacher_module_association')
+    op.drop_index('ix_students_search_vector', table_name='students', postgresql_using='gin')
+    op.execute("DROP TRIGGER IF EXISTS students_vector_update ON students;")
+    op.execute("DROP FUNCTION IF EXISTS students_search_vector_update();")
     op.drop_table('students')
     op.drop_table('payments')
     op.drop_table('exams')
