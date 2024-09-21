@@ -517,14 +517,25 @@ class ExamResult(Base):
     class_room_id:Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("classrooms.id"))
     module_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("modules.id"))
 
-
+    
     @property
     def percentage(self):
         return (self.marks_obtained/100)*100
     
     @property
-    def grade(self):
-        pass
+    def grade_obtained(self):
+        if self.percentage >= 90:
+            return "A+"
+        elif self.percentage >= 80:
+            return "A"
+        elif self.percentage >= 70:
+            return "B"
+        elif self.percentage >= 60:
+            return "C"
+        elif self.percentage >= 50:
+            return "D"
+        else:
+            return "F"
     
     def __init__(
         self, marks_obtained: decimal.Decimal, exam_id: uuid.UUID, student_id: uuid.UUID,class_room_id:uuid.UUID,module_id:uuid.UUID

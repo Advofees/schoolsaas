@@ -74,6 +74,7 @@ class ExamResultPermissions(BaseModel):
     can_view_exam_results: bool = False
     can_add_exam_results: bool = False
     can_edit_exam_results: bool = False
+    can_delete_exam_results: bool = False
 class PERMISSIONS(BaseModel):
     student_permissions: StudentPermissions = StudentPermissions()
     parent_permissions: ParentPermissions = ParentPermissions()

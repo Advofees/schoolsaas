@@ -16,7 +16,7 @@ from backend.payment.payment_controller import router as payment_router
 from backend.file.file_controller import router as file_router
 from backend.lesson_plan.lesson_plan_controller import router as lesson_plan_router
 from backend.permissions.permission_controller import router as permission_router
-
+from backend.exam_results.exam_result import router as exam_result_router
 #---
 app = FastAPI(docs_url="/")
 
@@ -37,6 +37,7 @@ app.include_router(authentication_router,tags=["Authentication"])
 app.include_router(permission_router,tags=["Permissions"])
 app.include_router(school_router,tags=["School"])
 app.include_router(teacher_router,tags=["Teacher"])
+app.include_router(exam_result_router,tags=["Exam Results"])
 app.include_router(parent_router,tags=["Parent"])
 app.include_router(student_router,tags=["Student"])
 app.include_router(payment_router,tags=["Payment"])

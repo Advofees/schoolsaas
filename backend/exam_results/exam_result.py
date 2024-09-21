@@ -1,20 +1,83 @@
+import datetime
 import decimal
+import typing
 import uuid
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from backend.database.database import DatabaseDependency
-from backend.models import Exam, ExamResult, ModuleEnrollment,  User
+from backend.models import ExamResult, ModuleEnrollment, User
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
 router = APIRouter()
 
 
-@router.get("/school/exam_results/student/{student_id}/list")
-def get_exam_results(
+class ExamResultResponseModel(BaseModel):
+    id: uuid.UUID
+    marks_obtained: decimal.Decimal
+    comments: typing.Optional[str]
+    created_at: datetime.datetime
+    updated_at: typing.Optional[datetime.datetime]
+    exam_id: uuid.UUID
+    student_id: uuid.UUID
+    class_room_id: uuid.UUID
+    module_id: uuid.UUID
+    percentage: float
+    grade_obtained: str
+
+
+def exam_result_response(exam_result: ExamResult) -> dict:
+    return {
+        "id": exam_result.id,
+        "marks_obtained": exam_result.marks_obtained,
+        "comments": exam_result.comments,
+        "created_at": exam_result.created_at,
+        "updated_at": exam_result.updated_at,
+        "exam_id": exam_result.exam_id,
+        "student_id": exam_result.student_id,
+        "class_room_id": exam_result.class_room_id,
+        "module_id": exam_result.module_id,
+        "percentage": exam_result.percentage,
+        "grade_obtained": exam_result.grade_obtained,
+    }
+
+
+@router.get("/school/student/classroom/{classroom_id}/{exam_id}")
+def get_module_exam_result_for_classroom(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
-    student_id: str,
+    classroom_id: uuid.UUID,
+    exam_id: uuid.UUID,
+):
+
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not any(
+        permission.permissions.exam_result_permissions.can_view_exam_results
+        for role in user.roles
+        if role.user_permissions
+        for permission in role.user_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+    exam_results = (
+        db.query(ExamResult)
+        .filter(ExamResult.class_room_id == classroom_id, ExamResult.exam_id == exam_id)
+        .all()
+    )
+    results = [exam_result_response(result) for result in exam_results]
+
+    return results
+
+
+@router.get("/school/student/module/exam_result/{student_id}/{exam_id}/{module_id}")
+def get_specific_module_exam_results_for_student(
+    db: DatabaseDependency,
+    auth_context: UserAuthenticationContextDependency,
+    student_id: uuid.UUID,
+    exam_id: uuid.UUID,
+    module_id: uuid.UUID,
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
@@ -28,11 +91,20 @@ def get_exam_results(
         for permission in role.user_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
-    exams = db.query(ExamResult).filter(ExamResult.exam_id == student_id).all()
-    return exams
+
+    exam_result = (
+        db.query(ExamResult)
+        .filter(
+            ExamResult.exam_id == exam_id,
+            ExamResult.module_id == module_id,
+            ExamResult.student_id == student_id,
+        )
+        .all()
+    )
+    return exam_result
 
 
-@router.get("/school/exam_results/{exam_id}/list")
+@router.get("/school/exam/{exam_id}/exam_results")
 def get_exam_results_by_student_id(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -52,45 +124,6 @@ def get_exam_results_by_student_id(
         raise HTTPException(status_code=403, detail="Permission denied")
     exams = db.query(ExamResult).filter(ExamResult.exam_id == exam_id).all()
     return exams
-
-
-@router.get(
-    "school/exam_results/classromm/{classromm_id}/exam/{exam_id}/academic_term/{academic_term_id}/list"
-)
-def get_exam_results_for_classroom(
-    db: DatabaseDependency,
-    auth_context: UserAuthenticationContextDependency,
-    exam_id: str,
-    academic_term_id: str,
-):
-    user = db.query(User).filter(User.id == auth_context.user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
-    result = (
-        db.query(ExamResult)
-        .join(Exam)
-        .filter(Exam.academic_term_id == academic_term_id, Exam.id == exam_id)
-        .all()
-    )
-
-    """'
-    GET exams results for students in a particular classroom for all modules for a specific term and exam
-
-    | Student | Module 1 | Module 2 | Module 3 | Module 4 | Module 5 | Total | Average | Grade | Position 
-    |---------|----------|----------|----------|----------|----------|-------|---------|-------|---------
-    | 1       | 50       | 60       | 70       | 80       | 90       | 350   | 70      | A     | 1
-    | 2       | 60       | 70       | 80       | 90       | 100      | 400   | 80      | A     | 2
-    """
 
 
 class CreateModuleExamResult(BaseModel):
@@ -119,7 +152,7 @@ def create_exam_results(
         for permission in role.user_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
-    
+
     module_enrollment = (
         db.query(ModuleEnrollment)
         .filter(
@@ -131,8 +164,9 @@ def create_exam_results(
 
     if not module_enrollment:
         raise HTTPException(
-            status_code=400, detail="Student is not enrolled in this module")
-    
+            status_code=400, detail="Student is not enrolled in this module"
+        )
+
     exam_result = (
         db.query(ExamResult)
         .filter(
@@ -148,7 +182,6 @@ def create_exam_results(
             status_code=400, detail="Exam result already exists, update instead"
         )
 
-    
     new_exam_result = ExamResult(
         student_id=body.student_id,
         exam_id=body.exam_id,
