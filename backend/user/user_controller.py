@@ -16,6 +16,7 @@ from pyotp import TOTP
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 dashboard_url = os.environ["DASHBOARD_URL"]
 
+
 router = APIRouter()
 
 
@@ -89,7 +90,7 @@ def login(
 
     if not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=404, detail="Invalid password or username")
-    
+
     db.query(UserSession).filter(
         UserSession.user_id == user.id,
         UserSession.expire_at < datetime.datetime.now(),

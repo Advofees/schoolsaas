@@ -132,6 +132,18 @@ class Student(Base):
     parents: Mapped[list["SchoolParent"]] = relationship(
         "SchoolParent", secondary="parent_student_associations", viewonly=True
     )
+    
+    module_enrollments: Mapped[list["ModuleEnrollment"]] = relationship(
+        "ModuleEnrollment",
+        back_populates="student",
+        cascade="all, delete-orphan"
+    )
+    modules: Mapped[list["Module"]] = relationship(
+        "Module",
+        secondary="module_enrollments",
+        back_populates="students",
+        viewonly=True,
+    )
 
     def __init__(
         self,
@@ -347,12 +359,42 @@ class Module(Base):
         "Teacher", secondary="teacher_module_association", back_populates="modules"
     )
     exams: Mapped[list["Exam"]] = relationship("Exam", back_populates="module")
+     
+
+    module_enrollments: Mapped[list["ModuleEnrollment"]] = relationship(
+        "ModuleEnrollment", back_populates="module"
+    )
+
+    students: Mapped[list["Student"]] = relationship(
+        "Student",
+        secondary="module_enrollments",
+        back_populates="modules",
+        viewonly=True,
+    )
 
     def __init__(self, name: str, description: typing.Optional[str] = None):
         super().__init__()
         self.name = name
         self.description = description
 
+class ModuleEnrollment(Base):
+    __tablename__ = "module_enrollments"
+
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("students.id"), primary_key=True
+    )
+    module_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("modules.id"), primary_key=True
+    )
+
+
+    student: Mapped["Student"] = relationship("Student", back_populates="module_enrollments")
+    module: Mapped["Module"] = relationship("Module", back_populates="module_enrollments")
+
+    def __init__(self, student_id:uuid.UUID, module_id:uuid.UUID):
+        super().__init__()
+        self.student_id = student_id
+        self.module_id = module_id
 
 class Attendance(Base):
     __tablename__ = "attendances"
@@ -683,8 +725,8 @@ class User(Base):
     student_user: Mapped["Student"] = relationship(Student, back_populates="user", uselist=False)
     school_parent_user: Mapped["SchoolParent"] = relationship(SchoolParent, back_populates="user", uselist=False)
     teacher_user: Mapped["Teacher"] = relationship(Teacher, back_populates="user", uselist=False)
-
-
+    
+  
     def __init__(
         self,
         email: str,
@@ -698,8 +740,11 @@ class User(Base):
         self.username = username
         self.password_hash = password_hash
         self.secret_key = pyotp.random_base32()
-   
     
+    def has_role_type(self, role_type: RoleType) -> bool:
+        return any(role.type == role_type for role in self.roles)
+    
+
 
 class UserSession(Base):
     __tablename__ = "user_sessions"
@@ -715,7 +760,7 @@ class UserSession(Base):
         UUID, ForeignKey("users.id"), nullable=False
     )
     user: Mapped["User"] = relationship("User", back_populates="sessions")
-
+    
     def __init__(self, user_id: uuid.UUID):
         super().__init__()
 

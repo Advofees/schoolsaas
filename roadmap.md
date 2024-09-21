@@ -5,103 +5,62 @@
 
 
 ## possible features
-- class register
-- school inventory(customizable per class,per department)
-- finance tracker for expenses and purcheses
-- grades management
-- exam reports
-- results exports
-- inventory exports
-- class curriculm planning aided by AI 
-- parents can pay to school and upload receipts ,prove of payment
-- school can send invoices to parents for fees
-- school can manage list of past papers for all subjects
-- school can manage past lesson plans
-- school inventory
-- notifications
-- file uploads(receipts, exams,invoices,assignments)
-- printing jobs(have a list of jobs that can be processed for printing)
-- support channel (discord,whatsapp,email,chat,twitter)
 
-## models
+- Legendary
 
-    - `School`
+    - class register
+    - school inventory(customizable per class,per department)
+    - finance tracker for expenses and purcheses
+    - grades management
+    - exam reports
+    - results exports
+    - inventory exports
+    - class curriculm planning aided by AI 
+    - parents can pay to school and upload receipts ,prove of payment
+    - school can send invoices to parents for fees
+    - school can manage list of past papers for all subjects
+    - school can manage past lesson plans
+    - school inventory
+    - notifications
+    - file uploads(receipts, exams,invoices,assignments)
+    - printing jobs(have a list of jobs that can be processed for printing)
+    - support channel (discord,whatsapp,email,chat,twitter)
 
-        - id
-        - name
-        - email 
-        - phone number
-        - payment_id
-        - logo
-        - website url
+# MVP
 
-    - `Teacher`
-        - id
-        - first name
-        - last name
-        - email
-        - phone
-        - school_id
+- login
+- register
+- landing page
 
-    - `Parent `
+- school view
 
-        - id
-        - first name
-        - last name
-        - email
-        - school_id
+    - school can register to the system
+    - school can add teachers
+    - school can add parents
+    - school can students to the parents
+    - school can manage permissions for a teacher
 
-    - `Student`
+- teacher view
 
-        - first name
-        - last name
-        - phone
-        - admission_number
-        - parent_id
-        - class_id
-        - payments_id
-    
-    - `Grade`
+    - teacher can add exam results for a student
+    - teacher can view all results for a specific Module
+    - teacher can update the result in a module 
+    - teacher can remove a result from a module
+    - teacher can enroll student in a module
+    - teacher can view overall results for all modules in a particular class(Grade i.e Grade 1, Grade 2)
+    - teacher can export the results as excel
+    - teacher can export specific student report card as pdf
+    - teacher can email results of a specific student to their parents
 
-        - id
-        - subject_id
-        - student_id
-        - class_id
-        - teacher_id
-        - exam_id
-        - score
+- student view
 
-    - LessonPlan
+    - student can view grades for all the modules they are enrolled in
+    - student can change password
+    - student can upload assignments(incase of essays)
 
-        - id
-        - teacher_id
-        - subject_id
-        - term
-        - date
+- parents view
 
-    - Examination
-        `provide an editor to write question,add tables,objects,images, final output to be well formatted`
-        - id
-
-    - Inventory 
-
-        - id
-        - title
-        - count
-        - update at
-        - user_id of who updated
-
-    - Payment
-
-        - id
-        - invoice_id
-        - receipt_id
-        - file_id
-        
-    - File
-
-        - id 
-        - url
-        - name
-        - owner_id(who uploaded)
-
+    - parents can view exam results of their student
+    - parents can upload bank payment receipts file for the school
+    - parents can view school communication
+    - parents can view invoices from the school

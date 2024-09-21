@@ -1,4 +1,6 @@
 import bcrypt
+import secrets
+import string
 
 
 def hash_password(password: str) -> str:
@@ -13,3 +15,9 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+
+def generate_temp_password(length:int=12):
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(secrets.choice(alphabet) for _ in range(length))
+    return password
