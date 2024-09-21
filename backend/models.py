@@ -572,7 +572,7 @@ class SchoolParentAssociation(Base):
     parent: Mapped["SchoolParent"] = relationship(
         "SchoolParent", back_populates="school_parent_associations"
     )
-    def __init(self, school_id: uuid.UUID, parent_id: uuid.UUID):
+    def __init__(self, school_id: uuid.UUID, parent_id: uuid.UUID):
         super().__init__()
         self.school_id = school_id
         self.parent_id = parent_id

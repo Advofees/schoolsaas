@@ -16,6 +16,7 @@ from backend.permissions.permissions_schemas import (
     TeacherPermissions,
 )
 from backend.models import (
+    ModuleEnrollment,
     Role,
     RoleType,
     User,
@@ -197,7 +198,7 @@ def seed_user(db: Session):
         )
         db.add(student_user)
         db.flush()
-        
+
         student = Student(
             first_name=faker.name(),
             last_name=faker.last_name(),
@@ -212,10 +213,19 @@ def seed_user(db: Session):
     db.add_all(students)
     db.flush()
 
-    # --- create exam results
+
     exam_results:list[ExamResult] = []
     for student in students:
         for module in modules:
+            # --- create module enrollment
+            module_enrollment = ModuleEnrollment(
+                student_id=student.id,
+                module_id=module.id,
+            )
+            db.add(module_enrollment)
+            db.flush()
+        
+            # --- create exam results
             exam_result = ExamResult(
                         marks_obtained=decimal.Decimal(random.randint(40, 100)),
                         exam_id=exam.id,
