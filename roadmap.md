@@ -28,9 +28,11 @@
 
 # MVP
 
-- [ ] Login
-- [ ] Register
-- [ ] Landing page
+- [X] Login
+- [X] Register
+- [X] Landing page
+- [X] Reset password
+- [X] Forgot Password
 
 - school view
 
@@ -42,25 +44,25 @@
 
 - teacher view
 
-    - teacher can add exam results for a student
-    - teacher can view all results for a specific Module
-    - teacher can update the result in a module 
-    - teacher can remove a result from a module
-    - teacher can enroll student in a module
-    - teacher can view overall results for all modules in a particular class(Grade i.e Grade 1, Grade 2)
-    - teacher can export the results as excel
-    - teacher can export specific student report card as pdf
-    - teacher can email results of a specific student to their parents
+    - [ ] teacher can add exam results for a student
+    - [ ] teacher can view all results for a specific Module
+    - [ ] teacher can update the result in a module 
+    - [ ] teacher can remove a result from a module
+    - [ ] teacher can enroll student in a module
+    - [ ] teacher can view overall results for all modules in a particular class(Grade i.e Grade 1, Grade 2)
+    - [ ] teacher can export the results as excel
+    - [ ] teacher can export specific student report card as pdf
+    - [ ] teacher can email results of a specific student to their parents
 
 - student view
 
-    - student can view grades for all the modules they are enrolled in
-    - student can change password
-    - student can upload assignments(incase of essays)
+    - [ ] student can view grades for all the modules they are enrolled in
+    - [ ] student can change password
+    - [ ] student can upload assignments(incase of essays)
 
 - parents view
 
-    - parents can view exam results of their student
-    - parents can upload bank payment receipts file for the school
-    - parents can view school communication
-    - parents can view invoices from the school
+    - [ ] parents can view exam results of their student
+    - [ ] parents can upload bank payment receipts file for the school
+    - [ ] parents can view school communication
+    - [ ] parents can view invoices from the school
