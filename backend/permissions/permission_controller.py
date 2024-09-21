@@ -11,22 +11,24 @@ from backend.user.user_authentication import UserAuthenticationContextDependency
 router = APIRouter()
 
 
-class UserPermissionModel(BaseModel):
-    user_id: uuid.UUID
+class TeacherPermissionModel(BaseModel):
+    permissions: TeacherPermissions
 
 
-@router.put("/school/teachers/permission/")
+@router.put("/school/teachers/permission/{teacher_user_id}/{teacher_id}")
 async def update_user_permissions(
-    body: UserPermissionModel,
+    body: TeacherPermissionModel,
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
+    teacher_user_id: uuid.UUID,
+    teacher_id: uuid.UUID
 ):
 
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_to_update = db.query(User).filter(User.id == body.user_id).first()
+    user_to_update = db.query(User).filter(User.id == teacher_user_id).first()
 
     if not user_to_update:
         raise HTTPException(status_code=404, detail="User not found")
@@ -35,19 +37,14 @@ async def update_user_permissions(
         raise HTTPException(status_code=403, detail="Permission denied")
 
     role = next(
-        (role for role in user_to_update.roles if role.type == RoleType.SCHOOL_ADMIN),
+        (role for role in user_to_update.roles if role.type == RoleType.TEACHER),
         None,
     )
     if not role:
-        raise HTTPException(status_code=404, detail="Role not found")
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     teacher_permission_definition = PERMISSIONS(
-        teacher_permissions=TeacherPermissions(
-            can_view_teachers=True,
-            can_add_teachers=True,
-            can_edit_teachers=True,
-            can_delete_teachers=True,
-        ),
+        teacher_permissions=body.permissions
     )
 
     teacher_permission_permission = UserPermission(
