@@ -209,7 +209,9 @@ def seed_user(db: Session):
             classroom_id=classroom.id,
             user_id=student_user.id,
         )
+        db.add(student)
         students.append(student)
+        db.flush()
         school_student_association=SchoolStudentAssociation(
             student_id=student.id,
             school_id=school.id
