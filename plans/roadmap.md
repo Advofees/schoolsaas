@@ -13,46 +13,47 @@
 ## Features
 - school
 
-	- can create account
-	- can login
-	- can create teachers
-	- can update teachers
-	- can delete teachers(this would make the teachers be past teachers)
-	- can register students
-	- can view all students
-	- can view all the parents/guardians of the students
-	- can edit student
-	- can manage fees made by parents
-	- can create timetables
-	- can edit timetables
-	- can view timetables
-	- can view school attendance
-	- can keep track of school inventory
-	- can generate overall class performance reports
-	- can generate daily, weekly, monthly class attendance reports per class
-	- can create educational articles
-	- can export all reports as csv , xl, pdf, doc
+	- [ ] can create account
+	- [ ] can login
+	- [ ] can create teachers
+	- [ ] can update teachers
+	- [ ] can delete teachers(this would make the teachers be past teachers)
+	- [ ] can register students
+	- [ ] can view all students
+	- [ ] can view all the parents/guardians of the students
+	- [ ] can edit student
+	- [ ] can manage fees made by parents
+	- [ ] can create timetables
+	- [ ] can edit timetables
+	- [ ] can view timetables
+	- [ ] can view school attendance
+	- [ ] can keep track of school inventory
+	- [ ] can generate overall class performance reports
+	- [ ] can generate daily, weekly, monthly class attendance reports per class
+	- [ ] can create educational articles
+	- [ ] can export all reports as csv , xl, pdf, doc
 	
 - teacher
 
-	- can record school attendance
-	- can update students grades
-	- can view past grades
-	- can upload past papers
-	- can view school timetable
-	- can view school duties
-	- can edit lesson plans
-	- can view lesson plans
-	- can generate exam reports 
-	- can view exam analysis per exam, per term ,per year and can go to the past for the same
+	- [ ] can record school attendance
+	- [ ] can update students grades
+	- [ ] can view past grades
+	- [ ] can upload past papers
+	- [ ] can view school timetable
+	- [ ] can view school duties
+	- [ ] can edit lesson plans
+	- [ ] can view lesson plans
+	- [ ] can generate exam reports 
+	- [ ] can view exam analysis per exam, per term ,per year and [ ] can go to the past for the same
 	
 - student/parent
-	- can view grades
-	- can view past payments
-	- can login
-	- can view past papers
-	- can view articles about specific topics
-	- can view class specific timetable
+
+	- [ ] can view grades
+	- [ ] can view past payments
+	- [ ] can login
+	- [ ] can view past papers
+	- [ ] can view articles about specific topics
+	- [ ] can view class specific timetable
 
 ## Monetization and marketing plan
 
