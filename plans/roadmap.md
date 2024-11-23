@@ -55,6 +55,14 @@
 	- [ ] can view articles about specific topics
 	- [ ] can view class specific timetable
 
+## Possible third party integrations
+
+	- [ ] mpesa 
+	- [ ] bank
+	- [ ] resend/ amazon ses (emails)
+	- [ ] s3 for media files like pdfs/docs etc
+	- [ ] africastalking sms api for school communication messages to parents
+	
 ## Monetization and marketing plan
 
 - 10 schools:
