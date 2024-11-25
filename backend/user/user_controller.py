@@ -13,13 +13,12 @@ from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
 from backend.user.user_authentication import OptionalUserAuthenticationContextDependency
 from pyotp import TOTP
+
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 dashboard_url = os.environ["DASHBOARD_URL"]
 
 
 router = APIRouter()
-
-
 
 
 class RegisterRequestBody(BaseModel):
@@ -36,7 +35,11 @@ def register(
     body: RegisterRequestBody,
     db: DatabaseDependency,
 ):
-    school_user = db.query(User).filter((User.email == body.email) | (User.username == body.username)).first()
+    school_user = (
+        db.query(User)
+        .filter((User.email == body.email) | (User.username == body.username))
+        .first()
+    )
 
     if school_user:
         raise HTTPException(
@@ -70,20 +73,23 @@ def register(
 
     return {"message": "School registered successfully"}
 
+
 class LoginRequestBody(BaseModel):
     identity: str
     password: str
 
 
-@router.post("/auth/user/login",status_code=status.HTTP_200_OK)
+@router.post("/auth/user/login", status_code=status.HTTP_200_OK)
 def login(
     body: LoginRequestBody,
     response: Response,
     db: DatabaseDependency,
 ):
-    user = db.query(User).filter(
-        (User.email == body.identity) | (User.username == body.identity)
-    ).first()
+    user = (
+        db.query(User)
+        .filter((User.email == body.identity) | (User.username == body.identity))
+        .first()
+    )
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -131,7 +137,7 @@ def login(
     }
 
 
-@router.post("/auth/user/logout",status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/auth/user/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
     response: Response,
 ):
@@ -141,11 +147,10 @@ def logout(
     return {}
 
 
-@router.get("/auth/user/session",status_code=status.HTTP_200_OK)
+@router.get("/auth/user/session", status_code=status.HTTP_200_OK)
 def get_user_session(
     db: DatabaseDependency,
     auth_context: OptionalUserAuthenticationContextDependency,
-
 ):
     if not auth_context:
         raise HTTPException(status_code=404)
@@ -183,7 +188,9 @@ def trigger_set_password(
     user = db.query(User)
 
     if isinstance(body, TriggerSetPasswordWithEmailRequestBody):
-        user = user.filter((User.email == body.identity) | (User.username == body.identity))
+        user = user.filter(
+            (User.email == body.identity) | (User.username == body.identity)
+        )
     elif isinstance(body, TriggerSetPasswordWithIDRequestBody):
         user = user.filter(User.id == body.id)
     else:
@@ -194,7 +201,6 @@ def trigger_set_password(
     if not user:
         raise HTTPException(status_code=404)
 
-    
     otp = TOTP(
         user.secret_key,
         digest=hashlib.sha256,
@@ -202,7 +208,7 @@ def trigger_set_password(
         interval=300,
     ).now()
 
-    email_params=SendEmailParams(
+    email_params = SendEmailParams(
         email=user.email,
         subject="Set Password",
         message=f"Your password reset code is {otp}",
@@ -220,17 +226,21 @@ class SetPasswordTokenData(BaseModel):
     user_id: uuid.UUID
 
 
-@router.post("/auth/user/set_password",status_code=status.HTTP_201_CREATED)
+@router.post("/auth/user/set_password", status_code=status.HTTP_201_CREATED)
 def set_password(
     db: DatabaseDependency,
     body: SetPasswordRequestBody,
-):  
+):
 
-    user = db.query(User).filter((User.email == body.identity) | (User.username == body.identity)).first()
+    user = (
+        db.query(User)
+        .filter((User.email == body.identity) | (User.username == body.identity))
+        .first()
+    )
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     if not TOTP(
         user.secret_key,
         digest=hashlib.sha256,
@@ -242,6 +252,4 @@ def set_password(
     user.password_hash = hash_password(body.password)
     db.commit()
 
-    return {
-        "message": "Password reset successfully"
-    }
+    return {"message": "Password reset successfully"}
