@@ -65,15 +65,12 @@
 
 ## Monetization and marketing plan
 
-- 10 schools:
-	- 1st year
-	- 10 X1000X100= 1000,000 Ksh /year
-- 100 schools
-	- 2nd year milestone
-	- 100X1000X100= 10,000,000 Ksh/year
-- 200 schools
-	- 3rd year milestone
-	- 200 X1000X100= 20,000,000 Ksh/year
-- 1000 schools
-	- 4 year milestone
-	- 1000 X 1000 X100= 100,000,000 Ksh/year
+- 1st year:
+	- 10 schools
+- 2nd year:
+	- 100 schools
+- 3rd year:
+	- 500 school
+- 4th year
+	- 1000 schools
+	
