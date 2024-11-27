@@ -34,7 +34,7 @@
   pip install -r requirements.txt
   ```
 - start docker for local development
-  ````
+  ```bash
   docker compose -f infrastructure_services/docker-compose.dev.yml up
   ```
 - Run migrations
