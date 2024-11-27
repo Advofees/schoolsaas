@@ -56,8 +56,9 @@
 	- [ ] can view class specific timetable
 
 ## Third party integrations
-- 
+- 	
 	- [ ] mpesa 
+	- [ ] calendar for events and timetables/notifications etc
 	- [ ] bank
 	- [ ] resend/ amazon ses (emails)
 	- [ ] s3 for media files like pdfs/docs etc

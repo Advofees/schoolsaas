@@ -121,10 +121,7 @@ def partial_update_student_attendance(
     db: DatabaseDependency,
     authentication_context: UserAuthenticationContextDependency,
 ):
-    """
-    Partially update a student's attendance record
-    """
-    # Verify user is authenticated and is a teacher
+
     user = db.query(User).filter(User.id == authentication_context.user_id).first()
     if not user:
         raise HTTPException(404, detail="user-not-found")

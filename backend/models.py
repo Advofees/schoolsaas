@@ -147,8 +147,8 @@ class Student(Base):
         back_populates="students",
         viewonly=True,
     )
-    search_vector: Mapped[str] = mapped_column(TSVECTOR)
 
+    search_vector: Mapped[typing.Optional[str]] = mapped_column(TSVECTOR, nullable=True)
     __table_args__ = (
         Index("ix_students_search_vector", "search_vector", postgresql_using="gin"),
     )
@@ -936,3 +936,161 @@ class Role(Base):
         self.name = name
         self.description = description
         self.type = type
+
+
+class DayOfWeek(enum.Enum):
+    MONDAY = "monday"
+    TUESDAY = "tuesday"
+    WEDNESDAY = "wednesday"
+    THURSDAY = "thursday"
+    FRIDAY = "friday"
+    SATURDAY = "saturday"
+    SUNDAY = "sunday"
+
+
+class TimeSlot(Base):
+    __tablename__ = "time_slots"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    start_time: Mapped[datetime.datetime] = mapped_column(nullable=False)
+    end_time: Mapped[datetime.datetime] = mapped_column(nullable=False)
+    day_of_week: Mapped[DayOfWeek] = mapped_column(Enum(DayOfWeek), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime, onupdate=func.now(), nullable=True
+    )
+
+    timetable_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("timetables.id"))
+    timetable: Mapped["Timetable"] = relationship(
+        "Timetable", back_populates="time_slots"
+    )
+
+    module_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("modules.id"))
+    module: Mapped["Module"] = relationship("Module")
+
+    teacher_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("teachers.id"))
+    teacher: Mapped["Teacher"] = relationship("Teacher")
+
+    classroom_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("classrooms.id"))
+    classroom: Mapped["Classroom"] = relationship("Classroom")
+
+    def __init__(
+        self,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
+        day_of_week: DayOfWeek,
+        timetable_id: uuid.UUID,
+        module_id: uuid.UUID,
+        teacher_id: uuid.UUID,
+        classroom_id: uuid.UUID,
+    ):
+        super().__init__()
+        self.start_time = start_time
+        self.end_time = end_time
+        self.day_of_week = day_of_week
+        self.timetable_id = timetable_id
+        self.module_id = module_id
+        self.teacher_id = teacher_id
+        self.classroom_id = classroom_id
+
+
+class Timetable(Base):
+    __tablename__ = "timetables"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    academic_year: Mapped[str] = mapped_column(String, nullable=False)
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime, onupdate=func.now(), nullable=True
+    )
+
+    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("schools.id"))
+    academic_term_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("academic_terms.id")
+    )
+    grade_level: Mapped[int] = mapped_column()
+
+    school: Mapped["School"] = relationship("School")
+    academic_term: Mapped["AcademicTerm"] = relationship("AcademicTerm")
+    time_slots: Mapped[list["TimeSlot"]] = relationship(
+        "TimeSlot", back_populates="timetable", cascade="all, delete-orphan"
+    )
+
+    def __init__(
+        self,
+        name: str,
+        academic_year: str,
+        school_id: uuid.UUID,
+        academic_term_id: uuid.UUID,
+        grade_level: int,
+    ):
+        super().__init__()
+        self.name = name
+        self.academic_year = academic_year
+        self.school_id = school_id
+        self.academic_term_id = academic_term_id
+        self.grade_level = grade_level
+
+
+class CalendarEvent(Base):
+    __tablename__ = "calendar_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[typing.Optional[str]] = mapped_column(String)
+    start_datetime: Mapped[datetime.datetime] = mapped_column(nullable=False)
+    end_datetime: Mapped[datetime.datetime] = mapped_column(nullable=False)
+    is_recurring: Mapped[bool] = mapped_column(default=False)
+    recurrence_rule: Mapped[typing.Optional[str]] = mapped_column(String)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=func.now(), nullable=False
+    )
+    updated_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column(
+        onupdate=func.now(), nullable=True
+    )
+
+    school_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schools.id"))
+    creator_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+
+    module_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("modules.id"), nullable=True
+    )
+    classroom_id: Mapped[typing.Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("classrooms.id"), nullable=True
+    )
+
+    school: Mapped["School"] = relationship("School")
+    creator: Mapped["User"] = relationship("User")
+    module: Mapped[typing.Optional["Module"]] = relationship("Module")
+    classroom: Mapped[typing.Optional["Classroom"]] = relationship("Classroom")
+
+    def __init__(
+        self,
+        title: str,
+        start_datetime: datetime.datetime,
+        end_datetime: datetime.datetime,
+        school_id: uuid.UUID,
+        creator_id: uuid.UUID,
+        description: typing.Optional[str] = None,
+        is_recurring: bool = False,
+        recurrence_rule: typing.Optional[str] = None,
+        module_id: typing.Optional[uuid.UUID] = None,
+        classroom_id: typing.Optional[uuid.UUID] = None,
+    ):
+        super().__init__()
+        self.title = title
+        self.description = description
+        self.start_datetime = start_datetime
+        self.end_datetime = end_datetime
+        self.is_recurring = is_recurring
+        self.recurrence_rule = recurrence_rule
+        self.school_id = school_id
+        self.creator_id = creator_id
+        self.module_id = module_id
+        self.classroom_id = classroom_id

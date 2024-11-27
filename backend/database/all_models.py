@@ -22,7 +22,10 @@ from backend.models import (
     Role,
     RolePermissionAssociation,
     UserRoleAssociation,
-    ModuleEnrollment
+    ModuleEnrollment,
+    Timetable,
+    TimeSlot,
+    CalendarEvent,
 )
 
 
@@ -49,5 +52,8 @@ def get_all_models() -> list[Type[Base]]:
         Role,
         RolePermissionAssociation,
         UserRoleAssociation,
-        ModuleEnrollment
+        ModuleEnrollment,
+        Timetable,
+        TimeSlot,
+        CalendarEvent,
     ]

@@ -166,7 +166,7 @@ def seed_user(db: Session):
     db.flush()
 
     # --create school teachers
-    teachers:list[Teacher] = []
+    teachers: list[Teacher] = []
     for i in range(len(possible_modules)):
         teacher_user = User(
             username=faker.user_name(),
@@ -187,10 +187,9 @@ def seed_user(db: Session):
     db.add_all(teachers)
     db.flush()
 
-
     # --- create school students
-    students:list[Student] = []
-    
+    students: list[Student] = []
+
     for j in range(5):
         student_user = User(
             username=faker.user_name(),
@@ -212,9 +211,8 @@ def seed_user(db: Session):
         db.add(student)
         students.append(student)
         db.flush()
-        school_student_association=SchoolStudentAssociation(
-            student_id=student.id,
-            school_id=school.id
+        school_student_association = SchoolStudentAssociation(
+            student_id=student.id, school_id=school.id
         )
         db.add(school_student_association)
         db.flush()
@@ -222,8 +220,7 @@ def seed_user(db: Session):
     db.add_all(students)
     db.flush()
 
-
-    exam_results:list[ExamResult] = []
+    exam_results: list[ExamResult] = []
     for student in students:
         for module in modules:
             # --- create module enrollment
@@ -233,22 +230,70 @@ def seed_user(db: Session):
             )
             db.add(module_enrollment)
             db.flush()
-        
+
             # --- create exam results
             exam_result = ExamResult(
-                        marks_obtained=decimal.Decimal(random.randint(40, 100)),
-                        exam_id=exam.id,
-                        student_id=student.id,
-                        class_room_id=classroom.id,
-                        module_id=module.id,
-                    )
+                marks_obtained=decimal.Decimal(random.randint(40, 100)),
+                exam_id=exam.id,
+                student_id=student.id,
+                class_room_id=classroom.id,
+                module_id=module.id,
+            )
             exam_results.append(exam_result)
     db.add_all(exam_results)
     db.flush()
-
 
 
 if __name__ == "__main__":
     db = get_db()
     seed_user(db)
     db.commit()
+
+
+# # Example usage:
+# def setup_grade_timetable(
+#     db: Session, school_id: uuid.UUID, academic_term_id: uuid.UUID
+# ):
+#     """Example of setting up a complete timetable for a grade."""
+
+#     # Create timetable
+#     timetable = Timetable(
+#     name=name,
+#     academic_year=academic_year,
+#     school_id=school_id,
+#     academic_term_id=academic_term_id,
+#     grade_level=grade_level,
+# )
+#     db.add(timetable)
+#     db.commit()
+
+
+#     # Add time slots for each day
+#     time_slot = add_time_slot(
+#         db=db,
+#         timetable_id=timetable.id,
+#         day=DayOfWeek.MONDAY,
+#         start_time=time(8, 0),  # 8:00 AM
+#         end_time=time(8, 40),  # 8:40 AM
+#         module_id=module_id,  # Assume defined
+#         teacher_id=teacher_id,  # Assume defined
+#         classroom_id=classroom_id,  # Assume defined
+#     )
+
+#     # Create calendar events for the term
+#     term_start = datetime(2024, 1, 1)
+#     term_end = datetime(2024, 4, 30)
+
+#     calendar_events = create_calendar_events_from_timetable(
+#         db=db, timetable=timetable, start_date=term_start, end_date=term_end
+#     )
+
+#     # Get teacher's schedule
+#     schedule = get_teacher_schedule(
+#         db=db,
+#         teacher_id=teacher_id,
+#         start_date=term_start,
+#         end_date=term_start + timedelta(days=7),
+#     )
+
+#     return timetable, calendar_events, schedule
