@@ -74,3 +74,10 @@
 - 4th year
 	- 1000 schools
 	
+# schools
+Bungoma DEB primary school 3000 pupils +
+Kiambu county 200 schools, 200 pupils+
+
+serve 1 million students 
+- 1000,000 by 100
+	- total: 100,000,000

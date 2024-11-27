@@ -1,23 +1,18 @@
 import datetime
 import uuid
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import func, or_
+from fastapi import APIRouter, HTTPException
+
 
 from backend.database.database import DatabaseDependency
 from backend.models import (
     Classroom,
     ParentStudentAssociation,
-    School,
     SchoolParent,
     Student,
     User,
 )
 from backend.user.user_authentication import UserAuthenticationContextDependency
-from sqlalchemy import select, func, and_
-
-from typing import Optional
-from fastapi import Query
 
 
 router = APIRouter()
@@ -217,94 +212,5 @@ async def get_students_in_classroom(
         raise HTTPException(status_code=403, detail="Permission denied")
 
     students = db.query(Student).filter(Student.classroom_id == class_room_id).all()
-
-    return students
-
-
-class StudentSearchParams(BaseModel):
-    search_term: Optional[str] = None
-    student_id: Optional[uuid.UUID] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    gender: Optional[str] = None
-    grade_level_min: Optional[int] = None
-    grade_level_max: Optional[int] = None
-    date_of_birth_start: Optional[datetime.date] = None
-    date_of_birth_end: Optional[datetime.date] = None
-
-
-@router.get("/school/search/advanced-search")
-async def advanced_search_students_feat(
-    db: DatabaseDependency,
-    auth_context: UserAuthenticationContextDependency,
-    search_term: Optional[str] = Query(None),
-    first_name: Optional[str] = Query(None),
-    last_name: Optional[str] = Query(None),
-    gender: Optional[str] = Query(None),
-    grade_level_min: Optional[int] = Query(None),
-    grade_level_max: Optional[int] = Query(None),
-    date_of_birth_start: Optional[datetime.date] = Query(None),
-    date_of_birth_end: Optional[datetime.date] = Query(None),
-    limit: int = Query(10, le=100),
-    offset: int = Query(0, ge=0),
-):
-    params = StudentSearchParams(
-        search_term=search_term,
-        first_name=first_name,
-        last_name=last_name,
-        gender=gender,
-        grade_level_min=grade_level_min,
-        grade_level_max=grade_level_max,
-        date_of_birth_start=date_of_birth_start,
-        date_of_birth_end=date_of_birth_end,
-    )
-
-    user = db.query(User).filter(User.id == auth_context.user_id).first()
-    if not user:
-        raise HTTPException(status_code=403)
-    user_school_ids = [assoc.school_id for assoc in user.school_user.school_parent_associations]
-
-    conditions = []
-    if params.search_term:
-        conditions.append(
-            or_(
-                Student.first_name.ilike(f"%{params.search_term}%"),
-                Student.last_name.ilike(f"%{params.search_term}%"),
-                func.similarity(Student.first_name, params.search_term) > 0.1,
-                func.similarity(Student.last_name, params.search_term) > 0.1,
-            )
-        )
-    if params.student_id:
-        conditions.append(Student.id == params.student_id)
-    if params.first_name:
-        conditions.append(Student.first_name.ilike(f"%{params.first_name}%"))
-    if params.last_name:
-        conditions.append(Student.last_name.ilike(f"%{params.last_name}%"))
-    if params.gender:
-        conditions.append(Student.gender == params.gender)
-    if params.grade_level_min is not None:
-        conditions.append(Student.grade_level >= params.grade_level_min)
-    if params.grade_level_max is not None:
-        conditions.append(Student.grade_level <= params.grade_level_max)
-    if params.date_of_birth_start:
-        conditions.append(Student.date_of_birth >= params.date_of_birth_start)
-    if params.date_of_birth_end:
-        conditions.append(Student.date_of_birth <= params.date_of_birth_end)
-
-    query = select(Student)
-    if conditions:
-        query = query.filter(
-            and_(*conditions),
-             Student.schools.any(School.id.in_(user_school_ids)),
-        )
-
-    query = query.order_by(Student.last_name, Student.first_name)
-    query = query.offset(offset).limit(limit)
-
-    result = db.execute(query)
-    students = result.scalars().all()
-
-    if not students:
-        raise HTTPException(status_code=404, detail="No students found")
 
     return students
