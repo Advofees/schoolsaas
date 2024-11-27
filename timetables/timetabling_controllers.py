@@ -254,21 +254,13 @@ class TimetableEventGeneration(BaseModel):
     end_date: datetime.datetime
 
 
-def ensure_time_type(time_value: datetime.time | datetime.datetime) -> datetime.time:
-    """Convert datetime or time to time object."""
-    if isinstance(time_value, datetime):
-        return time_value.time()
-    return time_value
-
-
 @router.post("/timetables/{timetable_id}/generate-events")
 async def generate_timetable_events(
     timetable_id: uuid.UUID,
     event_params: TimetableEventGeneration,
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
-) -> list[CalendarEvent]:
-    """Generate calendar events from a timetable."""
+):
 
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
@@ -281,35 +273,32 @@ async def generate_timetable_events(
     if not timetable:
         raise HTTPException(status_code=404, detail="Timetable not found")
 
-    events = []
-    time_slots = timetable.time_slots
+    # events = []
+    # time_slots = timetable.time_slots
 
-    for slot in time_slots:
-        # Convert to time type with explicit type handling
-        start_time = ensure_time_type(slot.start_time)
-        end_time = ensure_time_type(slot.end_time)
+    # for slot in time_slots:
 
-        event = CalendarEvent(
-            title=f"{slot.module.name} - {slot.classroom.name}",
-            description=f"Teacher: {slot.teacher.first_name} {slot.teacher.last_name}",
-            start_datetime=datetime.datetime.combine(
-                event_params.start_date.date(), start_time
-            ),
-            end_datetime=datetime.datetime.combine(
-                event_params.start_date.date(), end_time
-            ),
-            is_recurring=True,
-            recurrence_rule=f"FREQ=WEEKLY;BYDAY={slot.day_of_week.value[:2].upper()};UNTIL={event_params.end_date.strftime('%Y%m%d')}",
-            school_id=timetable.school_id,
-            creator_id=slot.teacher.user_id,
-            module_id=slot.module_id,
-            classroom_id=slot.classroom_id,
-        )
-        db.add(event)
-        events.append(event)
+    #     event = CalendarEvent(
+    #         title=f"{slot.module.name} - {slot.classroom.name}",
+    #         description=f"Teacher: {slot.teacher.first_name} {slot.teacher.last_name}",
+    #         start_datetime=datetime.datetime.combine(
+    #             event_params.start_date.date(), slot.start_time
+    #         ),
+    #         end_datetime=datetime.datetime.combine(
+    #             event_params.start_date.date(), slot.end_time
+    #         ),
+    #         is_recurring=True,
+    #         recurrence_rule=f"FREQ=WEEKLY;BYDAY={slot.day_of_week.value[:2].upper()};UNTIL={event_params.end_date.strftime('%Y%m%d')}",
+    #         school_id=timetable.school_id,
+    #         creator_id=slot.teacher.user_id,
+    #         module_id=slot.module_id,
+    #         classroom_id=slot.classroom_id,
+    #     )
+    #     db.add(event)
+    #     events.append(event)
 
-    db.commit()
-    return events
+    # db.commit()
+    # return events
 
 
 @router.post("/exams/{exam_id}/schedule")
@@ -334,7 +323,7 @@ async def schedule_exam(
         title=f"Exam: {exam.name} - {exam.module.name}",
         description=f"Total Marks: {exam.total_marks}",
         start_datetime=exam.date,
-        end_datetime=exam.date + datetime.timedelta(hours=2),  # Assuming 2-hour exam
+        end_datetime=exam.date + datetime.timedelta(hours=2),
         school_id=school_id,
         creator_id=user.id,
         module_id=exam.module_id,
