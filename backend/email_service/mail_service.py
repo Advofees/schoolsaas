@@ -9,11 +9,11 @@ resend.api_key = os.environ.get("EMAIL_SERVICE_API_KEY")
 EMAIL_DOMAIN = os.environ.get("EMAIL_DOMAIN")
 
 
-
 class SendEmailParams(BaseModel):
     email: str
     subject: str
     message: str
+
 
 def send_mail(body: SendEmailParams) -> resend.Email:
     params = {

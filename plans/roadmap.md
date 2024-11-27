@@ -56,8 +56,9 @@
 	- [ ] can view class specific timetable
 
 ## Third party integrations
-- 
+- 	
 	- [ ] mpesa 
+	- [ ] calendar for events and timetables/notifications etc
 	- [ ] bank
 	- [ ] resend/ amazon ses (emails)
 	- [ ] s3 for media files like pdfs/docs etc
@@ -74,3 +75,10 @@
 - 4th year
 	- 1000 schools
 	
+# schools
+Bungoma DEB primary school 3000 pupils +
+Kiambu county 200 schools, 200 pupils+
+
+serve 1 million students 
+- 1000,000 by 100
+	- total: 100,000,000
