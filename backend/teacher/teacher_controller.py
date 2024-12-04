@@ -2,7 +2,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from backend.database.database import DatabaseDependency
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
-from backend.models import RoleType, School, Teacher, User
+from backend.school.school_model import School
+from backend.teacher.teacher_model import Teacher
+from backend.user.user_models import RoleType, User
 from backend.user.passwords import generate_temp_password, hash_password
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
@@ -74,13 +76,13 @@ async def create_teacher_in_particular_school(
     auth_context: UserAuthenticationContextDependency,
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     if not user.has_role_type(RoleType.SCHOOL_ADMIN):
         raise HTTPException(status_code=403, detail="Permission denied")
-    
+
     if not any(
         permission.permissions.teacher_permissions.can_add_teachers
         for role in user.roles
@@ -101,7 +103,7 @@ async def create_teacher_in_particular_school(
         )
     temporary_password = generate_temp_password(8)
 
-    email_params=SendEmailParams(
+    email_params = SendEmailParams(
         email=user.email,
         subject="Welcome to {school.name}",
         message=f"You have been added as a teacher in our school : here is temporary password{temporary_password}, change it after login",
