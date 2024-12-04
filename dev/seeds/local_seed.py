@@ -4,10 +4,6 @@ load_dotenv()
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 from backend.database.all_models import get_all_models
 
 get_all_models()
