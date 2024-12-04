@@ -5,4 +5,4 @@ set -euo pipefail
 export PYTHONPATH=$(pwd)
 
 # Run the seed script
-python dev/seeds/seed.py
+python3 dev/seeds/local_seed.py

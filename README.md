@@ -38,16 +38,15 @@
   docker compose -f infrastructure_services/docker-compose.dev.yml down
   docker compose -f infrastructure_services/docker-compose.dev.yml up
   ```
-- Run migrations
-
-  ```bash
-  ./run-migrations.sh
-  ```
 - Seed the database
-  ```bash
+  - ```bash
 
   ./seed-database.sh 
 
+  ```
+  - or 
+  ```bash
+   python3 dev/seeds/local_seed.py
   ```
   - Start server
 
@@ -70,5 +69,3 @@
   ./generate-migrations
   ./run-migrations.sh
   ```
-
-

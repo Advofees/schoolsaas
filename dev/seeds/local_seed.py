@@ -2,6 +2,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import backend.database.all_models  # pyright: ignore [reportUnusedImport]
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from backend.database.all_models import get_all_models
 
 get_all_models()
@@ -37,15 +43,37 @@ from backend.exam.exam_model import Exam
 from backend.exam.exam_results.exam_result_model import ExamResult
 
 from backend.user.passwords import hash_password
-from sqlalchemy.orm import Session
 from backend.database.database import get_db
 import datetime
 
+from sqlalchemy import MetaData, create_engine
+
+from backend.database.database import DATABASE_URL, get_db
+
+from alembic import command
+from alembic.config import Config
+
+engine = create_engine(DATABASE_URL)
+
+metadata = MetaData()
+metadata.reflect(engine)
 faker = Faker()
+with engine.begin() as connection:
+    # the use of reversed(metadata.sorted_tables) is to ensure that foreign key constraints are not violated
+    for table in reversed(metadata.sorted_tables):
+        if table.name == "alembic_version":
+            continue
+
+        connection.execute(table.delete())
+
+engine.dispose()
+
+alembic_cfg = Config("alembic.ini")
+command.upgrade(alembic_cfg, "head")
 
 
-def seed_user(db: Session):
-    # Create permission definitions
+with get_db() as db:
+
     school_management_permission_definition = PERMISSIONS(
         teacher_permissions=TeacherPermissions(
             can_add_teachers=True,
@@ -282,55 +310,4 @@ def seed_user(db: Session):
     db.add_all(exam_results)
     db.flush()
 
-
-if __name__ == "__main__":
-    db = get_db()
-    seed_user(db)
     db.commit()
-# # Example usage:
-# def setup_grade_timetable(
-#     db: Session, school_id: uuid.UUID, academic_term_id: uuid.UUID
-# ):
-#     """Example of setting up a complete timetable for a grade."""
-
-#     # Create timetable
-#     timetable = Timetable(
-#     name=name,
-#     academic_year=academic_year,
-#     school_id=school_id,
-#     academic_term_id=academic_term_id,
-#     grade_level=grade_level,
-# )
-#     db.add(timetable)
-#     db.commit()
-
-
-#     # Add time slots for each day
-#     time_slot = add_time_slot(
-#         db=db,
-#         timetable_id=timetable.id,
-#         day=DayOfWeek.MONDAY,
-#         start_time=time(8, 0),  # 8:00 AM
-#         end_time=time(8, 40),  # 8:40 AM
-#         module_id=module_id,  # Assume defined
-#         teacher_id=teacher_id,  # Assume defined
-#         classroom_id=classroom_id,  # Assume defined
-#     )
-
-#     # Create calendar events for the term
-#     term_start = datetime(2024, 1, 1)
-#     term_end = datetime(2024, 4, 30)
-
-#     calendar_events = create_calendar_events_from_timetable(
-#         db=db, timetable=timetable, start_date=term_start, end_date=term_end
-#     )
-
-#     # Get teacher's schedule
-#     schedule = get_teacher_schedule(
-#         db=db,
-#         teacher_id=teacher_id,
-#         start_date=term_start,
-#         end_date=term_start + timedelta(days=7),
-#     )
-
-#     return timetable, calendar_events, schedule

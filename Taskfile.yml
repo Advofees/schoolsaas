@@ -26,7 +26,7 @@ tasks:
     desc: "Stop and remove Docker services and volumes"
     cmds:
       - docker compose -f infrastructure_services/docker-compose.dev.yml down -v
-  server:
+  start-server:
     desc: "Start the server"
     cmds:
       -  ./backend/start.dev.sh
