@@ -1,9 +1,14 @@
-import decimal
 from dotenv import load_dotenv
-from faker import Faker
 
 load_dotenv()
+
+from backend.database.all_models import get_all_models
+
+get_all_models()
+
 import random
+import decimal
+from faker import Faker
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 from backend.permissions.permissions_schemas import (
@@ -12,25 +17,25 @@ from backend.permissions.permissions_schemas import (
     StudentPermissions,
     TeacherPermissions,
 )
-from backend.models import (
-    ModuleEnrollment,
+from backend.user.user_models import (
+    User,
     Role,
     RoleType,
-    SchoolStudentAssociation,
-    User,
-    School,
     UserPermission,
-    Teacher,
-    Module,
-    Student,
-    Exam,
-    ExamResult,
-    Classroom,
-    AcademicTerm,
-    UserRoleAssociation,
     RolePermissionAssociation,
     UserPermissionAssociation,
+    UserRoleAssociation,
 )
+from backend.module.module_model import Module, ModuleEnrollment
+from backend.school.school_model import School
+from backend.student.student_model import Student
+from backend.teacher.teacher_model import Teacher
+from backend.classroom.classroom_model import Classroom
+from backend.academic_term.academic_term_model import AcademicTerm
+from backend.school.school_model import School, SchoolStudentAssociation
+from backend.exam.exam_model import Exam
+from backend.exam.exam_results.exam_result_model import ExamResult
+
 from backend.user.passwords import hash_password
 from sqlalchemy.orm import Session
 from backend.database.database import get_db

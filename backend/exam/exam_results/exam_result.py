@@ -6,7 +6,11 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from backend.database.database import DatabaseDependency
-from backend.models import ExamResult, ModuleEnrollment, User
+
+from backend.exam.exam_results.exam_result_model import ExamResult
+from backend.user.user_models import User
+from backend.module.module_model import ModuleEnrollment
+
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
 router = APIRouter()

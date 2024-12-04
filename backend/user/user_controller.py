@@ -7,7 +7,8 @@ import hashlib
 
 from pydantic import BaseModel
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
-from backend.models import School, User, UserSession
+from backend.user.user_models import User, UserSession
+from backend.school.school_model import School
 from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
