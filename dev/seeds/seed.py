@@ -8,9 +8,6 @@ import random
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 from backend.permissions.permissions_schemas import (
     PERMISSIONS,
-    ClassPermissions,
-    ExamResultPermissions,
-    ParentPermissions,
     SchoolPermissions,
     StudentPermissions,
     TeacherPermissions,
@@ -31,6 +28,8 @@ from backend.models import (
     Classroom,
     AcademicTerm,
     UserRoleAssociation,
+    RolePermissionAssociation,
+    UserPermissionAssociation,
 )
 from backend.user.passwords import hash_password
 from sqlalchemy.orm import Session
@@ -41,31 +40,13 @@ faker = Faker()
 
 
 def seed_user(db: Session):
-
-    parent_management_permission_definition = PERMISSIONS(
-        class_permissions=ClassPermissions(
-            can_add_classes=True,
-            can_edit_classes=True,
-            can_view_classes=True,
-            can_delete_classes=True,
-        ),
+    # Create permission definitions
+    school_management_permission_definition = PERMISSIONS(
         teacher_permissions=TeacherPermissions(
             can_add_teachers=True,
             can_edit_teachers=True,
             can_view_teachers=True,
             can_delete_teachers=True,
-        ),
-        exam_result_permissions=ExamResultPermissions(
-            can_add_exam_results=True,
-            can_edit_exam_results=True,
-            can_view_exam_results=True,
-            can_delete_exam_results=True,
-        ),
-        parent_permissions=ParentPermissions(
-            can_add_parents=True,
-            can_edit_parents=True,
-            can_view_parents=True,
-            can_delete_parents=True,
         ),
         student_permissions=StudentPermissions(
             can_add_students=True,
@@ -79,27 +60,31 @@ def seed_user(db: Session):
             can_add_school=True,
             can_edit_school=True,
             can_delete_school=True,
-            can_manage_permissions=True,
-            can_delete_permissions=True,
-            can_add_permissions=True,
-            can_edit_permissions=True,
-            can_view_permissions=True,
         ),
     )
 
-    parent_management_permission_user_permission = UserPermission(
-        permission_description=parent_management_permission_definition
+    # Create UserPermission instance
+    school_management_permission = UserPermission(
+        permission_description=school_management_permission_definition
     )
-
-    db.add(parent_management_permission_user_permission)
+    db.add(school_management_permission)
     db.flush()
 
-    role = Role(name="SchoolRole", type=RoleType.SCHOOL_ADMIN)
-    role.user_permissions.append(parent_management_permission_user_permission)
-
-    db.add(role)
+    school_admin_role = Role(
+        name="SchoolRole",
+        type=RoleType.SCHOOL_ADMIN,
+        description="School Administrator Role",
+    )
+    db.add(school_admin_role)
     db.flush()
 
+    school_role_permission_assoc = RolePermissionAssociation(
+        role_id=school_admin_role.id, user_permission_id=school_management_permission.id
+    )
+    db.add(school_role_permission_assoc)
+    db.flush()
+
+    # Create User
     user = User(
         username="school",
         email="school@app.com",
@@ -107,6 +92,15 @@ def seed_user(db: Session):
     )
     db.add(user)
     db.flush()
+
+    # Create UserPermissionAssociation
+    user_permission_assoc = UserPermissionAssociation(
+        user_id=user.id, user_permission_id=school_management_permission.id
+    )
+    db.add(user_permission_assoc)
+    db.flush()
+
+    # Create School
     school = School(
         name=faker.name(),
         address=faker.address(),
@@ -116,10 +110,15 @@ def seed_user(db: Session):
     )
     db.add(school)
     db.flush()
-    user_role_association = UserRoleAssociation(user_id=user.id, role_id=role.id)
+
+    # Create UserRoleAssociation
+    user_role_association = UserRoleAssociation(
+        user_id=user.id, role_id=school_admin_role.id
+    )
     db.add(user_role_association)
     db.flush()
 
+    # Create Classroom
     classroom = Classroom(
         name=f"Classroom 1 ",
         grade_level=1,
@@ -128,6 +127,7 @@ def seed_user(db: Session):
     db.add(classroom)
     db.flush()
 
+    # Create AcademicTerm
     academic_term = AcademicTerm(
         name=f"Term 1",
         start_date=datetime.datetime(2023, 1, 1),
@@ -136,6 +136,8 @@ def seed_user(db: Session):
     )
     db.add(academic_term)
     db.flush()
+
+    # Create Modules
     possible_modules = [
         "Mathematics",
         "Science",
@@ -155,6 +157,7 @@ def seed_user(db: Session):
     db.add_all(modules)
     db.flush()
 
+    # Create Exam
     exam = Exam(
         name=f"Exam Module name",
         date=datetime.datetime(2023, 6, 1),
@@ -165,15 +168,30 @@ def seed_user(db: Session):
     db.add(exam)
     db.flush()
 
-    # --create school teachers
+    # Create Teachers
     teachers: list[Teacher] = []
     for i in range(len(possible_modules)):
+        # Create teacher user with permissions
         teacher_user = User(
             username=faker.user_name(),
             email=faker.email(),
             password_hash=hash_password("password123"),
         )
         db.add(teacher_user)
+        db.flush()
+
+        # Create teacher role and permissions if needed
+        teacher_role = Role(
+            name=f"TeacherRole_{i}", type=RoleType.TEACHER, description="Teacher Role"
+        )
+        db.add(teacher_role)
+        db.flush()
+
+        # Associate teacher user with role
+        teacher_role_assoc = UserRoleAssociation(
+            user_id=teacher_user.id, role_id=teacher_role.id
+        )
+        db.add(teacher_role_assoc)
         db.flush()
 
         teacher = Teacher(
@@ -187,16 +205,30 @@ def seed_user(db: Session):
     db.add_all(teachers)
     db.flush()
 
-    # --- create school students
+    # Create Students
     students: list[Student] = []
-
     for j in range(5):
+        # Create student user with permissions
         student_user = User(
             username=faker.user_name(),
             email=faker.email(),
             password_hash=hash_password("password123"),
         )
         db.add(student_user)
+        db.flush()
+
+        # Create student role and permissions
+        student_role = Role(
+            name=f"StudentRole_{j}", type=RoleType.STUDENT, description="Student Role"
+        )
+        db.add(student_role)
+        db.flush()
+
+        # Associate student user with role
+        student_role_assoc = UserRoleAssociation(
+            user_id=student_user.id, role_id=student_role.id
+        )
+        db.add(student_role_assoc)
         db.flush()
 
         student = Student(
@@ -211,6 +243,7 @@ def seed_user(db: Session):
         db.add(student)
         students.append(student)
         db.flush()
+
         school_student_association = SchoolStudentAssociation(
             student_id=student.id, school_id=school.id
         )
@@ -220,10 +253,11 @@ def seed_user(db: Session):
     db.add_all(students)
     db.flush()
 
+    # Create ExamResults and ModuleEnrollments
     exam_results: list[ExamResult] = []
     for student in students:
         for module in modules:
-            # --- create module enrollment
+            # Create module enrollment
             module_enrollment = ModuleEnrollment(
                 student_id=student.id,
                 module_id=module.id,
@@ -231,7 +265,7 @@ def seed_user(db: Session):
             db.add(module_enrollment)
             db.flush()
 
-            # --- create exam results
+            # Create exam results
             exam_result = ExamResult(
                 marks_obtained=decimal.Decimal(random.randint(40, 100)),
                 exam_id=exam.id,
@@ -248,8 +282,6 @@ if __name__ == "__main__":
     db = get_db()
     seed_user(db)
     db.commit()
-
-
 # # Example usage:
 # def setup_grade_timetable(
 #     db: Session, school_id: uuid.UUID, academic_term_id: uuid.UUID

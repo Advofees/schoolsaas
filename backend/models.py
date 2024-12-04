@@ -764,84 +764,6 @@ class TeacherModuleAssociation(Base):
         self.module_id = module_id
 
 
-class User(Base):
-    __tablename__ = "users"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String)
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime, default=func.now(), nullable=False
-    )
-    secret_key: Mapped[str] = mapped_column()
-    updated_at: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime, onupdate=func.now(), nullable=True
-    )
-
-    # ---
-
-    roles: Mapped[list["Role"]] = relationship(
-        "Role", secondary="user_role_associations", back_populates="users"
-    )
-    # ---
-
-    sessions: Mapped[list["UserSession"]] = relationship(
-        "UserSession", back_populates="user"
-    )
-    files: Mapped[list["File"]] = relationship("File", back_populates="user")
-    school_user: Mapped["School"] = relationship(
-        School, back_populates="user", uselist=False
-    )
-    student_user: Mapped["Student"] = relationship(
-        Student, back_populates="user", uselist=False
-    )
-    school_parent_user: Mapped["SchoolParent"] = relationship(
-        SchoolParent, back_populates="user", uselist=False
-    )
-    teacher_user: Mapped["Teacher"] = relationship(
-        Teacher, back_populates="user", uselist=False
-    )
-
-    def __init__(
-        self,
-        email: str,
-        username: str,
-        password_hash: str,
-    ):
-        super().__init__()
-
-        self.email = email
-        self.username = username
-        self.password_hash = password_hash
-        self.secret_key = pyotp.random_base32()
-
-    def has_role_type(self, role_type: RoleType) -> bool:
-        return any(role.type == role_type for role in self.roles)
-
-
-class UserSession(Base):
-    __tablename__ = "user_sessions"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime, default=func.now(), nullable=False
-    )
-    expire_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False)
-
-    # ---
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID, ForeignKey("users.id"), nullable=False
-    )
-    user: Mapped["User"] = relationship("User", back_populates="sessions")
-
-    def __init__(self, user_id: uuid.UUID):
-        super().__init__()
-
-        self.user_id = user_id
-        self.expire_at = datetime.datetime.utcnow() + relativedelta(months=6)
-
-
 class UserPermission(Base):
     __tablename__ = "user_permissions"
 
@@ -852,6 +774,13 @@ class UserPermission(Base):
     )
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime, onupdate=func.now(), nullable=True
+    )
+
+    # Add back-reference to users for direct permissions
+    users: Mapped[list["User"]] = relationship(
+        "User",
+        secondary="user_permission_associations",
+        back_populates="permissions",
     )
 
     roles: Mapped[list["Role"]] = relationship(
@@ -869,6 +798,28 @@ class UserPermission(Base):
         self.permission_description = PERMISSIONS.model_validate(
             permission_description
         ).dict(exclude_unset=True)
+
+
+class UserPermissionAssociation(Base):
+    __tablename__ = "user_permission_associations"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("users.id"), primary_key=True
+    )
+    user_permission_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("user_permissions.id"), primary_key=True
+    )
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, onupdate=func.now(), nullable=True
+    )
+
+    def __init__(self, user_id: uuid.UUID, user_permission_id: uuid.UUID):
+        super().__init__()
+        self.user_id = user_id
+        self.user_permission_id = user_permission_id
 
 
 class RolePermissionAssociation(Base):
@@ -891,6 +842,95 @@ class RolePermissionAssociation(Base):
         super().__init__()
         self.role_id = role_id
         self.user_permission_id = user_permission_id
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+    secret_key: Mapped[str] = mapped_column()
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime, onupdate=func.now(), nullable=True
+    )
+
+    # Direct permissions relationship
+    permissions: Mapped[list["UserPermission"]] = relationship(
+        "UserPermission",
+        secondary="user_permission_associations",
+        back_populates="users",
+    )
+
+    roles: Mapped[list["Role"]] = relationship(
+        "Role", secondary="user_role_associations", back_populates="users"
+    )
+
+    sessions: Mapped[list["UserSession"]] = relationship(
+        "UserSession", back_populates="user"
+    )
+    files: Mapped[list["File"]] = relationship("File", back_populates="user")
+    calendar_events: Mapped[list["CalendarEvent"]] = relationship(
+        "CalendarEvent", back_populates="creator"
+    )
+    school_user: Mapped["School"] = relationship(
+        School, back_populates="user", uselist=False
+    )
+    student_user: Mapped["Student"] = relationship(
+        Student, back_populates="user", uselist=False
+    )
+    school_parent_user: Mapped["SchoolParent"] = relationship(
+        SchoolParent, back_populates="user", uselist=False
+    )
+    teacher_user: Mapped["Teacher"] = relationship(
+        Teacher, back_populates="user", uselist=False
+    )
+
+    def __init__(
+        self,
+        email: str,
+        username: str,
+        password_hash: str,
+    ):
+        super().__init__()
+        self.email = email
+        self.username = username
+        self.password_hash = password_hash
+        self.secret_key = pyotp.random_base32()
+
+    def has_role_type(self, role_type: RoleType) -> bool:
+        return any(role.type == role_type for role in self.roles)
+
+    @property
+    def all_permissions(self) -> set[UserPermission]:
+        all_permissions = set(self.permissions)
+        return all_permissions
+
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+    expire_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False)
+
+    # ---
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("users.id"), nullable=False
+    )
+    user: Mapped["User"] = relationship("User", back_populates="sessions")
+
+    def __init__(self, user_id: uuid.UUID):
+        super().__init__()
+
+        self.user_id = user_id
+        self.expire_at = datetime.datetime.utcnow() + relativedelta(months=6)
 
 
 class UserRoleAssociation(Base):
@@ -920,13 +960,14 @@ class Role(Base):
     type: Mapped[RoleType] = mapped_column(Enum(RoleType), nullable=False)
     description: Mapped[typing.Optional[str]] = mapped_column(String)
 
+    users: Mapped[list["User"]] = relationship(
+        "User", secondary="user_role_associations", back_populates="roles"
+    )
+
     user_permissions: Mapped[list["UserPermission"]] = relationship(
         "UserPermission",
         secondary="role_permission_associations",
         back_populates="roles",
-    )
-    users: Mapped[list["User"]] = relationship(
-        "User", secondary="user_role_associations", back_populates="roles"
     )
 
     def __init__(

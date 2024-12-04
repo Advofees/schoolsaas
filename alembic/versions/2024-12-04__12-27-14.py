@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: fe7bd5372525
+Revision ID: dda20ce46f11
 Revises: 
-Create Date: 2024-11-28 02:09:55.137057
+Create Date: 2024-12-04 12:27:14.603042
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'fe7bd5372525'
+revision: str = 'dda20ce46f11'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -107,6 +107,15 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('school_number')
+    )
+    op.create_table('user_permission_associations',
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('user_permission_id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['user_permission_id'], ['user_permissions.id'], ),
+    sa.PrimaryKeyConstraint('user_id', 'user_permission_id')
     )
     op.create_table('user_role_associations',
     sa.Column('user_id', sa.UUID(), nullable=False),
@@ -360,6 +369,7 @@ def downgrade() -> None:
     op.drop_table('academic_terms')
     op.drop_table('user_sessions')
     op.drop_table('user_role_associations')
+    op.drop_table('user_permission_associations')
     op.drop_table('schools')
     op.drop_table('school_parents')
     op.drop_table('role_permission_associations')

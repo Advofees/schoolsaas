@@ -166,6 +166,7 @@ def get_user_session(
     return {
         "user_id": auth_context.user_id,
         "roles": user.roles,
+        "permissions": user.all_permissions,
     }
 
 
