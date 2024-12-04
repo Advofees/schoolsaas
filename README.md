@@ -61,9 +61,9 @@
   task server
   ```
   - sample user
-    - email: `school@app.com`
+    - email/identity: `school@app.com`
     - password: `password123`
-    
+
 - To generate migrations make sure the model is added in backend/database/all_models.py then run the following commands
 
   ```bash
