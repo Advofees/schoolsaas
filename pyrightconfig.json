@@ -5,6 +5,8 @@
   "reportMissingSuperCall": "error",
   "reportUninitializedInstanceVariable": "error",
   "exclude": [
-    "venv"
-  ]
+    "venv",
+  ],
+  "pythonVersion": "3.10",
+  "pythonPlatform": "Linux"
 }

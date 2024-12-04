@@ -6,75 +6,89 @@ class StudentPermissions(BaseModel):
     can_edit_students: bool = False
     can_view_students: bool = False
     can_delete_students: bool = False
-    
+
+
 class ParentPermissions(BaseModel):
     can_add_parents: bool = False
     can_edit_parents: bool = False
     can_view_parents: bool = False
     can_delete_parents: bool = False
-    
+
+
 class ClassPermissions(BaseModel):
     can_manage_classes: bool = False
     can_view_classes: bool = False
     can_add_classes: bool = False
     can_edit_classes: bool = False
     can_delete_classes: bool = False
-    
+
+
 class TeacherPermissions(BaseModel):
     can_add_teachers: bool = False
     can_edit_teachers: bool = False
     can_view_teachers: bool = False
     can_delete_teachers: bool = False
-    
+
+
 class GradePermissions(BaseModel):
     can_add_grades: bool = False
     can_edit_grades: bool = False
     can_view_grades: bool = False
     can_delete_grades: bool = False
-    
+
+
 class AttendancePermissions(BaseModel):
     can_view_attendance: bool = False
     can_manage_attendance: bool = False
-    
+
+
 class ReportPermissions(BaseModel):
     can_view_reports: bool = False
     can_generate_reports: bool = False
-    
+
+
 class FeeManagementPermissions(BaseModel):
     can_manage_fees: bool = False
     can_view_fees: bool = False
-    
+
+
 class LibraryPermissions(BaseModel):
     can_manage_library: bool = False
     can_borrow_books: bool = False
     can_view_library: bool = False
-    
+
+
 class TimetablePermissions(BaseModel):
     can_manage_timetable: bool = False
     can_view_timetable: bool = False
-    
+
+
 class SchoolEventPermissions(BaseModel):
     can_manage_school_events: bool = False
     can_view_school_events: bool = False
+
 
 class SchoolPermissions(BaseModel):
     can_manage_school: bool = False
     can_view_school: bool = False
     can_add_school: bool = False
     can_edit_school: bool = False
-    can_delete_school: bool = False 
+    can_delete_school: bool = False
     can_manage_permissions: bool = False
     can_view_permissions: bool = False
     can_add_permissions: bool = False
     can_edit_permissions: bool = False
     can_delete_permissions: bool = False
-    
+
+
 class ExamResultPermissions(BaseModel):
     can_manage_exam_results: bool = False
     can_view_exam_results: bool = False
     can_add_exam_results: bool = False
     can_edit_exam_results: bool = False
     can_delete_exam_results: bool = False
+
+
 class PERMISSIONS(BaseModel):
     student_permissions: StudentPermissions = StudentPermissions()
     parent_permissions: ParentPermissions = ParentPermissions()
@@ -89,4 +103,3 @@ class PERMISSIONS(BaseModel):
     school_event_permissions: SchoolEventPermissions = SchoolEventPermissions()
     school_permissions: SchoolPermissions = SchoolPermissions()
     exam_result_permissions: ExamResultPermissions = ExamResultPermissions()
-    

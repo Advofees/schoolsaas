@@ -56,11 +56,28 @@ class UserPermission(Base):
     def permissions(self):
         return PERMISSIONS.model_validate(self.permission_description)
 
-    def __init__(self, permission_description: PERMISSIONS):
+    def __init__(self, permission_description: dict | PERMISSIONS):
         super().__init__()
-        self.permission_description = PERMISSIONS.model_validate(
-            permission_description
-        ).dict(exclude_unset=True)
+
+        # If we get a dict, validate it against base permissions
+        if isinstance(permission_description, dict):
+            base_permissions = PERMISSIONS()
+            for category, perms in permission_description.items():
+                if hasattr(base_permissions, category):
+                    category_model = getattr(base_permissions, category)
+                    for perm_name, perm_value in perms.items():
+                        if hasattr(category_model, perm_name):
+                            setattr(category_model, perm_name, perm_value)
+
+            self.permission_description = base_permissions.model_dump(
+                exclude_unset=True
+            )
+
+        # If we get a PERMISSIONS object, just validate and store it
+        else:
+            self.permission_description = PERMISSIONS.model_validate(
+                permission_description
+            ).model_dump(exclude_unset=True)
 
 
 class UserPermissionAssociation(Base):
