@@ -35,6 +35,7 @@
   ```
 - start docker for local development
   ```bash
+  docker compose -f infrastructure_services/docker-compose.dev.yml down
   docker compose -f infrastructure_services/docker-compose.dev.yml up
   ```
 - Run migrations
@@ -42,19 +43,13 @@
   ```bash
   ./run-migrations.sh
   ```
-
-- To generate migrations make sure the model is added in backend/database/all_models.py then run the following commands
-
+- Seed the database
   ```bash
-  ./generate-migrations
-  ./run-migrations.sh
-  ```
-- seed database
 
-  ```bash
-  ./seed-database.sh
+  ./seed-database.sh 
+
   ```
-- run server
+  - Start server
 
   ```bash
    ./backend/start.dev.sh
@@ -65,3 +60,15 @@
   
   task server
   ```
+  - sample user
+    - email: `school@app.com`
+    - password: `password123`
+    
+- To generate migrations make sure the model is added in backend/database/all_models.py then run the following commands
+
+  ```bash
+  ./generate-migrations
+  ./run-migrations.sh
+  ```
+
+

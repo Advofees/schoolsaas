@@ -17,3 +17,4 @@ email-validator==2.1.*
 pyotp==2.9.*
 Faker==28.4.*
 resend==2.4.*
+boto3==1.35.*
