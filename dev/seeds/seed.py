@@ -1,9 +1,14 @@
-import decimal
 from dotenv import load_dotenv
-from faker import Faker
 
 load_dotenv()
+
+from backend.database.all_models import get_all_models
+
+get_all_models()
+
 import random
+import decimal
+from faker import Faker
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 from backend.permissions.permissions_schemas import (
