@@ -2,15 +2,12 @@ import datetime
 import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
-
-
-from backend.database.database import DatabaseDependency
 from backend.user.user_models import User
 from backend.student.student_model import Student
 from backend.classroom.classroom_model import Classroom
 from backend.school.school_model import SchoolParent
 from backend.parent.parent_model import ParentStudentAssociation
-
+from backend.database.database import DatabaseDependency
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
 
@@ -104,9 +101,7 @@ async def get_student(
 
     if not any(
         permission.permissions.student_permissions.can_view_students
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -132,17 +127,8 @@ async def get_student_parents(
 
     if not any(
         permission.permissions.student_permissions.can_view_students
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
-    if not any(
-        permission.permissions.parent_permissions.can_view_parents
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        and permission.permissions.parent_permissions.can_view_parents
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -175,11 +161,9 @@ async def get_student_classroom(
 
     if not any(
         permission.permissions.student_permissions.can_view_students
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        for permission in user.all_permissions
     ):
-        raise HTTPException(status_code=403, detail="Permission denied")
+        raise HTTPException(status_code=403, detail="permission-denied")
 
     classroom = db.query(Classroom).filter(Classroom.id == student.classroom_id).first()
 
@@ -204,11 +188,9 @@ async def get_students_in_classroom(
 
     if not any(
         permission.permissions.student_permissions.can_view_students
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        for permission in user.all_permissions
     ):
-        raise HTTPException(status_code=403, detail="Permission denied")
+        raise HTTPException(status_code=403, detail="permission-denied")
 
     students = db.query(Student).filter(Student.classroom_id == class_room_id).all()
 
