@@ -4,7 +4,6 @@ import os
 from typing import Annotated
 from fastapi import Depends
 
-
 resend.api_key = os.environ.get("EMAIL_SERVICE_API_KEY")
 EMAIL_DOMAIN = os.environ.get("EMAIL_DOMAIN")
 
@@ -16,13 +15,14 @@ class SendEmailParams(BaseModel):
 
 
 def send_mail(body: SendEmailParams) -> resend.Email:
-    params = {
-        "from": f"donotreply@{EMAIL_DOMAIN}",
-        "to": [f"{body.email}"],
-        "subject": f"{body.subject}",
-        "html": f"<strong>{body.message}</strong>",
-    }
-    email = resend.Emails.send(params)
+    email = resend.Emails.send(
+        {
+            "from": f"donotreply@{EMAIL_DOMAIN}",
+            "to": [body.email],
+            "subject": body.subject,
+            "html": f"<strong>{body.message}</strong>",
+        }
+    )
     return email
 
 

@@ -5,7 +5,16 @@ from fastapi import APIRouter, HTTPException
 
 from backend.attendance.attendance_models import AttendanceStatus
 from backend.database.database import DatabaseDependency
-from backend.models import Student, User, Attendance
+
+
+from backend.user.user_models import (
+    User,
+)
+
+from backend.student.student_model import Student
+
+from backend.attendance.attendance_models import Attendance
+
 from backend.user.user_authentication import UserAuthenticationContextDependency
 import datetime
 import typing

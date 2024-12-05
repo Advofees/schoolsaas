@@ -56,11 +56,12 @@ class UserPermission(Base):
     def permissions(self):
         return PERMISSIONS.model_validate(self.permission_description)
 
-    def __init__(self, permission_description: PERMISSIONS):
+    def __init__(self, permission_description: dict):
         super().__init__()
+
         self.permission_description = PERMISSIONS.model_validate(
             permission_description
-        ).dict(exclude_unset=True)
+        ).model_dump(exclude_defaults=True, exclude_unset=True)
 
 
 class UserPermissionAssociation(Base):

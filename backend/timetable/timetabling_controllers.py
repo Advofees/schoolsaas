@@ -5,15 +5,15 @@ import datetime
 from pydantic import BaseModel
 from backend.database.database import DatabaseDependency
 from backend.user.user_authentication import UserAuthenticationContextDependency
-from backend.models import (
-    User,
-    Exam,
-    Timetable,
-    RoleType,
-    CalendarEvent,
-    TimeSlot,
-    DayOfWeek,
-)
+from backend.user.user_models import User, RoleType
+
+from backend.user.user_models import User
+
+
+from backend.exam.exam_model import Exam
+
+from backend.calendar_events.calendar_events_model import CalendarEvent
+from backend.timetable.timetable_model import DayOfWeek, TimeSlot, Timetable
 
 
 class TimeSlotCreate(BaseModel):

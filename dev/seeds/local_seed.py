@@ -4,10 +4,6 @@ load_dotenv()
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 from backend.database.all_models import get_all_models
 
 get_all_models()
@@ -98,7 +94,7 @@ with get_db() as db:
 
     # Create UserPermission instance
     school_management_permission = UserPermission(
-        permission_description=school_management_permission_definition
+        permission_description=school_management_permission_definition.model_dump()
     )
     db.add(school_management_permission)
     db.flush()
