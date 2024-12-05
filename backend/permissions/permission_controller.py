@@ -9,7 +9,6 @@ from backend.user.user_models import (
 )
 
 from backend.user.user_authentication import UserAuthenticationContextDependency
-from backend.permissions.permissions_schemas import PERMISSIONS
 
 router = APIRouter()
 
@@ -18,20 +17,8 @@ class createUserPermissionDTO(BaseModel):
     user_id: uuid.UUID
     permission_description: dict
 
-    @classmethod
-    def validate_permissions(cls, permission_dict: dict) -> PERMISSIONS:
-        base_permissions = PERMISSIONS()
-        for category, perms in permission_dict.items():
-            if hasattr(base_permissions, category):
-                category_model = getattr(base_permissions, category)
-                for perm_name, perm_value in perms.items():
-                    if hasattr(category_model, perm_name):
-                        setattr(category_model, perm_name, perm_value)
 
-        return PERMISSIONS.model_validate(base_permissions.model_dump())
-
-
-@router.post("/permissions/create")
+@router.post("/permissions/new-user-permission/create")
 def create_permission(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -42,21 +29,21 @@ def create_permission(
     if not user:
         raise HTTPException(403, detail="not-authorized")
 
-    valid_permission_description = createUserPermissionDTO.validate_permissions(
-        body.permission_description
-    )
-    new_permission = UserPermission(permission_description=valid_permission_description)
-    db.add(new_permission)
-    db.flush()
     associated_user = db.query(User).filter(User.id == body.user_id).first()
     if not associated_user:
         raise HTTPException(404)
+    if user.all_permissions:
+        raise HTTPException(403, detail="update-existing-permissions")
+    new_permission = UserPermission(permission_description=body.permission_description)
+    db.add(new_permission)
+    db.flush()
 
     association = UserPermissionAssociation(
         user_id=associated_user.id, user_permission_id=new_permission.id
     )
     db.add(association)
     db.flush()
+    db.commit()
 
 
 @router.delete("/permissions/{user_permission_id}/delete")
@@ -89,3 +76,4 @@ def remove_permission(
         raise HTTPException(404)
     db.delete(permission)
     db.flush()
+    db.commit()

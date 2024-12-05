@@ -94,7 +94,7 @@ with get_db() as db:
 
     # Create UserPermission instance
     school_management_permission = UserPermission(
-        permission_description=school_management_permission_definition
+        permission_description=school_management_permission_definition.model_dump()
     )
     db.add(school_management_permission)
     db.flush()
