@@ -16,9 +16,10 @@
 	- [X] can create account(signup)
 	- [X] can login
 	- [X] can reset password
+	- [X] can logout
 	- [X] can create teachers
 	- [ ] can update teachers
-	- [ ] can delete teachers(this would make the teachers be past teachers)
+	- [ ] can delete teachers
 	- [X] can register students
 	- [X] can view all students
 	- [X] can view all the parents/guardians of the students
