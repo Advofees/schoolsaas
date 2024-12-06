@@ -1,3 +1,4 @@
+import json
 import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
@@ -7,8 +8,10 @@ from backend.user.user_models import (
     UserPermission,
     UserPermissionAssociation,
 )
-from copy import deepcopy
+
 from backend.user.user_authentication import UserAuthenticationContextDependency
+from sqlalchemy import update
+
 
 router = APIRouter()
 
@@ -43,20 +46,17 @@ def update_permission(
     if not user_permission:
         raise HTTPException(404, detail="permission-not-found")
 
-    updated_permissions = deepcopy(user_permission.permission_description)
+    stmt = (
+        update(UserPermission)
+        .where(UserPermission.id == permission_id)
+        .values(
+            permission_description=UserPermission.permission_description.op("||")(
+                json.dumps(body.permission_description)
+            )
+        )
+    )
 
-    for (
-        category,
-        perms,
-    ) in (
-        body.permission_description.items()
-    ):  # TODO fix/simplify the permission updates in the JSONB column
-        if category in updated_permissions:
-            for key, value in perms.items():
-                updated_permissions[category][key] = value
-
-    user_permission.permission_description = updated_permissions
-    db.flush()
+    db.execute(stmt)
     db.commit()
 
 
