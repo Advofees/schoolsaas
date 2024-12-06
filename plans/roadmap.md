@@ -13,14 +13,15 @@
 ## Features
 - school
 
-	- [ ] can create account
-	- [ ] can login
-	- [ ] can create teachers
+	- [X] can create account(signup)
+	- [X] can login
+	- [X] can reset password
+	- [X] can create teachers
 	- [ ] can update teachers
 	- [ ] can delete teachers(this would make the teachers be past teachers)
-	- [ ] can register students
-	- [ ] can view all students
-	- [ ] can view all the parents/guardians of the students
+	- [X] can register students
+	- [X] can view all students
+	- [X] can view all the parents/guardians of the students
 	- [ ] can edit student
 	- [ ] can manage fees made by parents
 	- [ ] can create timetables
@@ -75,10 +76,3 @@
 - 4th year
 	- 1000 schools
 	
-# schools
-Bungoma DEB primary school 3000 pupils +
-Kiambu county 200 schools, 200 pupils+
-
-serve 1 million students 
-- 1000,000 by 100
-	- total: 100,000,000
