@@ -145,7 +145,7 @@ def logout(
     response.delete_cookie(
         key="user_access_token",
     )
-    return {}
+    return {"message": "logout-successfully"}
 
 
 @router.get("/auth/user/session", status_code=status.HTTP_200_OK)
@@ -254,4 +254,4 @@ def set_password(
     user.password_hash = hash_password(body.password)
     db.commit()
 
-    return {"message": "Password reset successfully"}
+    return {"message": "password-reset-successfully"}
