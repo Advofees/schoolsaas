@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # ---
 from backend.user.user_controller import router as authentication_router
+from backend.permissions.permission_controller import router as permissions_router
 from backend.school.school_controller import router as school_router
 from backend.teacher.teacher_controller import router as teacher_router
 from backend.parent.parent_controller import router as parent_router
@@ -38,6 +39,7 @@ app.add_middleware(
 # ---
 app.include_router(authentication_router, tags=["Authentication"])
 # ---
+app.include_router(permissions_router)
 app.include_router(exam_result_router, tags=["Exam Results"])
 
 app.include_router(permission_router, tags=["Permissions"])

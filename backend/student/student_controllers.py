@@ -187,7 +187,7 @@ async def get_students_in_classroom(
         raise HTTPException(status_code=404, detail="Classroom not found")
 
     if not any(
-        permission.permissions.student_permissions.can_view_students
+        permission.permissions.student_permissions.can_view_students is True
         for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="permission-denied")
