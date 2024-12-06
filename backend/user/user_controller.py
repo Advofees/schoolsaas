@@ -16,7 +16,6 @@ from backend.user.user_authentication import OptionalUserAuthenticationContextDe
 from pyotp import TOTP
 
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
-dashboard_url = os.environ["DASHBOARD_URL"]
 
 
 router = APIRouter()
