@@ -1,18 +1,19 @@
 ```bash
 
+PYTHONPATH=/Users/andrewkyalonzioki/Desktop/schoolsaas
 FRONTEND_URL="http://localhost:5173"
-GIT_COMMIT_SHA="commit sha"
+GIT_COMMIT_SHA="shooooo"
 SECRET_STRING="secret-string"
-JWT_SECRET_KEY="8pLkATrsPZWIhk0"
+JWT_SECRET_KEY="jwt-secret-key"
 
 DATABASE_HOST="localhost:5432"
 DATABASE_NAME="postgres"
 DATABASE_USER="postgres"
 DATABASE_PASSWORD="postgres"
 
-EMAIL_SERVICE_API_KEY="resend-email-service-key"
+EMAIL_SERVICE_API_KEY="email_api_key"
 EMAIL_DOMAIN="schoolsas.andrew-nzioki.com"
-
+DASHBOARD_URL="http://localhost:5173"
 
 MINIO_ROOT_USER="minioadmin"
 MINIO_ROOT_PASSWORD="minioadmin"

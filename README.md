@@ -17,6 +17,11 @@
   ```bash
   python3 -m venv venv
   ```
+- Setup absolute imports
+  ```bash
+  echo "PYTHONPATH=$(pwd)" > .env
+  ```
+- copy the values in environment_variables.md and add them to the .env
 
 - Activate the Python environment:
 
