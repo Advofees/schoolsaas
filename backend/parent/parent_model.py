@@ -18,7 +18,7 @@ class ParentStudentAssociation(Base):
     student_id: Mapped[uuid.UUID] = mapped_column(
         UUID, ForeignKey("students.id"), primary_key=True
     )
-
+    is_active: Mapped[bool] = mapped_column(default=True)
     parent: Mapped["SchoolParent"] = relationship(
         "SchoolParent", back_populates="parent_student_associations"
     )

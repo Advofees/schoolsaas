@@ -20,12 +20,6 @@ async def get_teachers_in_a_particular_school(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not any(
-        permission.permissions.teacher_permissions.can_view_teachers is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
     school = db.query(School).filter(School.id == user.school_user.id).first()
 
     if not school:
@@ -42,12 +36,6 @@ async def get_teacher_in_particular_school_by_id(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if not any(
-        permission.permissions.teacher_permissions.can_view_teachers is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
 
     teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
     if not teacher:
@@ -76,12 +64,6 @@ async def create_teacher_in_particular_school(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not user.has_role_type(RoleType.SCHOOL_ADMIN):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
-    if not any(
-        permission.permissions.teacher_permissions.can_add_teachers is True
-        for permission in user.all_permissions
-    ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
     school = db.query(School).filter(School.id == user.school_user.id).first()

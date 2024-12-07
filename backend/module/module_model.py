@@ -19,7 +19,10 @@ class Module(Base):
     description: Mapped[typing.Optional[str]] = mapped_column(String)
 
     teachers: Mapped[list["Teacher"]] = relationship(
-        "Teacher", secondary="teacher_module_association", back_populates="modules"
+        "Teacher",
+        secondary="teacher_module_association",
+        back_populates="modules",
+        viewonly=True,
     )
     exams: Mapped[list["Exam"]] = relationship("Exam", back_populates="module")
 

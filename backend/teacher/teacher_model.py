@@ -11,6 +11,7 @@ if typing.TYPE_CHECKING:
     from backend.school.school_model import School
     from backend.module.module_model import Module
     from backend.payment.payment_model import Payment
+    from backend.classroom.classroom_model import Classroom
 
 
 class TeacherModuleAssociation(Base):
@@ -66,8 +67,28 @@ class Teacher(Base):
     )
 
     modules: Mapped[list["Module"]] = relationship(
-        "Module", secondary="teacher_module_association", back_populates="teachers"
+        "Module",
+        secondary="teacher_module_association",
+        back_populates="teachers",
+        viewonly=True,
     )
+
+    classrooms: Mapped[list["Classroom"]] = relationship(
+        "Classroom",
+        secondary="class_teacher_associations",
+        back_populates="teachers",
+        viewonly=True,
+    )
+
+    classroom_associations: Mapped[list["ClassTeacherAssociation"]] = relationship(
+        "ClassTeacherAssociation", back_populates="teacher", viewonly=True
+    )
+
+    @property
+    def primary_classrooms(self) -> list["Classroom"]:
+        return [
+            assoc.classroom for assoc in self.classroom_associations if assoc.is_primary
+        ]
 
     def __init__(
         self,
@@ -86,3 +107,36 @@ class Teacher(Base):
         self.user_id = user_id
         self.school_id = school_id
         self.phone_number = phone_number
+
+
+class ClassTeacherAssociation(Base):
+    __tablename__ = "class_teacher_associations"
+
+    teacher_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("teachers.id"), primary_key=True
+    )
+    classroom_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("classrooms.id"), primary_key=True
+    )
+    is_primary: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime, onupdate=func.now(), nullable=True
+    )
+
+    teacher: Mapped["Teacher"] = relationship(
+        "Teacher", back_populates="classroom_associations"
+    )
+    classroom: Mapped["Classroom"] = relationship(
+        "Classroom", back_populates="teacher_associations"
+    )
+
+    def __init__(
+        self, teacher_id: uuid.UUID, classroom_id: uuid.UUID, is_primary: bool = False
+    ):
+        super().__init__()
+        self.teacher_id = teacher_id
+        self.classroom_id = classroom_id
+        self.is_primary = is_primary

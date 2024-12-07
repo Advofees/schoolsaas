@@ -104,6 +104,7 @@ class SchoolParentAssociation(Base):
     school: Mapped["School"] = relationship(
         "School", back_populates="school_parent_associations"
     )
+    is_active: Mapped[bool] = mapped_column(default=True)
 
     parent_id: Mapped[uuid.UUID] = mapped_column(
         UUID, ForeignKey("school_parents.id"), primary_key=True
@@ -127,7 +128,7 @@ class SchoolStudentAssociation(Base):
     student_id: Mapped[uuid.UUID] = mapped_column(
         UUID, ForeignKey("students.id"), primary_key=True
     )
-
+    is_active: Mapped[bool] = mapped_column(default=True)
     school: Mapped["School"] = relationship(
         "School", back_populates="school_students_associations"
     )

@@ -7,6 +7,7 @@ import hashlib
 
 from pydantic import BaseModel
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
+from backend.raise_exception import raise_exception
 from backend.user.user_models import User, UserSession
 from backend.school.school_model import School
 from fastapi import APIRouter, HTTPException, Response, status
@@ -93,6 +94,7 @@ def login(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    school_id = user.school_id or raise_exception()
 
     if not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=404, detail="Invalid password or username")
@@ -133,7 +135,10 @@ def login(
         "session": {
             "user_id": session.user_id,
             "roles": user.roles,
+            "permissions": user.all_permissions,
         },
+        "name": user.name,
+        "school_id": school_id,
     }
 
 
@@ -162,11 +167,16 @@ def get_user_session(
 
     if not user.roles:
         raise HTTPException(status_code=403, detail="You don't have permission")
+    # school details
+    # user info
+    # ---
+    school_id = user.school_id or raise_exception()
 
     return {
         "user_id": auth_context.user_id,
         "roles": user.roles,
         "permissions": user.all_permissions,
+        "school_id": school_id,
     }
 
 

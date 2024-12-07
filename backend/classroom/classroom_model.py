@@ -10,6 +10,7 @@ if typing.TYPE_CHECKING:
     from backend.school.school_model import School
     from backend.student.student_model import Student
     from backend.attendance.attendance_models import Attendance
+    from backend.teacher.teacher_model import Teacher, ClassTeacherAssociation
 
 
 class Classroom(Base):
@@ -33,6 +34,24 @@ class Classroom(Base):
     attendances: Mapped[list["Attendance"]] = relationship(
         "Attendance", back_populates="classroom"
     )
+
+    teachers: Mapped[list["Teacher"]] = relationship(
+        "Teacher",
+        secondary="class_teacher_associations",
+        back_populates="classrooms",
+        viewonly=True,
+    )
+
+    teacher_associations: Mapped[list["ClassTeacherAssociation"]] = relationship(
+        "ClassTeacherAssociation", back_populates="classroom"
+    )
+
+    @property
+    def primary_teacher(self) -> typing.Optional["Teacher"]:
+        for assoc in self.teacher_associations:
+            if assoc.is_primary:
+                return assoc.teacher
+        return None
 
     def __init__(
         self,

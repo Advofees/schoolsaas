@@ -1,14 +1,17 @@
 import datetime
 import uuid
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
-from backend.user.user_models import User
+from fastapi import APIRouter, HTTPException, Query
+from backend.raise_exception import raise_exception
+from backend.teacher.teacher_model import ClassTeacherAssociation
+from backend.user.user_models import RoleType, User
 from backend.student.student_model import Student
 from backend.classroom.classroom_model import Classroom
-from backend.school.school_model import SchoolParent
+from backend.school.school_model import SchoolParent, SchoolStudentAssociation
 from backend.parent.parent_model import ParentStudentAssociation
 from backend.database.database import DatabaseDependency
 from backend.user.user_authentication import UserAuthenticationContextDependency
+from sqlalchemy import func
 
 
 router = APIRouter()
@@ -81,6 +84,73 @@ async def create_student(
     db.commit()
 
     return {}
+
+
+@router.get("school/students/list")
+async def get_all_students(
+    db: DatabaseDependency,
+    auth_context: UserAuthenticationContextDependency,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="students per page"),
+):
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=403)
+    school_id = user.school_id or raise_exception()
+
+    skip = (page - 1) * page_size
+
+    if user.has_role_type(RoleType.SCHOOL_ADMIN):
+        total = (
+            db.query(func.count(Student.id))
+            .join(SchoolStudentAssociation)
+            .filter(SchoolStudentAssociation.school_id == school_id)
+            .scalar()
+        )
+
+        students = (
+            db.query(Student)
+            .join(SchoolStudentAssociation)
+            .filter(SchoolStudentAssociation.school_id == school_id)
+            .offset(skip)
+            .limit(page_size)
+            .all()
+        )
+
+    elif user.has_role_type(RoleType.CLASS_TEACHER):
+        teacher_id = user.teacher_user.id or raise_exception()
+
+        total = (
+            db.query(func.count(Student.id))
+            .join(Student.classroom)
+            .join(Classroom.teacher_associations)
+            .filter(
+                ClassTeacherAssociation.teacher_id == teacher_id,
+                ClassTeacherAssociation.is_primary == True,
+            )
+            .scalar()
+        )
+
+        students = (
+            db.query(Student)
+            .join(Student.classroom)
+            .join(Classroom.teacher_associations)
+            .filter(
+                ClassTeacherAssociation.teacher_id == teacher_id,
+                ClassTeacherAssociation.is_primary == True,
+            )
+            .offset(skip)
+            .limit(page_size)
+            .all()
+        )
+
+    else:
+        raise HTTPException(403)
+
+    total_pages = total // page_size + (1 if total % page_size else 0)
+
+    return {"students": students, "total": total, "page": page, "pages": total_pages}
 
 
 @router.get("/students/{student_id}")
@@ -185,12 +255,6 @@ async def get_students_in_classroom(
 
     if not class_room:
         raise HTTPException(status_code=404, detail="Classroom not found")
-
-    if not any(
-        permission.permissions.student_permissions.can_view_students is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="permission-denied")
 
     students = db.query(Student).filter(Student.classroom_id == class_room_id).all()
 

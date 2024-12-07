@@ -20,7 +20,11 @@ from backend.file.file_model import File
 from backend.student.student_model import Student
 from backend.parent.parent_model import ParentStudentAssociation
 from backend.inventory.inventory_model import Inventory
-from backend.teacher.teacher_model import Teacher, TeacherModuleAssociation
+from backend.teacher.teacher_model import (
+    Teacher,
+    TeacherModuleAssociation,
+    ClassTeacherAssociation,
+)
 from backend.payment.payment_model import Payment
 from backend.attendance.attendance_models import Attendance
 from backend.classroom.classroom_model import Classroom
@@ -52,6 +56,7 @@ def get_all_models() -> list[Type[Base]]:
         File,
         Payment,
         TeacherModuleAssociation,
+        ClassTeacherAssociation,
         UserPermission,
         UserPermissionAssociation,
         RolePermissionAssociation,

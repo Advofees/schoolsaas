@@ -11,9 +11,8 @@ DATABASE_NAME="postgres"
 DATABASE_USER="postgres"
 DATABASE_PASSWORD="postgres"
 
-EMAIL_SERVICE_API_KEY="email_api_key"
+EMAIL_SERVICE_API_KEY="re_37roY84N_Kgvp7agm3sq6tppzGRJJo2aQ"
 EMAIL_DOMAIN="schoolsas.andrew-nzioki.com"
-DASHBOARD_URL="http://localhost:5173"
 
 MINIO_ROOT_USER="minioadmin"
 MINIO_ROOT_PASSWORD="minioadmin"
