@@ -60,8 +60,16 @@
   
   task server
   ```
-  - sample user
+  - school admin user
     - email/identity: `school@app.com`
+    - password: `password123`
+
+  - teacher user
+    - email/identity: `teacher.school@app.com`
+    - password: `password123`
+    
+  - student user
+    - email/identity: `student.school@app.com`
     - password: `password123`
 
 - To generate migrations make sure the model is added in backend/database/all_models.py then run the following commands

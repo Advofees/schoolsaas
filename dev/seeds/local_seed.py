@@ -31,7 +31,7 @@ from backend.user.user_models import (
 from backend.module.module_model import Module, ModuleEnrollment
 from backend.school.school_model import School
 from backend.student.student_model import Student
-from backend.teacher.teacher_model import Teacher
+from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.classroom.classroom_model import Classroom
 from backend.academic_term.academic_term_model import AcademicTerm
 from backend.school.school_model import School, SchoolStudentAssociation
@@ -69,7 +69,9 @@ command.upgrade(alembic_cfg, "head")
 
 
 with get_db() as db:
-
+    #
+    # ---school default permissions
+    #
     school_management_permission_definition = PERMISSIONS(
         teacher_permissions=TeacherPermissions(
             can_add_teachers=True,
@@ -92,7 +94,6 @@ with get_db() as db:
         ),
     )
 
-    # Create UserPermission instance
     school_management_permission = UserPermission(
         permission_description=school_management_permission_definition.model_dump()
     )
@@ -113,60 +114,86 @@ with get_db() as db:
     db.add(school_role_permission_assoc)
     db.flush()
 
-    # Create User
-    user = User(
+    #
+    # ---school registration(school_admin registration)
+    #
+    school_user = User(
         username="school",
         email="school@app.com",
         password_hash=hash_password("password123"),
     )
-    db.add(user)
+    db.add(school_user)
     db.flush()
 
-    # Create UserPermissionAssociation
-    user_permission_assoc = UserPermissionAssociation(
-        user_id=user.id, user_permission_id=school_management_permission.id
+    #
+    # --- link school(school_admin) to their permissions
+    #
+    school_user_permission_association = UserPermissionAssociation(
+        user_id=school_user.id, user_permission_id=school_management_permission.id
     )
-    db.add(user_permission_assoc)
+    db.add(school_user_permission_association)
     db.flush()
 
-    # Create School
     school = School(
         name=faker.name(),
         address=faker.address(),
         country=faker.country(),
         school_number=str(faker.random_number(digits=6, fix_len=True)),
-        user_id=user.id,
+        user_id=school_user.id,
     )
     db.add(school)
     db.flush()
 
-    # Create UserRoleAssociation
-    user_role_association = UserRoleAssociation(
-        user_id=user.id, role_id=school_admin_role.id
+    #
+    # --
+    #
+    school_user_role_association = UserRoleAssociation(
+        user_id=school_user.id, role_id=school_admin_role.id
     )
-    db.add(user_role_association)
+    db.add(school_user_role_association)
     db.flush()
 
-    # Create Classroom
-    classroom = Classroom(
+    #
+    # ---
+    #
+    grade_1_green_classroom = Classroom(
         name=f"Classroom 1 ",
         grade_level=1,
         school_id=school.id,
     )
-    db.add(classroom)
+    db.add(grade_1_green_classroom)
     db.flush()
 
-    # Create AcademicTerm
-    academic_term = AcademicTerm(
+    #
+    # ---
+    #
+    first_academic_term_2024 = AcademicTerm(
         name=f"Term 1",
         start_date=datetime.datetime(2023, 1, 1),
         end_date=datetime.datetime(2023, 12, 31),
         school_id=school.id,
     )
-    db.add(academic_term)
+    second_academic_term_2024 = AcademicTerm(
+        name=f"Term 2",
+        start_date=datetime.datetime(2023, 1, 1),
+        end_date=datetime.datetime(2023, 12, 31),
+        school_id=school.id,
+    )
+    third_academic_term_2024 = AcademicTerm(
+        name=f"Term 3",
+        start_date=datetime.datetime(2023, 1, 1),
+        end_date=datetime.datetime(2023, 12, 31),
+        school_id=school.id,
+    )
+
+    db.add_all(
+        [first_academic_term_2024, second_academic_term_2024, third_academic_term_2024]
+    )
     db.flush()
 
-    # Create Modules
+    #
+    # --- subjects/modules
+    #
     possible_modules = [
         "Mathematics",
         "Science",
@@ -176,134 +203,151 @@ with get_db() as db:
         "Computer studies",
         "Kiswahili",
     ]
-    modules: list[Module] = []
-    for module in possible_modules:
-        new_module = Module(
-            name=f"{module} Module",
-            description=faker.text(),
-        )
-        modules.append(new_module)
-    db.add_all(modules)
-    db.flush()
 
-    # Create Exam
-    exam = Exam(
-        name=f"Exam Module name",
-        date=datetime.datetime(2023, 6, 1),
-        total_marks=100,
-        module_id=modules[0].id,
-        academic_term_id=academic_term.id,
+    module = Module(
+        name=possible_modules[0],
+        description=possible_modules[0],
     )
-    db.add(exam)
+
+    db.add(module)
     db.flush()
 
-    # Create Teachers
-    teachers: list[Teacher] = []
-    for i in range(len(possible_modules)):
-        # Create teacher user with permissions
-        teacher_user = User(
-            username=faker.user_name(),
-            email=faker.email(),
-            password_hash=hash_password("password123"),
-        )
-        db.add(teacher_user)
-        db.flush()
-
-        # Create teacher role and permissions if needed
-        teacher_role = Role(
-            name=f"TeacherRole_{i}", type=RoleType.TEACHER, description="Teacher Role"
-        )
-        db.add(teacher_role)
-        db.flush()
-
-        # Associate teacher user with role
-        teacher_role_assoc = UserRoleAssociation(
-            user_id=teacher_user.id, role_id=teacher_role.id
-        )
-        db.add(teacher_role_assoc)
-        db.flush()
-
-        teacher = Teacher(
-            first_name=faker.first_name(),
-            last_name=faker.last_name(),
-            email=faker.email(),
-            school_id=school.id,
-            user_id=teacher_user.id,
-        )
-        teachers.append(teacher)
-    db.add_all(teachers)
+    #
+    # ---
+    #
+    first_term_2024_exam = Exam(
+        name=module.name,
+        date=datetime.datetime(2023, 6, 1),
+        total_marks=80,
+        module_id=module.id,
+        academic_term_id=third_academic_term_2024.id,
+    )
+    second_term_2024_exam = Exam(
+        name=module.name,
+        date=datetime.datetime(2023, 6, 1),
+        total_marks=40,
+        module_id=module.id,
+        academic_term_id=third_academic_term_2024.id,
+    )
+    third_term_2024_exam = Exam(
+        name=module.name,
+        date=datetime.datetime(2023, 6, 1),
+        total_marks=60,
+        module_id=module.id,
+        academic_term_id=third_academic_term_2024.id,
+    )
+    db.add_all([first_term_2024_exam, second_term_2024_exam, third_term_2024_exam])
     db.flush()
 
-    # Create Students
-    students: list[Student] = []
-    for j in range(5):
-        # Create student user with permissions
-        student_user = User(
-            username=faker.user_name(),
-            email=faker.email(),
-            password_hash=hash_password("password123"),
-        )
-        db.add(student_user)
-        db.flush()
+    #
+    # ---
+    #
 
-        # Create student role and permissions
-        student_role = Role(
-            name=f"StudentRole_{j}", type=RoleType.STUDENT, description="Student Role"
-        )
-        db.add(student_role)
-        db.flush()
-
-        # Associate student user with role
-        student_role_assoc = UserRoleAssociation(
-            user_id=student_user.id, role_id=student_role.id
-        )
-        db.add(student_role_assoc)
-        db.flush()
-
-        student = Student(
-            first_name=faker.name(),
-            last_name=faker.last_name(),
-            date_of_birth=datetime.datetime(2005, 1, 1),
-            gender=faker.random_element(elements=("M", "F")),
-            grade_level=1,
-            classroom_id=classroom.id,
-            user_id=student_user.id,
-        )
-        db.add(student)
-        students.append(student)
-        db.flush()
-
-        school_student_association = SchoolStudentAssociation(
-            student_id=student.id, school_id=school.id
-        )
-        db.add(school_student_association)
-        db.flush()
-
-    db.add_all(students)
+    grade_1_green_teacher_user = User(
+        username=faker.user_name(),
+        email="teacher.school@app.com",
+        password_hash=hash_password("password123"),
+    )
+    db.add(grade_1_green_teacher_user)
     db.flush()
 
-    # Create ExamResults and ModuleEnrollments
-    exam_results: list[ExamResult] = []
-    for student in students:
-        for module in modules:
-            # Create module enrollment
-            module_enrollment = ModuleEnrollment(
-                student_id=student.id,
-                module_id=module.id,
-            )
-            db.add(module_enrollment)
-            db.flush()
+    # Create teacher role and permissions if needed
+    teacher_role = Role(
+        name=f"TeacherRole", type=RoleType.TEACHER, description="Teacher Role"
+    )
+    db.add(teacher_role)
+    db.flush()
 
-            # Create exam results
-            exam_result = ExamResult(
-                marks_obtained=decimal.Decimal(random.randint(40, 100)),
-                exam_id=exam.id,
-                student_id=student.id,
-                class_room_id=classroom.id,
-                module_id=module.id,
-            )
-            exam_results.append(exam_result)
-    db.add_all(exam_results)
+    # Associate teacher user with role
+    teacher_role_assoc = UserRoleAssociation(
+        user_id=grade_1_green_teacher_user.id, role_id=teacher_role.id
+    )
+    db.add(teacher_role_assoc)
+    db.flush()
+
+    grade_1_green_teacher = Teacher(
+        first_name=faker.first_name(),
+        last_name=faker.last_name(),
+        email=faker.email(),
+        school_id=school.id,
+        user_id=grade_1_green_teacher_user.id,
+    )
+    db.add(grade_1_green_teacher)
+    db.flush()
+    #
+    # --- class teacher assignment
+    #
+
+    assign_grade_1_green_classroom_a_class_teacher = ClassTeacherAssociation(
+        teacher_id=grade_1_green_teacher.id,
+        classroom_id=grade_1_green_classroom.id,
+    )
+
+    db.add(assign_grade_1_green_classroom_a_class_teacher)
+    db.flush()
+
+    #
+    #
+    #
+
+    student_user = User(
+        username=faker.user_name(),
+        email="student.school@app.com",
+        password_hash=hash_password("password123"),
+    )
+    db.add(student_user)
+    db.flush()
+
+    # Create student role and permissions
+    student_role = Role(
+        name=f"StudentRole", type=RoleType.STUDENT, description="Student Role"
+    )
+    db.add(student_role)
+    db.flush()
+
+    # Associate student user with role
+    student_role_assoc = UserRoleAssociation(
+        user_id=student_user.id, role_id=student_role.id
+    )
+    db.add(student_role_assoc)
+    db.flush()
+
+    student = Student(
+        first_name=faker.name(),
+        last_name=faker.last_name(),
+        date_of_birth=datetime.datetime(2005, 1, 1),
+        gender=faker.random_element(elements=("M", "F")),
+        grade_level=1,
+        classroom_id=grade_1_green_classroom.id,
+        user_id=student_user.id,
+    )
+    db.add(student)
+    db.flush()
+
+    school_student_association = SchoolStudentAssociation(
+        student_id=student.id, school_id=school.id
+    )
+    db.add(school_student_association)
+    db.flush()
+
+    # Create module enrollment
+    module_enrollment = ModuleEnrollment(
+        student_id=student.id,
+        module_id=module.id,
+    )
+    db.add(module_enrollment)
+    db.flush()
+
+    # Create exam results
+    exam_result = ExamResult(
+        marks_obtained=decimal.Decimal(random.randint(40, 100)),
+        exam_id=third_term_2024_exam.id,
+        student_id=student.id,
+        class_room_id=grade_1_green_classroom.id,
+        module_id=module.id,
+    )
+
+    db.add(exam_result)
     db.flush()
 
     db.commit()
