@@ -64,27 +64,36 @@
     - email/identity: `school@app.com`
     - password: `password123`
 
+
     ```bash
+
       {
       "identity": "school@app.com",
       "password": "password123"
       }
+
     ```
 
   - teacher user
     - email/identity: `teacher.school@app.com`
     - password: `password123`
 
+
     ```bash
+
       {
       "identity": "teacher.school@app.com",
       "password": "password123"
       }
+
     ```
     
+
   - student user
     - email/identity: `student.school@app.com`
     - password: `password123`
+
+
 
     ```bash
       {
