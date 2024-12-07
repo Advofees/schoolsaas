@@ -19,7 +19,7 @@
 	- [X] can logout
 	- [X] can create teachers
 	- [ ] can update teachers
-	- [ ] can delete teachers
+	- [X] can delete teachers
 	- [X] can register students
 	- [X] can view all students
 	- [X] can view all the parents/guardians of the students
@@ -38,8 +38,8 @@
 - teacher
 
 	- [ ] can record school attendance
-	- [ ] can update students grades
-	- [ ] can view past grades
+	- [X] can update students grades
+	- [X] can view past grades
 	- [ ] can upload past papers
 	- [ ] can view school timetable
 	- [ ] can view school duties
