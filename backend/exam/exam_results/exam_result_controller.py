@@ -47,7 +47,7 @@ def exam_result_response(exam_result: ExamResult) -> dict:
     }
 
 
-@router.get("/school/student/classroom/{classroom_id}/{exam_id}")
+@router.get("/school/student/classroom/{classroom_id}/exam_results/{exam_id}")
 def get_module_exam_result_for_classroom(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -75,7 +75,9 @@ def get_module_exam_result_for_classroom(
     return results
 
 
-@router.get("/school/student/classroom/{classroom_id}/{exam_id}/{student_id}")
+@router.get(
+    "/school/student/classroom/{classroom_id}/exam_results/{exam_id}/{student_id}"
+)
 def get_module_exam_result_for_student_in_a_classroom(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -108,7 +110,7 @@ def get_module_exam_result_for_student_in_a_classroom(
     return results
 
 
-@router.get("/school/student/module/exam_result/{student_id}/{exam_id}/{module_id}")
+@router.get("/school/student/{student_id}/module/{module_id}/exam_results/{exam_id}")
 def get_specific_module_exam_results_for_student(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
