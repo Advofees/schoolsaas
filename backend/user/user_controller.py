@@ -171,12 +171,23 @@ def get_user_session(
     # user info
     # ---
     school_id = user.school_id or raise_exception()
+    school = db.query(School).filter(School.id == school_id).first()
+
+    if not school:
+        raise HTTPException(404)
 
     return {
         "user_id": auth_context.user_id,
         "roles": user.roles,
         "permissions": user.all_permissions,
-        "school_id": school_id,
+        "name": user.name,
+        "email": user.email,
+        "school": {
+            "id": school_id,
+            "name": school.name,
+            "number": school.school_number,
+            "address": school.address,
+        },
     }
 
 
