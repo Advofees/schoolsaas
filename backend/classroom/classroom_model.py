@@ -36,7 +36,10 @@ class Classroom(Base):
     )
 
     teachers: Mapped[list["Teacher"]] = relationship(
-        "Teacher", secondary="class_teacher_associations", back_populates="classrooms"
+        "Teacher",
+        secondary="class_teacher_associations",
+        back_populates="classrooms",
+        viewonly=True,
     )
 
     teacher_associations: Mapped[list["ClassTeacherAssociation"]] = relationship(

@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: f1d2b120e0a3
+Revision ID: ca10c42c86d9
 Revises: 
-Create Date: 2024-12-04 13:57:57.941598
+Create Date: 2024-12-07 14:39:35.040918
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'f1d2b120e0a3'
+revision: str = 'ca10c42c86d9'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -167,6 +167,7 @@ def upgrade() -> None:
     op.create_table('school_parent_associations',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('school_id', sa.UUID(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('parent_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['parent_id'], ['school_parents.id'], ),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
@@ -206,6 +207,16 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['module_id'], ['modules.id'], ),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('class_teacher_associations',
+    sa.Column('teacher_id', sa.UUID(), nullable=False),
+    sa.Column('classroom_id', sa.UUID(), nullable=False),
+    sa.Column('is_primary', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['classroom_id'], ['classrooms.id'], ),
+    sa.ForeignKeyConstraint(['teacher_id'], ['teachers.id'], ),
+    sa.PrimaryKeyConstraint('teacher_id', 'classroom_id')
     )
     op.create_table('exams',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -316,6 +327,7 @@ def upgrade() -> None:
     op.create_table('parent_student_associations',
     sa.Column('parent_id', sa.UUID(), nullable=False),
     sa.Column('student_id', sa.UUID(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['parent_id'], ['school_parents.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
     sa.PrimaryKeyConstraint('parent_id', 'student_id')
@@ -323,6 +335,7 @@ def upgrade() -> None:
     op.create_table('school_student_associations',
     sa.Column('school_id', sa.UUID(), nullable=False),
     sa.Column('student_id', sa.UUID(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
     sa.PrimaryKeyConstraint('school_id', 'student_id')
@@ -361,6 +374,7 @@ def downgrade() -> None:
     op.drop_table('students')
     op.drop_table('payments')
     op.drop_table('exams')
+    op.drop_table('class_teacher_associations')
     op.drop_table('calendar_events')
     op.drop_table('teachers')
     op.drop_table('school_parent_associations')

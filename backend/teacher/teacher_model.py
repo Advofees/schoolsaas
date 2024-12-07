@@ -67,15 +67,21 @@ class Teacher(Base):
     )
 
     modules: Mapped[list["Module"]] = relationship(
-        "Module", secondary="teacher_module_association", back_populates="teachers"
+        "Module",
+        secondary="teacher_module_association",
+        back_populates="teachers",
+        viewonly=True,
     )
 
     classrooms: Mapped[list["Classroom"]] = relationship(
-        "Classroom", secondary="class_teacher_associations", back_populates="teachers"
+        "Classroom",
+        secondary="class_teacher_associations",
+        back_populates="teachers",
+        viewonly=True,
     )
 
     classroom_associations: Mapped[list["ClassTeacherAssociation"]] = relationship(
-        "ClassTeacherAssociation", back_populates="teacher"
+        "ClassTeacherAssociation", back_populates="teacher", viewonly=True
     )
 
     @property

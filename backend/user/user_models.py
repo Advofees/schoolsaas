@@ -47,12 +47,14 @@ class UserPermission(Base):
         "User",
         secondary="user_permission_associations",
         back_populates="permissions",
+        viewonly=True,
     )
 
     roles: Mapped[list["Role"]] = relationship(
         "Role",
         secondary="role_permission_associations",
         back_populates="user_permissions",
+        viewonly=True,
     )
 
     @property
@@ -161,13 +163,17 @@ class Role(Base):
     description: Mapped[typing.Optional[str]] = mapped_column(String)
 
     users: Mapped[list["User"]] = relationship(
-        "User", secondary="user_role_associations", back_populates="roles"
+        "User",
+        secondary="user_role_associations",
+        back_populates="roles",
+        viewonly=True,
     )
 
     user_permissions: Mapped[list["UserPermission"]] = relationship(
         "UserPermission",
         secondary="role_permission_associations",
         back_populates="roles",
+        viewonly=True,
     )
 
     def __init__(
@@ -199,10 +205,14 @@ class User(Base):
         "UserPermission",
         secondary="user_permission_associations",
         back_populates="users",
+        viewonly=True,
     )
 
     roles: Mapped[list["Role"]] = relationship(
-        "Role", secondary="user_role_associations", back_populates="users"
+        "Role",
+        secondary="user_role_associations",
+        back_populates="users",
+        viewonly=True,
     )
 
     sessions: Mapped[list["UserSession"]] = relationship(
