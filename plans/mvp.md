@@ -1,57 +1,79 @@
-# School
+# MVP Checklist
 
-- school-name
-- school-email
-- school-logo
-- school-number
+## Basic School Information
+- [ ] School name 
+- [ ] School email 
+- [ ] School logo
+- [ ] School contact number 
 
-- school stats
-	- total number of students
-	- total number of teachers
-	- yearly enrollment stats
-	- payments stats
-	
-- sidebars:
-	- teachers
-		- your classroom
-		- your students
-	- students 
-		- classroom name
-		- classroom number of students
-		- gender: Male | Female(stats)
-		- attendance stats PRESENT | ABSENT (stats)
-		- absent yesterday
-		- fetch all students
-			- filter by classroom
-				- return students for a particular classroom
-	
-		- if the current user is the teacher:
-			- return students for his class only
-			- summary to have:
-				- attendance stats
-					- ABSENT
-					- PRESENT
-					
-Restrict later based on permissions
-- views based on Roles
-- full information based on their role
+## Analytics Dashboard
 
-parents/students
-if you select year return the grades for the three terms as three objects
-- grades
-	- filter by:
-		- year
-	 - academic term
-- fees
-	-  filter by:
-		- year
-		- academic term
-- school-messages:
-	- filter by:
-		- created_at
-# endpoints
+- [ ] Total student count
+- [ ] Total teacher count
+- [ ] Yearly enrollment trends
+- [ ] Payment analytics
+      - Revenue overview
+      - Outstanding payments
+      - Payment history
 
-- echarts
-- vue-echarts
-- postgres
+## Role-Based Access Control
+- [ ] Teacher dashboard
+- [ ] Student/Parent dashboard
+- [ ] SchoolAdmin dashboard
 
+
+## Teacher dashboard Features
+- [ ] Classroom management
+  - [ ] View assigned classroom
+  - [ ] Student list management
+- [ ] Student Analytics
+  - [ ] Gender distribution stats
+  - [ ] Attendance tracking
+    - [ ] Present/Absent marking
+    - [ ] Daily attendance summary
+    - [ ] Absence notifications
+  - [ ] Class-specific student filters
+  - [ ] Attendance reports generation
+
+## Student/Parent Dashboard Features
+- [ ] Academic Records
+  - [ ] Grade viewing by year
+  - [ ] Term-wise grade breakdown
+    - [ ] First term
+    - [ ] Second term
+    - [ ] Third term
+- [ ] Fee Management
+  - [ ] View fees by year
+  - [ ] View fees by term
+  - [ ] Payment history
+- [ ] School Communications
+  - [ ] Message center
+  - [ ] Date-based message filtering
+
+## API Endpoints
+- [ ] Authentication endpoints
+- [ ] School information endpoints
+- [ ] Analytics endpoints
+- [ ] Student management endpoints
+- [ ] Grade management endpoints
+- [ ] Attendance management endpoints
+- [ ] Communication endpoints
+
+## Filters & Search
+- [ ] Classroom filter
+- [ ] Year filter
+- [ ] Term filter
+- [ ] Date range filter for messages
+- [ ] Student search functionality
+
+## Additional Features
+- [ ] Role-based view restrictions
+- [ ] Data export functionality
+
+
+## Notes:
+- Each item can be marked as complete by changing `[ ]` to `[x]`
+- Implementation priority should follow the order listed
+- All features should include proper error handling and validation
+- Regular testing and feedback loops should be maintained
+- Documentation should be updated as features are completed
