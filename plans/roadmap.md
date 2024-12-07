@@ -36,10 +36,11 @@
 	- [ ] can export all reports as csv , xl, pdf, doc
 	
 - teacher
-
+	
 	- [ ] can record school attendance
 	- [X] can update students grades
 	- [X] can view past grades
+	- [X] can manage classroom
 	- [ ] can upload past papers
 	- [ ] can view school timetable
 	- [ ] can view school duties
