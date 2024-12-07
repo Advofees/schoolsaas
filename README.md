@@ -40,10 +40,9 @@
   docker compose -f infrastructure_services/docker-compose.dev.yml up
   ```
 - Seed the database
-  - ```bash
-
+  
+  ```bash
   ./seed-database.sh 
-
   ```
   - or 
   ```bash
@@ -53,13 +52,14 @@
 
   ```bash
    ./backend/start.dev.sh
-   ````
+   ```
    or 
 
   ```bash
   
   task server
   ```
+  
   - school admin user
     - email/identity: `school@app.com`
     - password: `password123`
