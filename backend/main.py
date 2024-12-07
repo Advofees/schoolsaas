@@ -38,20 +38,21 @@ app.add_middleware(
 )
 
 # ---
-app.include_router(authentication_router, tags=["Authentication"])
+app.include_router(authentication_router, tags=["authentication"])
+app.include_router(permissions_router, tags=["permissions"])
 # ---
-app.include_router(permissions_router, tags=["Permissions"])
+app.include_router(school_router, tags=["school"])
+app.include_router(teacher_router, tags=["teacher"])
+
+
 app.include_router(exam_result_router, tags=["Exam Results"])
 
-app.include_router(school_router, tags=["School"])
-app.include_router(teacher_router, tags=["Teacher"])
-
-app.include_router(parent_router, tags=["Parent"])
-app.include_router(student_router, tags=["Student"])
-app.include_router(payment_router, tags=["Payment"])
-app.include_router(lesson_plan_router, tags=["Lesson Plans"])
+app.include_router(parent_router, tags=["parent"])
+app.include_router(student_router, tags=["student"])
+app.include_router(payment_router, tags=["payment"])
+app.include_router(lesson_plan_router, tags=["lesson-plans"])
 
 
-@app.get("/health", tags=["Health"])
+@app.get("/health", tags=["health"])
 def health():
     return {"version": os.environ.get("GIT_COMMIT_SHA")}
