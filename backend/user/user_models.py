@@ -8,7 +8,7 @@ from backend.database.base import Base
 import typing
 from sqlalchemy.dialects.postgresql import JSONB
 import enum
-from backend.permissions.permissions_schemas import PERMISSIONS
+from backend.user.permissions.permissions_schemas import PERMISSIONS
 
 
 from backend.school.school_model import School
@@ -25,6 +25,9 @@ class RoleType(enum.Enum):
     TEACHER = "teacher"
     STUDENT = "student"
     PARENT = "parent"
+    SECRETARY = "secretary"
+    BURSAR = "bursar"
+    CLASS_TEACHER = "class_teacher"
 
 
 class UserPermission(Base):
@@ -221,6 +224,63 @@ class User(Base):
     teacher_user: Mapped["Teacher"] = relationship(
         Teacher, back_populates="user", uselist=False
     )
+
+    @property
+    def name(self):
+        if self.school_user:
+            return self.school_user.name
+        elif self.teacher_user:
+            return self.teacher_user.first_name
+        elif self.student_user:
+            return self.student_user.first_name
+
+    @property
+    def school_id(self):
+        if self.school_user:
+            return self.school_user.id
+        elif self.teacher_user:
+            return self.teacher_user.school.id
+        elif self.student_user:
+            if not self.student_user.school_students_associations:
+                raise ValueError(
+                    f"Student {self.student_user.id} is not associated with any school"
+                )
+
+            active_association = next(
+                (
+                    assoc
+                    for assoc in self.student_user.school_students_associations
+                    if assoc.is_active
+                ),
+                None,
+            )
+            if not active_association:
+                raise ValueError(
+                    f"Student {self.student_user.id} has no active school set"
+                )
+            return active_association.school_id
+
+        elif self.school_parent_user:
+            if not self.school_parent_user.school_parent_associations:
+                raise ValueError(
+                    f"Parent {self.school_parent_user.id} is not associated with any school"
+                )
+
+            active_association = next(
+                (
+                    assoc
+                    for assoc in self.school_parent_user.school_parent_associations
+                    if assoc.is_active
+                ),
+                None,
+            )
+            if not active_association:
+                raise ValueError(
+                    f"Parent {self.school_parent_user.id} has no active school set"
+                )
+            return active_association.school_id
+
+        return None
 
     def __init__(
         self,

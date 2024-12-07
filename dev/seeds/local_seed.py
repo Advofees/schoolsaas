@@ -13,7 +13,7 @@ import decimal
 from faker import Faker
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
-from backend.permissions.permissions_schemas import (
+from backend.user.permissions.permissions_schemas import (
     PERMISSIONS,
     SchoolPermissions,
     StudentPermissions,

@@ -120,7 +120,6 @@ class ClassTeacherAssociation(Base):
         DateTime, onupdate=func.now(), nullable=True
     )
 
-    # Add relationships to both Teacher and Classroom
     teacher: Mapped["Teacher"] = relationship(
         "Teacher", back_populates="classroom_associations"
     )

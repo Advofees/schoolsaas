@@ -79,6 +79,7 @@ class SchoolPermissions(BaseModel):
     can_add_permissions: bool = False
     can_edit_permissions: bool = False
     can_delete_permissions: bool = False
+    can_manage_teachers: bool = False
 
 
 class ExamResultPermissions(BaseModel):

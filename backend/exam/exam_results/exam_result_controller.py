@@ -59,12 +59,6 @@ def get_module_exam_result_for_classroom(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
     exam_results = (
         db.query(ExamResult)
         .filter(ExamResult.class_room_id == classroom_id, ExamResult.exam_id == exam_id)
@@ -90,11 +84,6 @@ def get_module_exam_result_for_student_in_a_classroom(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
 
     exam_results = (
         db.query(ExamResult)
@@ -122,13 +111,6 @@ def get_specific_module_exam_results_for_student(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
     exam_result = (
         db.query(ExamResult)
         .filter(
@@ -152,12 +134,6 @@ def get_exam_results_by_student_id(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
     exams = db.query(ExamResult).filter(ExamResult.exam_id == exam_id).all()
     return exams
 
@@ -180,12 +156,6 @@ def create_exam_results(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if not any(
-        permission.permissions.exam_result_permissions.can_add_exam_results is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
 
     module_enrollment = (
         db.query(ModuleEnrollment)
@@ -245,12 +215,6 @@ def update_exam_results(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if not any(
-        permission.permissions.exam_result_permissions.can_edit_exam_results is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
 
     exam_result = (
         db.query(ExamResult)

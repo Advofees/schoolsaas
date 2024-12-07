@@ -35,14 +35,6 @@ def get_school(
     if not user.has_role_type(RoleType.SUPER_ADMIN):
         raise HTTPException(status_code=403, detail="Permission denied")
 
-    if not any(
-        permission.permissions.school_permissions.can_view_school
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
     total_schools = db.query(School).count()
 
     schools = db.query(School).offset(offset).limit(limit).all()
@@ -94,14 +86,6 @@ def get_school_by_id(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if not any(
-        permission.permissions.school_permissions.can_view_school
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
 
     school = db.query(School).filter(School.id == school_id).first()
     if not school:

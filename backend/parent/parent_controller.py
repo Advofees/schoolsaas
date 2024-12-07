@@ -29,12 +29,6 @@ async def create_parent(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not any(
-        permission.permissions.parent_permissions.can_add_parents is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
     school_parent = (
         db.query(SchoolParent)
         .filter(
@@ -77,12 +71,6 @@ async def get_parent(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not any(
-        permission.permissions.parent_permissions.can_view_parents is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
     total_parents = db.query(SchoolParent).count()
 
     parents = db.query(SchoolParent).offset(offset).limit(limit).all()
@@ -119,12 +107,6 @@ async def update_parent(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not any(
-        permission.permissions.parent_permissions.can_edit_parents is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
     school_parent = (
         db.query(SchoolParent).filter(SchoolParent.id == body.student_id).first()
     )
@@ -154,12 +136,6 @@ async def delete_parent(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if not any(
-        permission.permissions.parent_permissions.can_delete_parents is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
 
     school_parent = (
         db.query(SchoolParent).filter(SchoolParent.id == school_parent_id).first()
