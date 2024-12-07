@@ -305,7 +305,7 @@ class User(Base):
         self.secret_key = pyotp.random_base32()
 
     def has_role_type(self, role_type: RoleType) -> bool:
-        return any(role.type == role_type for role in self.roles)
+        return any(role.type == role_type.value for role in self.roles)
 
     @property
     def all_permissions(self) -> set[UserPermission]:
