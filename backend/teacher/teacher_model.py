@@ -134,7 +134,7 @@ class ClassTeacherAssociation(Base):
     )
 
     def __init__(
-        self, teacher_id: uuid.UUID, classroom_id: uuid.UUID, is_primary: bool = False
+        self, teacher_id: uuid.UUID, classroom_id: uuid.UUID, is_primary: bool
     ):
         super().__init__()
         self.teacher_id = teacher_id

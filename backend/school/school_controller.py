@@ -48,6 +48,21 @@ class PaymentStats(BaseModel):
         )
 
 
+def student_dto(student: Student) -> dict:
+    return {
+        "grade_level": student.grade_level,
+        "created_at": student.created_at,
+        "updated_at": student.updated_at,
+        "first_name": student.first_name,
+        "last_name": student.last_name,
+        "classroom_id": student.classroom_id,
+        "user_id": student.user_id,
+        "id": student.id,
+        "date_of_birth": student.date_of_birth,
+        "gender": student.gender,
+    }
+
+
 def dashboard_resources_dto(
     students: list[Student],
     total_students_managed: int,
@@ -65,7 +80,7 @@ def dashboard_resources_dto(
         "total_pages": total_pages,
         "current_year": current_year,
         "payments": payments,
-        "students": students,
+        "students": [student_dto(student) for student in students],
     }
 
 
