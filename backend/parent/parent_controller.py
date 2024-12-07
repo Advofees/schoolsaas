@@ -30,10 +30,8 @@ async def create_parent(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.parent_permissions.can_add_parents
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.parent_permissions.can_add_parents is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -80,10 +78,8 @@ async def get_parent(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.parent_permissions.can_view_parents
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.parent_permissions.can_view_parents is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -124,10 +120,8 @@ async def update_parent(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.parent_permissions.can_edit_parents
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.parent_permissions.can_edit_parents is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -162,10 +156,8 @@ async def delete_parent(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.parent_permissions.can_delete_parents
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.parent_permissions.can_delete_parents is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 

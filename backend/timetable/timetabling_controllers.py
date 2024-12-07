@@ -192,7 +192,6 @@ async def get_teacher_timetable(
         current_date += datetime.timedelta(days=1)
 
 
-# Calendar endpoints
 @router.post("/schools/{school_id}/calendar-events")
 async def create_calendar_event(
     school_id: uuid.UUID,

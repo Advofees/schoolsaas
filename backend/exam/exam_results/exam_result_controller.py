@@ -60,12 +60,11 @@ def get_module_exam_result_for_classroom(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.exam_result_permissions.can_view_exam_results is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
+
     exam_results = (
         db.query(ExamResult)
         .filter(ExamResult.class_room_id == classroom_id, ExamResult.exam_id == exam_id)
@@ -90,12 +89,11 @@ def get_module_exam_result_for_student_in_a_classroom(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.exam_result_permissions.can_view_exam_results is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
+
     exam_results = (
         db.query(ExamResult)
         .filter(
@@ -124,10 +122,8 @@ def get_specific_module_exam_results_for_student(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.exam_result_permissions.can_view_exam_results is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -155,12 +151,11 @@ def get_exam_results_by_student_id(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.exam_result_permissions.can_view_exam_results
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.exam_result_permissions.can_view_exam_results is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
+
     exams = db.query(ExamResult).filter(ExamResult.exam_id == exam_id).all()
     return exams
 
@@ -185,10 +180,8 @@ def create_exam_results(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.exam_result_permissions.can_add_exam_results
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.exam_result_permissions.can_add_exam_results is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -230,7 +223,7 @@ def create_exam_results(
     )
     db.add(new_exam_result)
     db.commit()
-    return {"detail": "Exam result added successfully"}
+    return {"message": "Exam result added successfully"}
 
 
 class UpdateModuleExamResult(BaseModel):
@@ -252,10 +245,8 @@ def update_exam_results(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.exam_result_permissions.can_edit_exam_results
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.exam_result_permissions.can_edit_exam_results is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -276,4 +267,4 @@ def update_exam_results(
 
     exam_result.marks_obtained = body.marks_obtained
     db.commit()
-    return {"detail": "Exam result updated successfully"}
+    return {"message": "Exam result updated successfully"}

@@ -20,7 +20,9 @@ from backend.student.student_controllers import router as student_router
 from backend.payment.payment_controller import router as payment_router
 from backend.lesson_plan.lesson_plan_controller import router as lesson_plan_router
 from backend.permissions.permission_controller import router as permission_router
-from backend.exam.exam_results.exam_result import router as exam_result_router
+from backend.exam.exam_results.exam_result_controller import (
+    router as exam_result_router,
+)
 
 # ---
 app = FastAPI(docs_url="/")

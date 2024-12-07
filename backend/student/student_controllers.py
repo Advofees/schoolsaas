@@ -48,7 +48,7 @@ async def create_student(
     # --
 
     if not any(
-        permission.permissions.student_permissions.can_add_students
+        permission.permissions.student_permissions.can_add_students is True
         for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
@@ -100,7 +100,7 @@ async def get_student(
         raise HTTPException(status_code=404, detail="Student not found")
 
     if not any(
-        permission.permissions.student_permissions.can_view_students
+        permission.permissions.student_permissions.can_view_students is True
         for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
@@ -127,7 +127,7 @@ async def get_student_parents(
 
     if not any(
         permission.permissions.student_permissions.can_view_students
-        and permission.permissions.parent_permissions.can_view_parents
+        and permission.permissions.parent_permissions.can_view_parents is True
         for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
@@ -160,7 +160,7 @@ async def get_student_classroom(
         raise HTTPException(status_code=404, detail="Student not found")
 
     if not any(
-        permission.permissions.student_permissions.can_view_students
+        permission.permissions.student_permissions.can_view_students is True
         for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="permission-denied")

@@ -33,6 +33,12 @@ def update_permission(
     if not user:
         raise HTTPException(403, detail="not-authorized")
 
+    if not any(
+        permission.permissions.school_permissions.can_manage_permissions is True
+        for permission in user.all_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     associated_user = db.query(User).filter(User.id == user_id).first()
     if not associated_user:
         raise HTTPException(404)
@@ -76,6 +82,12 @@ def create_permission(
     if not user:
         raise HTTPException(403, detail="not-authorized")
 
+    if not any(
+        permission.permissions.school_permissions.can_manage_permissions is True
+        for permission in user.all_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     associated_user = db.query(User).filter(User.id == body.user_id).first()
     if not associated_user:
         raise HTTPException(404)
@@ -103,6 +115,12 @@ def remove_permission(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
         raise HTTPException(403, detail="not-authorized")
+
+    if not any(
+        permission.permissions.school_permissions.can_manage_permissions is True
+        for permission in user.all_permissions
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     user_permission_association = (
         db.query(UserPermissionAssociation)

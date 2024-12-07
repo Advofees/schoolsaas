@@ -21,10 +21,8 @@ async def get_teachers_in_a_particular_school(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.teacher_permissions.can_view_teachers
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.teacher_permissions.can_view_teachers is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -46,10 +44,8 @@ async def get_teacher_in_particular_school_by_id(
         raise HTTPException(status_code=404, detail="User not found")
 
     if not any(
-        permission.permissions.teacher_permissions.can_view_teachers
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.teacher_permissions.can_view_teachers is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -65,7 +61,6 @@ class TeacherModel(BaseModel):
     last_name: str
     email: str
     phone: str
-    password: str
 
 
 @router.post("/school/teachers/create")
@@ -84,10 +79,8 @@ async def create_teacher_in_particular_school(
         raise HTTPException(status_code=403, detail="Permission denied")
 
     if not any(
-        permission.permissions.teacher_permissions.can_add_teachers
-        for role in user.roles
-        if role.user_permissions
-        for permission in role.user_permissions
+        permission.permissions.teacher_permissions.can_add_teachers is True
+        for permission in user.all_permissions
     ):
         raise HTTPException(status_code=403, detail="Permission denied")
 
@@ -112,7 +105,7 @@ async def create_teacher_in_particular_school(
     email_service.send(email_params)
     new_teacher_user = User(
         email=body.email,
-        password_hash=hash_password(password=body.password),
+        password_hash=hash_password(password=temporary_password),
         username=body.email,
     )
     db.add(new_teacher_user)
@@ -137,4 +130,4 @@ async def create_teacher_in_particular_school(
     db.add(new_teacher)
     db.commit()
 
-    return {"detail": "Teacher created successfully"}
+    return {"message": "Teacher created successfully"}
