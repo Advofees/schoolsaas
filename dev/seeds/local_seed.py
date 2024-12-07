@@ -288,188 +288,194 @@ with get_db() as db:
 
     # Grade 1 Students
     # Student 1: John Davis
-    student1_user = User(
+    student_john_davis_user = User(
         username="john.davis",
         email="student.school@app.com",
         password_hash=hash_password("password123"),
     )
-    db.add(student1_user)
+    db.add(student_john_davis_user)
     db.flush()
 
-    student1_role_assoc = UserRoleAssociation(
-        user_id=student1_user.id, role_id=student_role.id
+    student_john_davis_role_assoc = UserRoleAssociation(
+        user_id=student_john_davis_user.id, role_id=student_role.id
     )
-    db.add(student1_role_assoc)
+    db.add(student_john_davis_role_assoc)
     db.flush()
 
-    student1 = Student(
+    student_john_davis = Student(
         first_name="John",
         last_name="Davis",
         date_of_birth=datetime.datetime(2017, 3, 15),
         gender="M",
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
-        user_id=student1_user.id,
+        user_id=student_john_davis_user.id,
     )
-    db.add(student1)
+    db.add(student_john_davis)
     db.flush()
 
-    student1_school_assoc = SchoolStudentAssociation(
-        student_id=student1.id, school_id=sunrise_academy.id
+    student_john_davis_school_assoc = SchoolStudentAssociation(
+        student_id=student_john_davis.id, school_id=sunrise_academy.id
     )
-    db.add(student1_school_assoc)
+    db.add(student_john_davis_school_assoc)
     db.flush()
 
     # Student 2: Michael Chang
-    student2_user = User(
+    student_micheal_chang = User(
         username="michael.chang",
         email="student.michael.chang@school.app",
         password_hash=hash_password("password123"),
     )
-    db.add(student2_user)
+    db.add(student_micheal_chang)
     db.flush()
 
-    student2_role_assoc = UserRoleAssociation(
-        user_id=student2_user.id, role_id=student_role.id
+    student_micheal_chang_role_assoc = UserRoleAssociation(
+        user_id=student_micheal_chang.id, role_id=student_role.id
     )
-    db.add(student2_role_assoc)
+    db.add(student_micheal_chang_role_assoc)
     db.flush()
 
-    student2 = Student(
+    student_micheal_chang = Student(
         first_name="Michael",
         last_name="Chang",
         date_of_birth=datetime.datetime(2017, 5, 20),
         gender="M",
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
-        user_id=student2_user.id,
+        user_id=student_micheal_chang.id,
     )
-    db.add(student2)
+    db.add(student_micheal_chang)
     db.flush()
 
-    student2_school_assoc = SchoolStudentAssociation(
-        student_id=student2.id, school_id=sunrise_academy.id
+    student_micheal_chang_school_assoc = SchoolStudentAssociation(
+        student_id=student_micheal_chang.id, school_id=sunrise_academy.id
     )
-    db.add(student2_school_assoc)
+    db.add(student_micheal_chang_school_assoc)
     db.flush()
 
     # Student 3: Sofia Patel
-    student3_user = User(
+    student_sofia_patel_user = User(
         username="sofia.patel",
         email="student.sofia.patel@school.app",
         password_hash=hash_password("password123"),
     )
-    db.add(student3_user)
+    db.add(student_sofia_patel_user)
     db.flush()
 
-    student3_role_assoc = UserRoleAssociation(
-        user_id=student3_user.id, role_id=student_role.id
+    student_sofia_patel_role_assoc = UserRoleAssociation(
+        user_id=student_sofia_patel_user.id, role_id=student_role.id
     )
-    db.add(student3_role_assoc)
+    db.add(student_sofia_patel_role_assoc)
     db.flush()
 
-    student3 = Student(
+    student_sofia_patel = Student(
         first_name="Sofia",
         last_name="Patel",
         date_of_birth=datetime.datetime(2017, 7, 10),
         gender="F",
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
-        user_id=student3_user.id,
+        user_id=student_sofia_patel_user.id,
     )
-    db.add(student3)
+    db.add(student_sofia_patel)
     db.flush()
 
-    student3_school_assoc = SchoolStudentAssociation(
-        student_id=student3.id, school_id=sunrise_academy.id
+    student_sofia_patel_school_assoc = SchoolStudentAssociation(
+        student_id=student_sofia_patel.id, school_id=sunrise_academy.id
     )
-    db.add(student3_school_assoc)
+    db.add(student_sofia_patel_school_assoc)
     db.flush()
 
     # Grade 2 Students
     # Student 4: David Kim
-    student4_user = User(
+    student_david_kim_user = User(
         username="david.kim",
         email="student.david.kim@school.app",
         password_hash=hash_password("password123"),
     )
-    db.add(student4_user)
+    db.add(student_david_kim_user)
     db.flush()
 
-    student4_role_assoc = UserRoleAssociation(
-        user_id=student4_user.id, role_id=student_role.id
+    student_david_kim_role_assoc = UserRoleAssociation(
+        user_id=student_david_kim_user.id, role_id=student_role.id
     )
-    db.add(student4_role_assoc)
+    db.add(student_david_kim_role_assoc)
     db.flush()
 
-    student4 = Student(
+    student_david_kim = Student(
         first_name="David",
         last_name="Kim",
         date_of_birth=datetime.datetime(2016, 4, 25),
         gender="M",
         grade_level=2,
         classroom_id=grade_2_science_classroom.id,
-        user_id=student4_user.id,
+        user_id=student_david_kim_user.id,
     )
-    db.add(student4)
+    db.add(student_david_kim)
     db.flush()
 
-    student4_school_assoc = SchoolStudentAssociation(
-        student_id=student4.id, school_id=sunrise_academy.id
+    student_david_kim_school_assoc = SchoolStudentAssociation(
+        student_id=student_david_kim.id, school_id=sunrise_academy.id
     )
-    db.add(student4_school_assoc)
+    db.add(student_david_kim_school_assoc)
     db.flush()
 
     # Student 5: Emily Wong
-    student5_user = User(
+    student_emily_wong_user = User(
         username="emily.wong",
         email="student.emily.wong@school.app",
         password_hash=hash_password("password123"),
     )
-    db.add(student5_user)
+    db.add(student_emily_wong_user)
     db.flush()
 
-    student5_role_assoc = UserRoleAssociation(
-        user_id=student5_user.id, role_id=student_role.id
+    student_emily_wong_role_assoc = UserRoleAssociation(
+        user_id=student_emily_wong_user.id, role_id=student_role.id
     )
-    db.add(student5_role_assoc)
+    db.add(student_emily_wong_role_assoc)
     db.flush()
 
     # Student 6: Alexander Martinez
-    student6_user = User(
+    student_alexander_martinez_user = User(
         username="alexander.martinez",
         email="student.alex.martinez@school.app",
         password_hash=hash_password("password123"),
     )
-    db.add(student6_user)
+    db.add(student_alexander_martinez_user)
     db.flush()
 
-    student6_role_assoc = UserRoleAssociation(
-        user_id=student6_user.id, role_id=student_role.id
+    student_alexander_martinez_role_assoc = UserRoleAssociation(
+        user_id=student_alexander_martinez_user.id, role_id=student_role.id
     )
-    db.add(student6_role_assoc)
+    db.add(student_alexander_martinez_role_assoc)
     db.flush()
 
-    student6 = Student(
+    student_alexander_martinez = Student(
         first_name="Alexander",
         last_name="Martinez",
         date_of_birth=datetime.datetime(2016, 8, 30),
         gender="M",
         grade_level=2,
         classroom_id=grade_2_science_classroom.id,
-        user_id=student6_user.id,
+        user_id=student_alexander_martinez_user.id,
     )
-    db.add(student6)
+    db.add(student_alexander_martinez)
     db.flush()
 
-    student6_school_assoc = SchoolStudentAssociation(
-        student_id=student6.id, school_id=sunrise_academy.id
+    student_alexander_martinez_school_assoc = SchoolStudentAssociation(
+        student_id=student_alexander_martinez.id, school_id=sunrise_academy.id
     )
-    db.add(student6_school_assoc)
+    db.add(student_alexander_martinez_school_assoc)
     db.flush()
 
     # Create module enrollments for all students in all modules
-    all_students = [student1, student2, student3, student4, student6]
+    all_students = [
+        student_john_davis,
+        student_micheal_chang,
+        student_sofia_patel,
+        student_david_kim,
+        student_alexander_martinez,
+    ]
     all_modules = [mathematics_module] + additional_modules
 
     for student in all_students:
@@ -517,17 +523,17 @@ with get_db() as db:
 
                 # Adjust scores based on student and subject
                 if module.name == "Advanced Mathematics" and student in [
-                    student2,
-                    student3,
+                    student_micheal_chang,
+                    student_sofia_patel,
                 ]:  # Michael and Sofia excel in math
                     base_score += 15
                 elif module.name in ["Physics", "Chemistry"] and student in [
-                    student4,
+                    student_david_kim,
                 ]:  # David and Emily excel in sciences
                     base_score += 15
                 elif module.name == "English Literature" and student in [
-                    student3,
-                    student6,
+                    student_sofia_patel,
+                    student_alexander_martinez,
                 ]:  # Sofia and Alexander excel in literature
                     base_score += 15
 
