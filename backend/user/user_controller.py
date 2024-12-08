@@ -2,9 +2,6 @@ import os
 import jwt
 import uuid
 import datetime
-from typing import Union
-import hashlib
-
 from pydantic import BaseModel
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
 from backend.raise_exception import raise_exception
@@ -13,11 +10,10 @@ from backend.school.school_model import School
 from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
-from backend.user.user_authentication import OptionalUserAuthenticationContextDependency
-from pyotp import TOTP
+from backend.user.user_authentication import UserAuthenticationContextDependency
 
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
-
+FRONTEND_URL = os.environ["FRONTEND_URL"]
 
 router = APIRouter()
 
@@ -135,7 +131,6 @@ def login(
         "session": {
             "user_id": session.user_id,
             "roles": user.roles,
-            "permissions": user.all_permissions,
         },
         "name": user.name,
         "school_id": school_id,
@@ -152,10 +147,19 @@ def logout(
     return {"message": "logout-successfully"}
 
 
+def logout_all(
+    db: DatabaseDependency,
+    user_id: uuid.UUID,
+):
+    db.query(UserSession).filter(
+        UserSession.user_id == user_id,
+    ).delete()
+
+
 @router.get("/auth/user/session", status_code=status.HTTP_200_OK)
 def get_user_session(
     db: DatabaseDependency,
-    auth_context: OptionalUserAuthenticationContextDependency,
+    auth_context: UserAuthenticationContextDependency,
 ):
     if not auth_context:
         raise HTTPException(status_code=404)
@@ -167,9 +171,7 @@ def get_user_session(
 
     if not user.roles:
         raise HTTPException(status_code=403, detail="You don't have permission")
-    # school details
-    # user info
-    # ---
+
     school_id = user.school_id or raise_exception()
 
     school = db.query(School).filter(School.id == school_id).first()
@@ -180,7 +182,6 @@ def get_user_session(
     return {
         "user_id": auth_context.user_id,
         "roles": user.roles,
-        "permissions": user.all_permissions,
         "school_id": school_id,
         "name": user.name,
         "email": user.email,
@@ -193,87 +194,146 @@ def get_user_session(
     }
 
 
-class TriggerSetPasswordWithEmailRequestBody(BaseModel):
-    identity: str
-
-
-class TriggerSetPasswordWithIDRequestBody(BaseModel):
-    id: uuid.UUID
-
-
-@router.post("/auth/user/trigger_set_password")
-def trigger_set_password(
-    db: DatabaseDependency,
-    email_service: EmailServiceDependency,
-    body: Union[
-        TriggerSetPasswordWithEmailRequestBody, TriggerSetPasswordWithIDRequestBody
-    ],
-):
-    user = db.query(User)
-
-    if isinstance(body, TriggerSetPasswordWithEmailRequestBody):
-        user = user.filter(
-            (User.email == body.identity) | (User.username == body.identity)
-        )
-    elif isinstance(body, TriggerSetPasswordWithIDRequestBody):
-        user = user.filter(User.id == body.id)
-    else:
-        raise Exception()
-
-    user = user.first()
-
-    if not user:
-        raise HTTPException(status_code=404)
-
-    otp = TOTP(
-        user.secret_key,
-        digest=hashlib.sha256,
-        digits=6,
-        interval=300,
-    ).now()
-
-    email_params = SendEmailParams(
-        email=user.email,
-        subject="Set Password",
-        message=f"Your password reset code is {otp}",
-    )
-    email_service.send(email_params)
-
-
 class SetPasswordRequestBody(BaseModel):
-    identity: str
     password: str
-    otp: str
+    token: str
 
 
 class SetPasswordTokenData(BaseModel):
     user_id: uuid.UUID
 
 
-@router.post("/auth/user/set_password", status_code=status.HTTP_201_CREATED)
+@router.post("/auth/user/set_password")
 def set_password(
     db: DatabaseDependency,
     body: SetPasswordRequestBody,
 ):
+    try:
+        raw_payload = jwt.decode(
+            body.token,
+            JWT_SECRET_KEY,
+            algorithms=["HS256"],
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=409, detail="expired-token")
 
-    user = (
-        db.query(User)
-        .filter((User.email == body.identity) | (User.username == body.identity))
-        .first()
-    )
+    token_data = SetPasswordTokenData.model_validate(raw_payload)
+
+    user = db.query(User).filter(User.id == token_data.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if not TOTP(
-        user.secret_key,
-        digest=hashlib.sha256,
-        digits=6,
-        interval=300,
-    ).verify(body.otp):
-        raise HTTPException(status_code=404, detail="invalid-totp-code")
+        raise HTTPException(status_code=404)
 
     user.password_hash = hash_password(body.password)
+
     db.commit()
 
-    return {"message": "password-reset-successfully"}
+
+class TriggerResetPasswordWithEmailRequestBody(BaseModel):
+    email: str
+
+
+@router.post("/auth/user/forgot-password")
+def generate_link_to_reset_password_and_send_to_accountant_users_email(
+    db: DatabaseDependency,
+    body: TriggerResetPasswordWithEmailRequestBody,
+    email_service: EmailServiceDependency,
+):
+    user = db.query(User).filter(User.email == body.email).first()
+
+    if not user:
+        raise HTTPException(status_code=404)
+
+    token = jwt.encode(
+        {
+            "exp": datetime.datetime.now() + datetime.timedelta(hours=1),
+            "user_id": str(user.id),
+        },
+        JWT_SECRET_KEY,
+        algorithm="HS256",
+    )
+
+    reset_link = f"{FRONTEND_URL}/user/reset-password?token={token}"
+
+    email_params = SendEmailParams(
+        email=user.email,
+        subject="Set Password",
+        message=f"Your password reset link: {reset_link}",
+    )
+
+    email_service.send(email_params)
+
+    return {}
+
+
+@router.post("/auth/user/request-password-change")
+def generate_link_to_reset_password_and_send_to_authenticated_accountant_users_email(
+    db: DatabaseDependency,
+    email_service: EmailServiceDependency,
+    auth_context: UserAuthenticationContextDependency,
+):
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404)
+
+    token = jwt.encode(
+        {
+            "exp": datetime.datetime.now() + datetime.timedelta(hours=1),
+            "user_id": str(user.id),
+        },
+        JWT_SECRET_KEY,
+        algorithm="HS256",
+    )
+
+    reset_link = f"{FRONTEND_URL}/user/reset-password?token={token}"
+
+    email_params = SendEmailParams(
+        email=user.email,
+        subject="Set Password",
+        message=f"Your password reset link: {reset_link}",
+    )
+
+    email_service.send(email_params)
+
+    return {}
+
+
+class ResetPasswordRequestBody(BaseModel):
+    new_password: str
+    token: str
+
+
+class ResetPasswordTokenData(BaseModel):
+    user_id: uuid.UUID
+
+
+@router.post("/auth/user/reset-password")
+def reset_password(
+    db: DatabaseDependency,
+    body: ResetPasswordRequestBody,
+):
+    try:
+        raw_payload = jwt.decode(
+            body.token,
+            JWT_SECRET_KEY,
+            algorithms=["HS256"],
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=409, detail="expired-token")
+
+    token_data = ResetPasswordTokenData.model_validate(raw_payload)
+
+    user = db.query(User).filter(User.id == token_data.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404)
+
+    user.password_hash = hash_password(body.new_password)
+
+    db.flush()
+
+    logout_all(db, user.id)
+
+    db.flush()
+    db.commit()
