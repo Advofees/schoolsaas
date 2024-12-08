@@ -22,6 +22,7 @@ from backend.lesson_plan.lesson_plan_controller import router as lesson_plan_rou
 from backend.exam.exam_results.exam_result_controller import (
     router as exam_result_router,
 )
+from backend.file.file_controller import router as file_router
 
 # ---
 app = FastAPI(docs_url="/")
@@ -51,6 +52,7 @@ app.include_router(parent_router, tags=["parent"])
 app.include_router(student_router, tags=["student"])
 app.include_router(payment_router, tags=["payment"])
 app.include_router(lesson_plan_router, tags=["lesson-plans"])
+app.include_router(file_router)
 
 
 @app.get("/health", tags=["health"])

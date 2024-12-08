@@ -4,7 +4,6 @@ import uuid
 import datetime
 from backend.database.base import Base
 
-
 import typing
 
 if typing.TYPE_CHECKING:
@@ -28,15 +27,40 @@ class File(Base):
 
     def __init__(
         self,
-        filename: str,
+        name: str,
         file_type: str,
-        file_size: int,
-        file_path: str,
+        size: int,
+        path: str,
         user_id: uuid.UUID,
     ):
         super().__init__()
-        self.filename = filename
-        self.file_type = file_type
-        self.file_size = file_size
-        self.file_path = file_path
+        self.name = name
+        self.type = file_type
+        self.size = size
+        self.path = path
+        self.user_id = user_id
+
+
+class Profile(Base):
+    __tablename__ = "profiles"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    file_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("files.id"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("users.id"), nullable=False
+    )
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+    file: Mapped["File"] = relationship("File")
+    user: Mapped["User"] = relationship("User", back_populates="profile")
+
+    def __init__(
+        self,
+        file_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ):
+        super().__init__()
+        self.file_id = file_id
         self.user_id = user_id

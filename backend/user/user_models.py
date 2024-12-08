@@ -12,7 +12,7 @@ from backend.user.permissions.permissions_schemas import PERMISSIONS
 
 
 from backend.school.school_model import School
-from backend.file.file_model import File
+from backend.file.file_model import File, Profile
 from backend.calendar_events.calendar_events_model import CalendarEvent
 from backend.student.student_model import Student
 from backend.school.school_model import School, SchoolParent
@@ -233,6 +233,9 @@ class User(Base):
     )
     teacher_user: Mapped["Teacher"] = relationship(
         Teacher, back_populates="user", uselist=False
+    )
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="user", uselist=False
     )
 
     @property
