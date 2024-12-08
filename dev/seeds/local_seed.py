@@ -123,7 +123,7 @@ with get_db() as db:
     sunrise_academy = School(
         name="Sunrise Academy",
         address="123 Education Lane, Learning District",
-        country="United States",
+        country="Kenya",
         school_number=str(faker.random_number(digits=6, fix_len=True)),
         user_id=school_admin_user.id,
     )
@@ -208,18 +208,20 @@ with get_db() as db:
     db.add_all(additional_modules)
     db.flush()
 
+    teacher_role = Role(
+        name="TeacherRole", type=RoleType.CLASS_TEACHER, description="Teacher Role"
+    )
+    db.add(teacher_role)
+    db.flush()
+    #
+    # ---
+    #
     math_teacher_user = User(
         username="james.thompson",
         email="teacher.school@app.com",
         password_hash=hash_password("password123"),
     )
     db.add(math_teacher_user)
-    db.flush()
-
-    teacher_role = Role(
-        name="TeacherRole", type=RoleType.CLASS_TEACHER, description="Teacher Role"
-    )
-    db.add(teacher_role)
     db.flush()
 
     math_teacher_role_assoc = UserRoleAssociation(
@@ -231,7 +233,7 @@ with get_db() as db:
     math_teacher = Teacher(
         first_name="James",
         last_name="Thompson",
-        email="teacher.school@app.com",
+        email="james.thompson@app.com",
         school_id=sunrise_academy.id,
         user_id=math_teacher_user.id,
     )
@@ -249,7 +251,7 @@ with get_db() as db:
     # Create Second Teacher (Science)
     science_teacher_user = User(
         username="sarah.schmidt",
-        email="teacher.sarah.schmidt@school.app",
+        email="teacher.school@school.app",
         password_hash=hash_password("password123"),
     )
     db.add(science_teacher_user)
@@ -264,7 +266,7 @@ with get_db() as db:
     science_teacher = Teacher(
         first_name="Sarah",
         last_name="Schmidt",
-        email="teacher.sarah.schmidt@school.app",
+        email="sarah.schmidt@school.app",
         school_id=sunrise_academy.id,
         user_id=science_teacher_user.id,
     )
