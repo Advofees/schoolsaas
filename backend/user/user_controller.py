@@ -234,7 +234,7 @@ class TriggerResetPasswordWithEmailRequestBody(BaseModel):
 
 
 @router.post("/auth/user/forgot-password")
-def generate_link_to_reset_password_and_send_to_accountant_users_email(
+def generate_link_to_reset_password_and_send_to_users_email(
     db: DatabaseDependency,
     body: TriggerResetPasswordWithEmailRequestBody,
     email_service: EmailServiceDependency,
@@ -267,7 +267,7 @@ def generate_link_to_reset_password_and_send_to_accountant_users_email(
 
 
 @router.post("/auth/user/request-password-change")
-def generate_link_to_reset_password_and_send_to_authenticated_accountant_users_email(
+def generate_link_to_reset_password_and_send_to_authenticated_users_email(
     db: DatabaseDependency,
     email_service: EmailServiceDependency,
     auth_context: UserAuthenticationContextDependency,
