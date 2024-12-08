@@ -68,7 +68,7 @@ def register(
     db.flush()
     db.commit()
 
-    return {"message": "School registered successfully"}
+    return {"message": "school-registered-successfully"}
 
 
 class LoginRequestBody(BaseModel):
@@ -144,7 +144,7 @@ def logout(
     response.delete_cookie(
         key="user_access_token",
     )
-    return {"message": "logout-successfully"}
+    return {"message": "logged-out-successfully"}
 
 
 def logout_all(
@@ -296,7 +296,7 @@ def generate_link_to_reset_password_and_send_to_authenticated_users_email(
 
     email_service.send(email_params)
 
-    return {}
+    return {"message": "reset-link-sent-to-your-email"}
 
 
 class ResetPasswordRequestBody(BaseModel):
@@ -336,4 +336,4 @@ def reset_password(
     logout_all(db, user.id)
 
     db.flush()
-    db.commit()
+    return {"message": "password-reset-successfully"}
