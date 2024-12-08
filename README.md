@@ -59,7 +59,8 @@
   
   task server
   ```
-  
+  ### sample users
+
   - school admin user
     - email/identity: `school@app.com`
     - password: `password123`
@@ -106,5 +107,9 @@
 
   ```bash
   ./generate-migrations
-  ./run-migrations.sh
+  ```
+- apply the migrations changes to test whether the generated migrations are correct
+
+  ```bash
+    ./run-migrations.sh
   ```
