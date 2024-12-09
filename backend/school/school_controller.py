@@ -238,6 +238,19 @@ def student_dto(student: Student) -> dict:
     }
 
 
+def teacher_dto(teacher: Teacher) -> dict:
+    return {
+        "school_id": teacher.school_id,
+        "id": teacher.id,
+        "first_name": teacher.first_name,
+        "last_name": teacher.last_name,
+        "phone_number": teacher.phone_number,
+        "email": teacher.email,
+        "created_at": teacher.created_at,
+        "updated_at": teacher.updated_at,
+    }
+
+
 def dashboard_resources_dto(
     students: list[Student],
     teachers: list[Teacher],
@@ -257,7 +270,7 @@ def dashboard_resources_dto(
         "teachers_total": len(teachers),
         "attendance": attendance_metrics,
         "teachers" "payments": payments,
-        "teachers": teachers,
+        "teachers": [teacher_dto(teacher) for teacher in teachers],
         "students": [student_dto(student) for student in students],
         "page": page,
         "total_pages": total_pages,
