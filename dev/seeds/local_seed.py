@@ -11,7 +11,8 @@ get_all_models()
 import random
 import decimal
 from faker import Faker
-
+import uuid
+from sqlalchemy.orm import Session
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 from backend.user.permissions.permissions_schemas import (
     PERMISSIONS,
@@ -35,6 +36,7 @@ from backend.academic_term.academic_term_model import AcademicTerm
 from backend.school.school_model import School, SchoolStudentAssociation
 from backend.exam.exam_model import Exam
 from backend.exam.exam_results.exam_result_model import ExamResult
+from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.passwords import hash_password
 from backend.database.database import get_db
 import datetime
@@ -456,14 +458,74 @@ with get_db() as db:
     db.add(student_alexander_martinez_school_assoc)
     db.flush()
 
-    # Create module enrollments for all students in all modules
-    all_students = [
+    #
+    # ---
+    #
+
+    all_students: list[Student] = [
         student_john_davis,
         student_micheal_chang,
         student_sofia_patel,
         student_david_kim,
         student_alexander_martinez,
     ]
+    attendance_months = {
+        1: (first_academic_term_2024, [8, 15, 22, 29]),  # January
+        2: (first_academic_term_2024, [5, 12, 19, 26]),  # February
+        3: (first_academic_term_2024, [4, 11, 18, 25]),  # March
+        5: (second_academic_term_2024, [6, 13, 20, 27]),  # May
+        6: (second_academic_term_2024, [3, 10, 17, 24]),  # June
+        7: (second_academic_term_2024, [1, 8, 15, 22]),  # July
+        10: (third_academic_term_2024, [7, 14, 21, 28]),  # October
+        11: (third_academic_term_2024, [4, 11, 18, 25]),  # November
+        12: (third_academic_term_2024, [2, 9, 16, 23]),  # December
+    }
+
+    def create_attendance_records(
+        db: Session,
+        students: list[Student],
+        start_date: datetime.datetime,
+        school_id: uuid.UUID,
+        academic_term_id: uuid.UUID,
+        num_days: int = 5,
+    ):
+        for student in students:
+            current_date = start_date
+
+            for day in range(num_days):
+                # 90% chance of being present
+                is_present = random.random() < 0.9
+
+                attendance = Attendance(
+                    date=current_date,
+                    status=(
+                        AttendanceStatus.PRESENT.value
+                        if is_present
+                        else AttendanceStatus.ABSENT.value
+                    ),
+                    student_id=student.id,
+                    school_id=school_id,
+                    classroom_id=student.classroom_id,
+                    academic_term_id=academic_term_id,
+                    remarks="Regular attendance" if is_present else "Absent",
+                )
+                db.add(attendance)
+
+                current_date = current_date + datetime.timedelta(days=1)
+
+        db.flush()
+
+    for month, (academic_term, mondays) in attendance_months.items():
+        for day in mondays:
+            start_date = datetime.datetime(2024, month, day)
+            create_attendance_records(
+                db,
+                students=all_students,
+                start_date=start_date,
+                school_id=sunrise_academy.id,
+                academic_term_id=academic_term.id,
+            )
+
     all_modules = [mathematics_module] + additional_modules
 
     for student in all_students:
@@ -480,21 +542,21 @@ with get_db() as db:
         term_exams = [
             Exam(
                 name=f"{module.name} Term 1 Assessment",
-                date=datetime.datetime(2024, 4, 15),
+                date=datetime.datetime(2024, 3, 15),
                 total_marks=100,
                 module_id=module.id,
                 academic_term_id=first_academic_term_2024.id,
             ),
             Exam(
                 name=f"{module.name} Term 2 Assessment",
-                date=datetime.datetime(2024, 8, 15),
+                date=datetime.datetime(2024, 7, 15),
                 total_marks=100,
                 module_id=module.id,
                 academic_term_id=second_academic_term_2024.id,
             ),
             Exam(
                 name=f"{module.name} Term 3 Assessment",
-                date=datetime.datetime(2024, 12, 1),
+                date=datetime.datetime(2024, 10, 1),
                 total_marks=100,
                 module_id=module.id,
                 academic_term_id=third_academic_term_2024.id,

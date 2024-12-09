@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
@@ -10,9 +11,11 @@ from backend.raise_exception import raise_exception
 from backend.school.school_model import School, SchoolStudentAssociation
 from backend.student.student_model import Student
 from backend.teacher.teacher_model import ClassTeacherAssociation
+from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.user_models import User, RoleType
 from backend.user.user_authentication import UserAuthenticationContextDependency
 import datetime
+import typing
 
 router = APIRouter()
 
@@ -20,6 +23,132 @@ router = APIRouter()
 class PaymentMethodStats(BaseModel):
     amount: float
     count: int
+
+
+class AttendanceMetrics(BaseModel):
+    total_absent: typing.Optional[int]
+    total_present: typing.Optional[int]
+    start_date: datetime.datetime
+    end_date: typing.Optional[datetime.datetime]
+    filter_type: str  # 'day', 'week', 'month', 'year'
+
+
+@dataclass
+class DateRangeResult:
+    start_date: datetime.datetime
+    end_date: datetime.datetime
+
+
+def calculate_date_range(
+    filter_type: str,
+    filter_date: typing.Optional[datetime.datetime] = None,
+) -> DateRangeResult:
+    """
+    Calculate start and end dates based on filter type and date.
+    Returns (start_date, end_date) tuple.
+    """
+    if not filter_date:
+        filter_date = datetime.datetime.now()
+
+    # Normalize the time component
+    start_date = filter_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if filter_type == "day":
+        end_date = start_date + datetime.timedelta(days=1)
+
+    elif filter_type == "week":
+        # Adjust to start of week (Monday)
+        start_date = start_date - datetime.timedelta(days=start_date.weekday())
+        end_date = start_date + datetime.timedelta(days=7)
+
+    elif filter_type == "month":
+        # Start from first day of the month
+        start_date = start_date.replace(day=1)
+        # Move to first day of next month
+        if start_date.month == 12:
+            end_date = start_date.replace(year=start_date.year + 1, month=1)
+        else:
+            end_date = start_date.replace(month=start_date.month + 1)
+
+    elif filter_type == "year":
+        # Start from first day of the year
+        start_date = start_date.replace(month=1, day=1)
+        # End on first day of next year
+        end_date = start_date.replace(year=start_date.year + 1)
+
+    else:
+        raise ValueError(f"Invalid filter_type: {filter_type}")
+
+    return DateRangeResult(start_date=start_date, end_date=end_date)
+
+
+def get_classroom_attendance_metrics(
+    db: DatabaseDependency,
+    school_id: uuid.UUID,
+    classroom_id: uuid.UUID,
+    filter_type: str = "day",
+    filter_date: typing.Optional[datetime.datetime] = None,
+) -> AttendanceMetrics:
+    """Get attendance metrics for a specific classroom."""
+
+    date_range_result = calculate_date_range(filter_type, filter_date)
+
+    query = db.query(Attendance).filter(
+        Attendance.school_id == school_id,
+        Attendance.classroom_id == classroom_id,
+        Attendance.date >= date_range_result.start_date,
+        Attendance.date < date_range_result.end_date,
+    )
+
+    attendances = query.all()
+
+    total_present = sum(
+        1 for a in attendances if a.status == AttendanceStatus.PRESENT.value
+    )
+    total_absent = sum(
+        1 for a in attendances if a.status == AttendanceStatus.ABSENT.value
+    )
+
+    return AttendanceMetrics(
+        total_present=total_present,
+        total_absent=total_absent,
+        start_date=date_range_result.start_date,
+        end_date=date_range_result.end_date,
+        filter_type=filter_type,
+    )
+
+
+def get_entire_school_attendance_metrics(
+    db: DatabaseDependency,
+    school_id: uuid.UUID,
+    filter_type: str = "day",
+    filter_date: typing.Optional[datetime.datetime] = None,
+) -> AttendanceMetrics:
+
+    date_range_result = calculate_date_range(filter_type, filter_date)
+
+    query = db.query(Attendance).filter(
+        Attendance.school_id == school_id,
+        Attendance.date >= date_range_result.start_date,
+        Attendance.date < date_range_result.end_date,
+    )
+
+    attendances = query.all()
+
+    total_present = sum(
+        1 for a in attendances if a.status == AttendanceStatus.PRESENT.value
+    )
+    total_absent = sum(
+        1 for a in attendances if a.status == AttendanceStatus.ABSENT.value
+    )
+
+    return AttendanceMetrics(
+        total_present=total_present,
+        total_absent=total_absent,
+        start_date=date_range_result.start_date,
+        end_date=date_range_result.end_date,
+        filter_type=filter_type,
+    )
 
 
 class PaymentStats(BaseModel):
@@ -71,23 +200,29 @@ def dashboard_resources_dto(
     total_pages: int,
     payments: PaymentStats,
     current_year: int,
+    attendance_metrics: AttendanceMetrics,
 ) -> dict:
 
     return {
+        "current_year": current_year,
         "total_students_managed": total_students_managed,
         "total_current_year_students_enrollment": total_current_year_students_enrollment,
-        "page": page,
-        "total_pages": total_pages,
-        "current_year": current_year,
+        "attendance": attendance_metrics,
         "payments": payments,
         "students": [student_dto(student) for student in students],
+        "page": page,
+        "total_pages": total_pages,
     }
 
 
-@router.get("/school/students/dashboard-resources")
+@router.get("/school/dashboard-resources")
 async def get_all_students(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
+    filter_type: str = Query("day", enum=["day", "week", "month", "year"]),
+    filter_date: typing.Optional[datetime.datetime] = Query(
+        None, description="Filter date, defaults to today"
+    ),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="students per page"),
 ):
@@ -95,6 +230,7 @@ async def get_all_students(
 
     if not user:
         raise HTTPException(status_code=403)
+
     school_id = user.school_id or raise_exception()
 
     skip = (page - 1) * page_size
@@ -144,6 +280,15 @@ async def get_all_students(
             .limit(page_size)
             .all()
         )
+        #
+        #
+        #
+        attendance_metrics = get_entire_school_attendance_metrics(
+            db,
+            school_id=school_id,
+            filter_type=filter_type,
+            filter_date=filter_date,
+        )
 
     elif user.has_role_type(RoleType.CLASS_TEACHER):
         teacher_id = user.teacher_user.id or raise_exception()
@@ -184,6 +329,28 @@ async def get_all_students(
             .limit(page_size)
             .all()
         )
+        #
+        # ---
+        #
+        classroom = (
+            db.query(Classroom)
+            .join(ClassTeacherAssociation)
+            .filter(
+                ClassTeacherAssociation.teacher_id == teacher_id,
+                ClassTeacherAssociation.is_primary == True,
+            )
+            .first()
+        )
+        if not classroom:
+            raise Exception()
+
+        attendance_metrics = get_classroom_attendance_metrics(
+            db,
+            school_id=school_id,
+            classroom_id=classroom.id,
+            filter_type=filter_type,
+            filter_date=filter_date,
+        )
 
     else:
         raise HTTPException(403)
@@ -199,6 +366,7 @@ async def get_all_students(
         total_pages=total_pages,
         current_year=current_year,
         payments=payment_summary,
+        attendance_metrics=attendance_metrics,
     )
 
 
