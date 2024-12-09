@@ -9,20 +9,26 @@ services:
     ports:
       - "5432:5432"
 
-  # minio:
-  #   image: minio/minio:latest
-  #   ports:
-  #     - "9000:9000"  # API endpoint
-  #     - "9001:9001"  # Console/GUI
-  #   environment:
-  #     - MINIO_ROOT_USER=minioadmin      # Change these credentials
-  #     - MINIO_ROOT_PASSWORD=minioadmin   # in production
-  #   command: server /data --console-address ":9001"
-  #   volumes:
-  #     - minio_data:/data
-  #   healthcheck:
-  #     test: ["CMD", "mc", "ready", "local"]
-  #     interval: 30s
-  #     timeout: 20s
-  #     retries: 3
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"  # API endpoint
+      - "9001:9001"  # Console/GUI
+    environment:
+      - MINIO_ROOT_USER=minioadmin      
+      - MINIO_ROOT_PASSWORD=minioadmin   
+    command: server /data --console-address ":9001"
+    volumes:
+      - type: volume
+        source: minio_data
+        target: /data
+        volume:
+          nocopy: true
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
+volumes:
+  minio_data: {}

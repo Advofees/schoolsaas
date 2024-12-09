@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
@@ -27,6 +28,9 @@ from backend.user.user_models import (
     UserPermissionAssociation,
     UserRoleAssociation,
 )
+from backend.file.file_model import Profile, File
+from backend.s3.aws_s3_service import init_s3_client
+from backend.s3.s3_constants import BUCKET_NAME
 from backend.module.module_model import Module, ModuleEnrollment
 from backend.school.school_model import School
 from backend.student.student_model import Student, Gender
@@ -44,6 +48,8 @@ from sqlalchemy import MetaData, create_engine
 from backend.database.database import DATABASE_URL, get_db
 from alembic import command
 from alembic.config import Config
+import mimetypes
+import os
 
 engine = create_engine(DATABASE_URL)
 metadata = MetaData()
@@ -59,6 +65,73 @@ with engine.begin() as connection:
 engine.dispose()
 alembic_cfg = Config("alembic.ini")
 command.upgrade(alembic_cfg, "head")
+
+
+def create_simple_profile(file_path: str, user_id: uuid.UUID, db: Session):
+    s3 = init_s3_client()
+
+    # Make sure user exists
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError("User not found")
+
+    # Check if bucket exists, create if it doesn't
+    try:
+        s3.head_bucket(Bucket=BUCKET_NAME)
+    except:
+        s3.create_bucket(Bucket=BUCKET_NAME)
+
+    # Read file and get its details
+    with open(file_path, "rb") as file:
+        file_content = file.read()
+        file_size = len(file_content)
+        file_name = os.path.basename(file_path)
+        content_type = mimetypes.guess_type(file_path)[0]
+
+    content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+    if file_path.lower().endswith(".png"):
+        content_type = "image/png"
+    elif file_path.lower().endswith(".jpg") or file_path.lower().endswith(".jpeg"):
+        content_type = "image/jpeg"
+    elif file_path.lower().endswith(".svg"):
+        content_type = "image/svg+xml"
+
+    # Clean filename and create S3 key
+    clean_filename = file_name.replace(" ", "_")
+    file_key = f"profiles/{user_id}/{uuid.uuid4()}-{clean_filename}"
+
+    s3.put_object(
+        Bucket=BUCKET_NAME,
+        Key=file_key,
+        Body=file_content,
+        ContentType=content_type,
+        ACL="private",
+    )
+
+    existing_profiles = (
+        db.query(Profile)
+        .filter(Profile.user_id == user_id, Profile.is_active == True)
+        .all()
+    )
+
+    for profile in existing_profiles:
+        profile.is_active = False
+
+    new_file = File(
+        name=file_name,
+        file_type=content_type,
+        size=file_size,
+        path=file_key,
+        user_id=user_id,
+    )
+    db.add(new_file)
+    db.flush()
+
+    profile = Profile(file_id=new_file.id, user_id=user_id)
+    db.add(profile)
+    db.commit()
+
+    return profile
 
 
 with get_db() as db:
@@ -101,7 +174,15 @@ with get_db() as db:
     )
     db.add(school_admin_user)
     db.flush()
-
+    #
+    #
+    #
+    school_profile = create_simple_profile(
+        file_path="dev/profiles/school.png", user_id=school_admin_user.id, db=db
+    )
+    #
+    #
+    #
     school_user_permission_association = UserPermissionAssociation(
         user_id=school_admin_user.id, user_permission_id=school_management_permission.id
     )
@@ -212,6 +293,9 @@ with get_db() as db:
     db.add(math_teacher_user)
     db.flush()
 
+    math_teacher_profile = create_simple_profile(
+        file_path="dev/profiles/teacher.png", user_id=math_teacher_user.id, db=db
+    )
     math_teacher_role_assoc = UserRoleAssociation(
         user_id=math_teacher_user.id, role_id=teacher_role.id
     )
@@ -285,6 +369,10 @@ with get_db() as db:
     )
     db.add(student_john_davis_user)
     db.flush()
+
+    student_teacher_profile = create_simple_profile(
+        file_path="dev/profiles/girl.png", user_id=student_john_davis_user.id, db=db
+    )
 
     student_john_davis_role_assoc = UserRoleAssociation(
         user_id=student_john_davis_user.id, role_id=student_role.id

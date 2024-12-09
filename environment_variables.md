@@ -1,6 +1,5 @@
 ```bash
 
-PYTHONPATH=/Users/andrewkyalonzioki/Desktop/schoolsaas
 FRONTEND_URL="http://localhost:5173"
 GIT_COMMIT_SHA="shooooo"
 SECRET_STRING="secret-string"
