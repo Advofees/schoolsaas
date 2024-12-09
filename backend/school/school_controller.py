@@ -10,7 +10,7 @@ from backend.payment.payment_model import Payment
 from backend.raise_exception import raise_exception
 from backend.school.school_model import School, SchoolStudentAssociation
 from backend.student.student_model import Student, Gender
-from backend.teacher.teacher_model import ClassTeacherAssociation
+from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.user_models import User, RoleType
 from backend.user.user_authentication import UserAuthenticationContextDependency
@@ -240,6 +240,7 @@ def student_dto(student: Student) -> dict:
 
 def dashboard_resources_dto(
     students: list[Student],
+    teachers: list[Teacher],
     total_students_managed: int,
     total_current_year_students_enrollment: int,
     page: int,
@@ -251,10 +252,12 @@ def dashboard_resources_dto(
 
     return {
         "current_year": current_year,
-        "total_students_managed": total_students_managed,
-        "total_current_year_students_enrollment": total_current_year_students_enrollment,
+        "students_total": total_students_managed,
+        "current_year_students_enrollment_total": total_current_year_students_enrollment,
+        "teachers_total": len(teachers),
         "attendance": attendance_metrics,
-        "payments": payments,
+        "teachers" "payments": payments,
+        "teachers": teachers,
         "students": [student_dto(student) for student in students],
         "page": page,
         "total_pages": total_pages,
@@ -326,6 +329,14 @@ async def get_all_students(
             .limit(page_size)
             .all()
         )
+
+        teachers = (
+            db.query(Teacher)
+            .filter(Teacher.school_id == school_id)
+            .offset(skip)
+            .limit(page_size)
+            .all()
+        )
         #
         #
         #
@@ -390,6 +401,15 @@ async def get_all_students(
         if not classroom:
             raise Exception()
 
+        teachers = (
+            db.query(Teacher)
+            .join(ClassTeacherAssociation)
+            .filter(ClassTeacherAssociation.classroom_id == classroom.id)
+            .offset(skip)
+            .limit(page_size)
+            .all()
+        )
+
         attendance_metrics = get_classroom_attendance_metrics(
             db,
             school_id=school_id,
@@ -413,6 +433,7 @@ async def get_all_students(
         current_year=current_year,
         payments=payment_summary,
         attendance_metrics=attendance_metrics,
+        teachers=teachers,
     )
 
 
