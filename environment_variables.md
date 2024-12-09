@@ -21,6 +21,9 @@ AWS_SECRET_ACCESS_KEY="minioadmin"
 AWS_REGION="us-east-1"
 S3_LOCAL_ENDPOINT_URL="http://localhost:9000"
 
+ENVIRONMENT="development"
+BUCKET_NAME="main"
+
 ```
 
 
