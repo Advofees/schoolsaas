@@ -9,7 +9,7 @@ from backend.database.database import DatabaseDependency
 from backend.payment.payment_model import Payment
 from backend.raise_exception import raise_exception
 from backend.school.school_model import School, SchoolStudentAssociation
-from backend.student.student_model import Student
+from backend.student.student_model import Student, Gender
 from backend.teacher.teacher_model import ClassTeacherAssociation
 from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.user_models import User, RoleType
@@ -29,6 +29,10 @@ class AttendanceMetrics(BaseModel):
     total_absent: typing.Optional[int]
     total_present: typing.Optional[int]
     start_date: datetime.datetime
+    total_present_male: int
+    total_absent_male: int
+    total_present_female: int
+    total_absent_female: int
     end_date: typing.Optional[datetime.datetime]
     filter_type: str  # 'day', 'week', 'month', 'year'
 
@@ -82,6 +86,16 @@ def calculate_date_range(
     return DateRangeResult(start_date=start_date, end_date=end_date)
 
 
+@dataclass
+class MetricsCounter:
+    total_present: int = 0
+    total_absent: int = 0
+    total_present_male: int = 0
+    total_present_female: int = 0
+    total_absent_male: int = 0
+    total_absent_female: int = 0
+
+
 def get_classroom_attendance_metrics(
     db: DatabaseDependency,
     school_id: uuid.UUID,
@@ -102,16 +116,32 @@ def get_classroom_attendance_metrics(
 
     attendances = query.all()
 
-    total_present = sum(
-        1 for a in attendances if a.status == AttendanceStatus.PRESENT.value
-    )
-    total_absent = sum(
-        1 for a in attendances if a.status == AttendanceStatus.ABSENT.value
-    )
+    metrics = MetricsCounter()
+
+    # Single pass through the data
+    for attendance in attendances:
+        if attendance.status == AttendanceStatus.PRESENT.value:
+            metrics.total_present += 1
+            if attendance.student.gender == Gender.MALE.value:
+                metrics.total_present_male += 1
+            elif attendance.student.gender == Gender.FEMALE.value:
+                metrics.total_present_female += 1
+        elif attendance.status == AttendanceStatus.ABSENT.value:
+            metrics.total_absent += 1
+            if attendance.student.gender == Gender.MALE.value:
+                metrics.total_absent_male += 1
+            elif attendance.student.gender == Gender.FEMALE.value:
+                metrics.total_absent_female += 1
+        else:
+            raise Exception()
 
     return AttendanceMetrics(
-        total_present=total_present,
-        total_absent=total_absent,
+        total_present=metrics.total_present,
+        total_absent=metrics.total_absent,
+        total_present_male=metrics.total_present_male,
+        total_present_female=metrics.total_present_female,
+        total_absent_male=metrics.total_absent_male,
+        total_absent_female=metrics.total_absent_female,
         start_date=date_range_result.start_date,
         end_date=date_range_result.end_date,
         filter_type=filter_type,
@@ -135,16 +165,32 @@ def get_entire_school_attendance_metrics(
 
     attendances = query.all()
 
-    total_present = sum(
-        1 for a in attendances if a.status == AttendanceStatus.PRESENT.value
-    )
-    total_absent = sum(
-        1 for a in attendances if a.status == AttendanceStatus.ABSENT.value
-    )
+    metrics = MetricsCounter()
+
+    for attendance in attendances:
+
+        if attendance.status == AttendanceStatus.PRESENT.value:
+            metrics.total_present += 1
+            if attendance.student.gender == Gender.MALE.value:
+                metrics.total_present_male += 1
+            elif attendance.student.gender == Gender.FEMALE.value:
+                metrics.total_present_female += 1
+        elif attendance.status == AttendanceStatus.ABSENT.value:
+            metrics.total_absent += 1
+            if attendance.student.gender == Gender.MALE.value:
+                metrics.total_absent_male += 1
+            elif attendance.student.gender == Gender.FEMALE.value:
+                metrics.total_absent_female += 1
+        else:
+            raise Exception()
 
     return AttendanceMetrics(
-        total_present=total_present,
-        total_absent=total_absent,
+        total_present=metrics.total_present,
+        total_absent=metrics.total_absent,
+        total_present_male=metrics.total_present_male,
+        total_present_female=metrics.total_present_female,
+        total_absent_male=metrics.total_absent_male,
+        total_absent_female=metrics.total_absent_female,
         start_date=date_range_result.start_date,
         end_date=date_range_result.end_date,
         filter_type=filter_type,

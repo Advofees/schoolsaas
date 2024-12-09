@@ -29,7 +29,7 @@ from backend.user.user_models import (
 )
 from backend.module.module_model import Module, ModuleEnrollment
 from backend.school.school_model import School
-from backend.student.student_model import Student
+from backend.student.student_model import Student, Gender
 from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.classroom.classroom_model import Classroom
 from backend.academic_term.academic_term_model import AcademicTerm
@@ -296,7 +296,7 @@ with get_db() as db:
         first_name="John",
         last_name="Davis",
         date_of_birth=datetime.datetime(2017, 3, 15),
-        gender="M",
+        gender=Gender.MALE.value,
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
         user_id=student_john_davis_user.id,
@@ -329,7 +329,7 @@ with get_db() as db:
         first_name="Michael",
         last_name="Chang",
         date_of_birth=datetime.datetime(2017, 5, 20),
-        gender="M",
+        gender=Gender.MALE.value,
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
         user_id=student_micheal_chang.id,
@@ -362,7 +362,7 @@ with get_db() as db:
         first_name="Sofia",
         last_name="Patel",
         date_of_birth=datetime.datetime(2017, 7, 10),
-        gender="F",
+        gender=Gender.FEMALE.value,
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
         user_id=student_sofia_patel_user.id,
@@ -396,7 +396,7 @@ with get_db() as db:
         first_name="David",
         last_name="Kim",
         date_of_birth=datetime.datetime(2016, 4, 25),
-        gender="M",
+        gender=Gender.MALE.value,
         grade_level=2,
         classroom_id=grade_2_science_classroom.id,
         user_id=student_david_kim_user.id,
@@ -444,7 +444,7 @@ with get_db() as db:
         first_name="Alexander",
         last_name="Martinez",
         date_of_birth=datetime.datetime(2016, 8, 30),
-        gender="M",
+        gender=Gender.MALE.value,
         grade_level=2,
         classroom_id=grade_2_science_classroom.id,
         user_id=student_alexander_martinez_user.id,

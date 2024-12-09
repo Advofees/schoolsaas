@@ -13,11 +13,16 @@ from backend.attendance.attendance_models import Attendance
 from backend.classroom.classroom_model import Classroom
 from backend.school.school_model import School, SchoolParent, SchoolStudentAssociation
 from backend.exam.exam_results.exam_result_model import ExamResult
-
+import enum
 
 if typing.TYPE_CHECKING:
     from backend.user.user_models import User
     from backend.module.module_model import Module, ModuleEnrollment
+
+
+class Gender(enum.Enum):
+    MALE = "male"
+    FEMALE = "female"
 
 
 class Student(Base):
