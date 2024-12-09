@@ -24,7 +24,7 @@ class Attendance(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     date: Mapped[datetime.datetime] = mapped_column()
-    status: Mapped[str] = mapped_column(String)  # Present, Absent, Late, etc.
+    status: Mapped[str] = mapped_column()  # Present, Absent, Late, etc.
     remarks: Mapped[typing.Optional[str]] = mapped_column(String)
 
     created_at: Mapped[datetime.datetime] = mapped_column(
@@ -55,7 +55,7 @@ class Attendance(Base):
     def __init__(
         self,
         date: datetime.datetime,
-        status: str,
+        status: AttendanceStatus,
         student_id: uuid.UUID,
         school_id: uuid.UUID,
         classroom_id: uuid.UUID,
@@ -64,7 +64,7 @@ class Attendance(Base):
     ):
         super().__init__()
         self.date = date
-        self.status = status
+        self.status = status.value
         self.student_id = student_id
         self.school_id = school_id
         self.classroom_id = classroom_id

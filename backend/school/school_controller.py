@@ -3,7 +3,6 @@ import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
 from sqlalchemy import func
-
 from backend.classroom.classroom_model import Classroom
 from backend.database.database import DatabaseDependency
 from backend.payment.payment_model import Payment
@@ -470,10 +469,10 @@ def get_school(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="user-not-found")
 
     if not user.has_role_type(RoleType.SUPER_ADMIN):
-        raise HTTPException(status_code=403, detail="Permission denied")
+        raise HTTPException(status_code=403, detail="permission-denied")
 
     total_schools = db.query(School).count()
 
@@ -503,11 +502,11 @@ def update_school(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="user-not-found")
 
     school = db.query(School).filter(School.id == school_id).first()
     if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+        raise HTTPException(status_code=404, detail="school-not-found")
 
     school.name = body.name
 
@@ -525,10 +524,10 @@ def get_school_by_id(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="user-not-found")
 
     school = db.query(School).filter(School.id == school_id).first()
     if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+        raise HTTPException(status_code=404, detail="school-not-found")
 
     return school

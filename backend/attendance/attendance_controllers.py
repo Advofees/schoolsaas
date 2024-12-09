@@ -104,7 +104,7 @@ def create_student_class_attendance(
 
     attendance = Attendance(
         student_id=body.student_id,
-        status=body.status.value,
+        status=body.status,
         date=body.date,
         school_id=body.school_id,
         classroom_id=body.classroom_id,
