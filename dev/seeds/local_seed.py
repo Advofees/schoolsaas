@@ -499,9 +499,9 @@ with get_db() as db:
                 attendance = Attendance(
                     date=current_date,
                     status=(
-                        AttendanceStatus.PRESENT.value
+                        AttendanceStatus.PRESENT
                         if is_present
-                        else AttendanceStatus.ABSENT.value
+                        else AttendanceStatus.ABSENT
                     ),
                     student_id=student.id,
                     school_id=school_id,
