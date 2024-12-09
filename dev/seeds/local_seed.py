@@ -16,8 +16,6 @@ import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 from backend.user.permissions.permissions_schemas import (
     PERMISSIONS,
     SchoolPermissions,
-    StudentPermissions,
-    TeacherPermissions,
 )
 from backend.user.user_models import (
     User,
@@ -64,18 +62,6 @@ command.upgrade(alembic_cfg, "head")
 with get_db() as db:
     # School Admin Permissions
     school_management_permission_definition = PERMISSIONS(
-        teacher_permissions=TeacherPermissions(
-            can_add_teachers=True,
-            can_edit_teachers=True,
-            can_view_teachers=True,
-            can_delete_teachers=True,
-        ),
-        student_permissions=StudentPermissions(
-            can_add_students=True,
-            can_edit_students=True,
-            can_view_students=True,
-            can_delete_students=True,
-        ),
         school_permissions=SchoolPermissions(
             can_manage_school=True,
             can_view_school=True,

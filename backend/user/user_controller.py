@@ -185,6 +185,7 @@ def get_user_session(
         "school_id": school_id,
         "name": user.name,
         "email": user.email,
+        "permissions": user.all_permissions,
         "school": {
             "id": school_id,
             "name": school.name,
