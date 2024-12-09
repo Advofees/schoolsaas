@@ -31,12 +31,6 @@
 ## What is expected to happen?
 <!-- Describe the expected outcome after your changes -->
 
-## (Optional) What did you learn by building this PR?
-<!-- Share any insights, challenges overcome, or new techniques learned -->
-
-## (Optional) Name one practice or methodology that helped you build this PR
-<!-- Examples: TDD, pair programming, breaking down tasks into smaller chunks, etc. -->
-
 ---
 Remember to:
 - Link any related issues
