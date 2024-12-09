@@ -2,6 +2,9 @@ import os
 import jwt
 import uuid
 import datetime
+
+# from pyotp import TOTP
+# import hashlib
 from pydantic import BaseModel
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
 from backend.raise_exception import raise_exception
@@ -370,3 +373,46 @@ def reset_password(
 
     db.flush()
     return {"message": "password-reset-successfully"}
+
+
+#
+# LETS ONLY ADD OTP WHEN WE HAVE MONEY TO COVER EMAIL COSTS AND HAVE RATE LIMITER IN PLACE
+#
+# class GenerateAccountantUserTOTPRequestBody(BaseModel):
+#     identity: str
+#     password: str
+
+
+# @router.post("/auth/user/generate_totp")
+# def generate_totp_code_and_send_to_user_email(
+#     body: GenerateAccountantUserTOTPRequestBody,
+#     db: DatabaseDependency,
+#     email_service: EmailServiceDependency,
+# ):
+#     user = db.query(User).filter(User.email == body.identity).first()
+
+#     if not user:
+#         raise HTTPException(status_code=404)
+
+#     if not verify_password(body.password, user.password_hash):
+#         raise HTTPException(status_code=404)
+
+#     time_based_one_time_password_code = TOTP(
+#         user.secret_key,
+#         digest=hashlib.sha256,
+#         digits=6,
+#         interval=300,
+#     ).now()
+
+#     # ---
+
+#     email_params = SendEmailParams(
+#         email=user.email,
+#         subject="VERIFICATION CODE",
+#         message=f"Your CODE: {time_based_one_time_password_code}",
+#     )
+#     email_service.send(email_params)
+
+#     return {"message": "login-verification-code-sent"}
+
+# ---
