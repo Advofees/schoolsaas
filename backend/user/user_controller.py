@@ -5,17 +5,44 @@ import datetime
 from pydantic import BaseModel
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
 from backend.raise_exception import raise_exception
-from backend.user.user_models import User, UserSession
+from backend.user.user_models import User, UserSession, Profile
 from backend.school.school_model import School
 from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
 from backend.user.user_authentication import UserAuthenticationContextDependency
+from backend.file.file_model import File
+from sqlalchemy.orm import Session
+import typing
+from backend.s3.aws_s3_service import init_s3_client
+from backend.s3.s3_constants import BUCKET_NAME, PRESIGNED_URL_EXPIRATION
 
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 FRONTEND_URL = os.environ["FRONTEND_URL"]
 
 router = APIRouter()
+
+
+def get_profile_url(
+    profile_id: uuid.UUID,
+    db: Session,
+) -> typing.Optional[str]:
+    s3 = init_s3_client()
+    profile = db.query(Profile).filter(Profile.id == profile_id).first()
+    if not profile:
+        return None
+
+    file = db.query(File).filter(File.id == profile.file_id).first()
+    if not file:
+        return None
+
+    presigned_url = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": BUCKET_NAME, "Key": file.path},
+        ExpiresIn=PRESIGNED_URL_EXPIRATION,
+    )
+
+    return presigned_url
 
 
 class RegisterRequestBody(BaseModel):
@@ -179,6 +206,10 @@ def get_user_session(
     if not school:
         raise HTTPException(404)
 
+    profile_url = None
+    if user.profile and user.profile.id:
+        profile_url = get_profile_url(db=db, profile_id=user.profile.id)
+
     return {
         "user_id": auth_context.user_id,
         "roles": user.roles,
@@ -186,6 +217,7 @@ def get_user_session(
         "name": user.name,
         "email": user.email,
         "permissions": user.all_permissions,
+        "profile_url": profile_url if profile_url else None,
         "school": {
             "id": school_id,
             "name": school.name,
