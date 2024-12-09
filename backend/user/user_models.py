@@ -292,6 +292,11 @@ class User(Base):
 
         return None
 
+    @property
+    def all_permissions(self) -> set[UserPermission]:
+        all_permissions = set(self.permissions)
+        return all_permissions
+
     def __init__(
         self,
         email: str,
@@ -306,8 +311,3 @@ class User(Base):
 
     def has_role_type(self, role_type: RoleType) -> bool:
         return any(role.type == role_type.value for role in self.roles)
-
-    @property
-    def all_permissions(self) -> set[UserPermission]:
-        all_permissions = set(self.permissions)
-        return all_permissions
