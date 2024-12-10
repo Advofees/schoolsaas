@@ -5,11 +5,11 @@ services:
       dockerfile: Dockerfile
     container_name: dev_postgres
     environment:
-      POSTGRES_DB: schoolsas
-      POSTGRES_USER: schoolsas
-      POSTGRES_PASSWORD: schoolsas
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
   minio:
     image: minio/minio:latest
