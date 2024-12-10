@@ -281,7 +281,8 @@ def generate_link_to_reset_password_and_send_to_users_email(
 
     token = jwt.encode(
         {
-            "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
+            "exp": datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(hours=1),
             "user_id": str(user.id),
         },
         JWT_SECRET_KEY,
@@ -316,7 +317,8 @@ def generate_link_to_reset_password_and_send_to_authenticated_users_email(
 
     token = jwt.encode(
         {
-            "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
+            "exp": datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(hours=1),
             "user_id": str(user.id),
         },
         JWT_SECRET_KEY,
@@ -367,8 +369,6 @@ def reset_password(
         raise HTTPException(status_code=404)
 
     user.password_hash = hash_password(body.new_password)
-
-    db.commit()
 
     db.flush()
 
