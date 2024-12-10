@@ -372,6 +372,7 @@ def reset_password(
     logout_all(db, user.id)
 
     db.flush()
+    db.commit()
     return {"message": "password-reset-successfully"}
 
 
