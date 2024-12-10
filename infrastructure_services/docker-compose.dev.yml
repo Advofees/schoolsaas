@@ -1,7 +1,9 @@
 services:
-  postgres:
-    image: postgres:17
-    container_name: postgres
+  postgres_db:
+    build:
+      context: postgres
+      dockerfile: Dockerfile
+    container_name: dev_postgres
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -25,4 +27,3 @@ services:
   #     interval: 30s
   #     timeout: 20s
   #     retries: 3
-
