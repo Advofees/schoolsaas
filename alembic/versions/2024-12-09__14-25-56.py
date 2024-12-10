@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: ca10c42c86d9
+Revision ID: 1bf3b60de0d2
 Revises: 
-Create Date: 2024-12-07 14:39:35.040918
+Create Date: 2024-12-09 14:25:56.680055
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'ca10c42c86d9'
+revision: str = '1bf3b60de0d2'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -162,6 +162,15 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('profiles',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('file_id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.ForeignKeyConstraint(['file_id'], ['files.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('school_parent_associations',
@@ -378,6 +387,7 @@ def downgrade() -> None:
     op.drop_table('calendar_events')
     op.drop_table('teachers')
     op.drop_table('school_parent_associations')
+    op.drop_table('profiles')
     op.drop_table('inventories')
     op.drop_table('classrooms')
     op.drop_table('academic_terms')

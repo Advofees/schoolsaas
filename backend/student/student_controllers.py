@@ -3,14 +3,14 @@ import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 
-from backend.school.school_model import SchoolParent
+from backend.school.school_model import SchoolParent, SchoolStudentAssociation
 from backend.user.user_models import User
 from backend.student.student_model import Student
 from backend.classroom.classroom_model import Classroom
 from backend.parent.parent_model import ParentStudentAssociation
 from backend.database.database import DatabaseDependency
 from backend.user.user_authentication import UserAuthenticationContextDependency
-
+from backend.user.passwords import hash_password
 
 router = APIRouter()
 
@@ -18,11 +18,13 @@ router = APIRouter()
 class CreateStudent(BaseModel):
     first_name: str
     last_name: str
-    parent_id: uuid.UUID
     date_of_birth: datetime.datetime
     gender: str
     grade_level: int
+    password: str
+    email: str
     classroom_id: uuid.UUID
+    parent_id: uuid.UUID
 
 
 @router.post("/students/create")
@@ -42,36 +44,36 @@ async def create_student(
     if not parent:
         raise HTTPException(status_code=404, detail="Parent  not found")
 
-    class_room = db.query(Classroom).filter(Classroom.id == body.classroom_id).first()
+    classroom = db.query(Classroom).filter(Classroom.id == body.classroom_id).first()
 
-    if not class_room:
-        raise HTTPException(status_code=404, detail="Classroom not found")
-    # --
-
-    if not any(
-        permission.permissions.student_permissions.can_add_students is True
-        for permission in user.all_permissions
-    ):
-        raise HTTPException(status_code=403, detail="Permission denied")
+    if not classroom:
+        raise HTTPException(status_code=404, detail="classroom-not-found")
 
     # ---
     student_user = User(
-        email=body.first_name + body.last_name + "@student.com",
+        email=body.email,
         username=body.first_name + body.last_name,
-        password_hash="student",
+        password_hash=hash_password(body.password),
     )
     db.add(student_user)
+
     student = Student(
         first_name=body.first_name,
         last_name=body.last_name,
         date_of_birth=body.date_of_birth,
         gender=body.gender,
         grade_level=body.grade_level,
-        classroom_id=class_room.id,
+        classroom_id=classroom.id,
         user_id=student_user.id,
     )
 
     db.add(student)
+    db.flush()
+
+    student_school_association = SchoolStudentAssociation(
+        student_id=student.id, school_id=classroom.school_id
+    )
+    db.add(student_school_association)
     db.flush()
     # ---
     parent_student_association = ParentStudentAssociation(
@@ -81,7 +83,7 @@ async def create_student(
     db.flush()
     db.commit()
 
-    return {}
+    return {"message": "student-registered-successfully"}
 
 
 @router.get("/students/{student_id}")

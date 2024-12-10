@@ -1,25 +1,52 @@
 # MVP Checklist
+- users
+  - school-admin
+  - teachers
+    - roles:
+      - TEACHER
+      - CLASS_TEACHER
+  - student/parent
 
-## Basic School Information
-- [ ] School name 
-- [ ] School email 
-- [ ] School logo
-- [ ] School contact number 
+- registration
+  - registration is for schools only
 
-## Analytics Dashboard
+- register
+  - name
+  - email
+  - school_code/school_number
+  - contact number
 
-- [ ] Total student count
-- [ ] Total teacher count
-- [ ] Yearly enrollment trends
-- [ ] Payment analytics
-      - Revenue overview
-      - Outstanding payments
-      - Payment history
+- login
+  - email
+  - password
 
-## Role-Based Access Control
-- [ ] Teacher dashboard
-- [ ] Student/Parent dashboard
-- [ ] SchoolAdmin dashboard
+- school-admin-dashboard
+
+  - info
+
+    - [ ] School name 
+    - [ ] School email 
+    - [ ] School logo
+    - [ ] School contact number 
+
+  - stats
+
+    - [ ] Total student count
+    - [ ] Total teacher 
+    - [ ] attendance metrics
+          - total present count
+            - male count
+            - female count
+          - total absent count
+            - male count
+            - female count
+        
+    - [ ] Yearly enrollment trends
+    - [ ] Payment analytics
+          - Revenue overview
+          - Outstanding payments
+          - Payment history
+
 
 
 ## Teacher dashboard Features

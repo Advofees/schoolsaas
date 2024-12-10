@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
@@ -11,13 +12,12 @@ get_all_models()
 import random
 import decimal
 from faker import Faker
-
+import uuid
+from sqlalchemy.orm import Session
 import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 from backend.user.permissions.permissions_schemas import (
     PERMISSIONS,
     SchoolPermissions,
-    StudentPermissions,
-    TeacherPermissions,
 )
 from backend.user.user_models import (
     User,
@@ -28,15 +28,19 @@ from backend.user.user_models import (
     UserPermissionAssociation,
     UserRoleAssociation,
 )
+from backend.file.file_model import Profile, File
+from backend.s3.aws_s3_service import init_s3_client
+from backend.s3.s3_constants import BUCKET_NAME
 from backend.module.module_model import Module, ModuleEnrollment
 from backend.school.school_model import School
-from backend.student.student_model import Student
+from backend.student.student_model import Student, Gender
 from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.classroom.classroom_model import Classroom
 from backend.academic_term.academic_term_model import AcademicTerm
 from backend.school.school_model import School, SchoolStudentAssociation
 from backend.exam.exam_model import Exam
 from backend.exam.exam_results.exam_result_model import ExamResult
+from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.passwords import hash_password
 from backend.database.database import get_db
 import datetime
@@ -44,6 +48,8 @@ from sqlalchemy import MetaData, create_engine
 from backend.database.database import DATABASE_URL, get_db
 from alembic import command
 from alembic.config import Config
+import mimetypes
+import os
 
 engine = create_engine(DATABASE_URL)
 metadata = MetaData()
@@ -61,21 +67,76 @@ alembic_cfg = Config("alembic.ini")
 command.upgrade(alembic_cfg, "head")
 
 
+def create_simple_profile(file_path: str, user_id: uuid.UUID, db: Session):
+    s3 = init_s3_client()
+
+    # Make sure user exists
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError("User not found")
+
+    # Check if bucket exists, create if it doesn't
+    try:
+        s3.head_bucket(Bucket=BUCKET_NAME)
+    except:
+        s3.create_bucket(Bucket=BUCKET_NAME)
+
+    # Read file and get its details
+    with open(file_path, "rb") as file:
+        file_content = file.read()
+        file_size = len(file_content)
+        file_name = os.path.basename(file_path)
+        content_type = mimetypes.guess_type(file_path)[0]
+
+    content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+    if file_path.lower().endswith(".png"):
+        content_type = "image/png"
+    elif file_path.lower().endswith(".jpg") or file_path.lower().endswith(".jpeg"):
+        content_type = "image/jpeg"
+    elif file_path.lower().endswith(".svg"):
+        content_type = "image/svg+xml"
+
+    # Clean filename and create S3 key
+    clean_filename = file_name.replace(" ", "_")
+    file_key = f"profiles/{user_id}/{uuid.uuid4()}-{clean_filename}"
+
+    s3.put_object(
+        Bucket=BUCKET_NAME,
+        Key=file_key,
+        Body=file_content,
+        ContentType=content_type,
+        ACL="private",
+    )
+
+    existing_profiles = (
+        db.query(Profile)
+        .filter(Profile.user_id == user_id, Profile.is_active == True)
+        .all()
+    )
+
+    for profile in existing_profiles:
+        profile.is_active = False
+
+    new_file = File(
+        name=file_name,
+        file_type=content_type,
+        size=file_size,
+        path=file_key,
+        user_id=user_id,
+    )
+    db.add(new_file)
+    db.flush()
+
+    profile = Profile(file_id=new_file.id, user_id=user_id)
+    db.add(profile)
+    db.commit()
+
+    return profile
+
+
 with get_db() as db:
     # School Admin Permissions
     school_management_permission_definition = PERMISSIONS(
-        teacher_permissions=TeacherPermissions(
-            can_add_teachers=True,
-            can_edit_teachers=True,
-            can_view_teachers=True,
-            can_delete_teachers=True,
-        ),
-        student_permissions=StudentPermissions(
-            can_add_students=True,
-            can_edit_students=True,
-            can_view_students=True,
-            can_delete_students=True,
-        ),
         school_permissions=SchoolPermissions(
             can_manage_school=True,
             can_view_school=True,
@@ -113,7 +174,15 @@ with get_db() as db:
     )
     db.add(school_admin_user)
     db.flush()
-
+    #
+    #
+    #
+    school_profile = create_simple_profile(
+        file_path="dev/profiles/school.png", user_id=school_admin_user.id, db=db
+    )
+    #
+    #
+    #
     school_user_permission_association = UserPermissionAssociation(
         user_id=school_admin_user.id, user_permission_id=school_management_permission.id
     )
@@ -224,6 +293,9 @@ with get_db() as db:
     db.add(math_teacher_user)
     db.flush()
 
+    math_teacher_profile = create_simple_profile(
+        file_path="dev/profiles/teacher.png", user_id=math_teacher_user.id, db=db
+    )
     math_teacher_role_assoc = UserRoleAssociation(
         user_id=math_teacher_user.id, role_id=teacher_role.id
     )
@@ -298,6 +370,10 @@ with get_db() as db:
     db.add(student_john_davis_user)
     db.flush()
 
+    student_teacher_profile = create_simple_profile(
+        file_path="dev/profiles/girl.png", user_id=student_john_davis_user.id, db=db
+    )
+
     student_john_davis_role_assoc = UserRoleAssociation(
         user_id=student_john_davis_user.id, role_id=student_role.id
     )
@@ -308,7 +384,7 @@ with get_db() as db:
         first_name="John",
         last_name="Davis",
         date_of_birth=datetime.datetime(2017, 3, 15),
-        gender="M",
+        gender=Gender.MALE.value,
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
         user_id=student_john_davis_user.id,
@@ -341,7 +417,7 @@ with get_db() as db:
         first_name="Michael",
         last_name="Chang",
         date_of_birth=datetime.datetime(2017, 5, 20),
-        gender="M",
+        gender=Gender.MALE.value,
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
         user_id=student_micheal_chang.id,
@@ -374,7 +450,7 @@ with get_db() as db:
         first_name="Sofia",
         last_name="Patel",
         date_of_birth=datetime.datetime(2017, 7, 10),
-        gender="F",
+        gender=Gender.FEMALE.value,
         grade_level=1,
         classroom_id=grade_1_mathematics_classroom.id,
         user_id=student_sofia_patel_user.id,
@@ -408,7 +484,7 @@ with get_db() as db:
         first_name="David",
         last_name="Kim",
         date_of_birth=datetime.datetime(2016, 4, 25),
-        gender="M",
+        gender=Gender.MALE.value,
         grade_level=2,
         classroom_id=grade_2_science_classroom.id,
         user_id=student_david_kim_user.id,
@@ -456,7 +532,7 @@ with get_db() as db:
         first_name="Alexander",
         last_name="Martinez",
         date_of_birth=datetime.datetime(2016, 8, 30),
-        gender="M",
+        gender=Gender.MALE.value,
         grade_level=2,
         classroom_id=grade_2_science_classroom.id,
         user_id=student_alexander_martinez_user.id,
@@ -470,14 +546,74 @@ with get_db() as db:
     db.add(student_alexander_martinez_school_assoc)
     db.flush()
 
-    # Create module enrollments for all students in all modules
-    all_students = [
+    #
+    # ---
+    #
+
+    all_students: list[Student] = [
         student_john_davis,
         student_micheal_chang,
         student_sofia_patel,
         student_david_kim,
         student_alexander_martinez,
     ]
+    attendance_months = {
+        1: (first_academic_term_2024, [8, 15, 22, 29]),  # January
+        2: (first_academic_term_2024, [5, 12, 19, 26]),  # February
+        3: (first_academic_term_2024, [4, 11, 18, 25]),  # March
+        5: (second_academic_term_2024, [6, 13, 20, 27]),  # May
+        6: (second_academic_term_2024, [3, 10, 17, 24]),  # June
+        7: (second_academic_term_2024, [1, 8, 15, 22]),  # July
+        10: (third_academic_term_2024, [7, 14, 21, 28]),  # October
+        11: (third_academic_term_2024, [4, 11, 18, 25]),  # November
+        12: (third_academic_term_2024, [2, 9, 16, 23]),  # December
+    }
+
+    def create_attendance_records(
+        db: Session,
+        students: list[Student],
+        start_date: datetime.datetime,
+        school_id: uuid.UUID,
+        academic_term_id: uuid.UUID,
+        num_days: int = 5,
+    ):
+        for student in students:
+            current_date = start_date
+
+            for day in range(num_days):
+                # 90% chance of being present
+                is_present = random.random() < 0.9
+
+                attendance = Attendance(
+                    date=current_date,
+                    status=(
+                        AttendanceStatus.PRESENT
+                        if is_present
+                        else AttendanceStatus.ABSENT
+                    ),
+                    student_id=student.id,
+                    school_id=school_id,
+                    classroom_id=student.classroom_id,
+                    academic_term_id=academic_term_id,
+                    remarks="Regular attendance" if is_present else "Absent",
+                )
+                db.add(attendance)
+
+                current_date = current_date + datetime.timedelta(days=1)
+
+        db.flush()
+
+    for month, (academic_term, mondays) in attendance_months.items():
+        for day in mondays:
+            start_date = datetime.datetime(2024, month, day)
+            create_attendance_records(
+                db,
+                students=all_students,
+                start_date=start_date,
+                school_id=sunrise_academy.id,
+                academic_term_id=academic_term.id,
+            )
+
     all_modules = [mathematics_module] + additional_modules
 
     for student in all_students:
@@ -494,21 +630,21 @@ with get_db() as db:
         term_exams = [
             Exam(
                 name=f"{module.name} Term 1 Assessment",
-                date=datetime.datetime(2024, 4, 15),
+                date=datetime.datetime(2024, 3, 15),
                 total_marks=100,
                 module_id=module.id,
                 academic_term_id=first_academic_term_2024.id,
             ),
             Exam(
                 name=f"{module.name} Term 2 Assessment",
-                date=datetime.datetime(2024, 8, 15),
+                date=datetime.datetime(2024, 7, 15),
                 total_marks=100,
                 module_id=module.id,
                 academic_term_id=second_academic_term_2024.id,
             ),
             Exam(
                 name=f"{module.name} Term 3 Assessment",
-                date=datetime.datetime(2024, 12, 1),
+                date=datetime.datetime(2024, 10, 1),
                 total_marks=100,
                 module_id=module.id,
                 academic_term_id=third_academic_term_2024.id,

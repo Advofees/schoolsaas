@@ -36,7 +36,7 @@
   ```
 - start docker for local development
   ```bash
-  docker compose -f infrastructure_services/docker-compose.dev.yml down
+  docker compose -f infrastructure_services/docker-compose.dev.yml down -v
   docker compose -f infrastructure_services/docker-compose.dev.yml up
   ```
 - Seed the database

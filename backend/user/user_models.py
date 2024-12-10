@@ -12,7 +12,7 @@ from backend.user.permissions.permissions_schemas import PERMISSIONS
 
 
 from backend.school.school_model import School
-from backend.file.file_model import File
+from backend.file.file_model import File, Profile
 from backend.calendar_events.calendar_events_model import CalendarEvent
 from backend.student.student_model import Student
 from backend.school.school_model import School, SchoolParent
@@ -234,6 +234,9 @@ class User(Base):
     teacher_user: Mapped["Teacher"] = relationship(
         Teacher, back_populates="user", uselist=False
     )
+    profile: Mapped["Profile"] = relationship(
+        "Profile", back_populates="user", uselist=False
+    )
 
     @property
     def name(self):
@@ -292,6 +295,11 @@ class User(Base):
 
         return None
 
+    @property
+    def all_permissions(self) -> set[UserPermission]:
+        all_permissions = set(self.permissions)
+        return all_permissions
+
     def __init__(
         self,
         email: str,
@@ -306,8 +314,3 @@ class User(Base):
 
     def has_role_type(self, role_type: RoleType) -> bool:
         return any(role.type == role_type.value for role in self.roles)
-
-    @property
-    def all_permissions(self) -> set[UserPermission]:
-        all_permissions = set(self.permissions)
-        return all_permissions

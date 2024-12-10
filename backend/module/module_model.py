@@ -5,10 +5,9 @@ from backend.database.base import Base
 import typing
 
 if typing.TYPE_CHECKING:
-
     from backend.student.student_model import Student
     from backend.teacher.teacher_model import Teacher
-    from exam.exam_model import Exam
+    from backend.exam.exam_model import Exam
 
 
 class Module(Base):

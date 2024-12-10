@@ -2,20 +2,50 @@ import os
 import jwt
 import uuid
 import datetime
+
+# from pyotp import TOTP
+# import hashlib
 from pydantic import BaseModel
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
 from backend.raise_exception import raise_exception
-from backend.user.user_models import User, UserSession
+from backend.user.user_models import User, UserSession, Profile
 from backend.school.school_model import School
 from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
 from backend.user.user_authentication import UserAuthenticationContextDependency
+from backend.file.file_model import File
+from sqlalchemy.orm import Session
+import typing
+from backend.s3.aws_s3_service import init_s3_client
+from backend.s3.s3_constants import BUCKET_NAME, PRESIGNED_URL_EXPIRATION
 
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 FRONTEND_URL = os.environ["FRONTEND_URL"]
 
 router = APIRouter()
+
+
+def get_profile_url(
+    profile_id: uuid.UUID,
+    db: Session,
+) -> typing.Optional[str]:
+    s3 = init_s3_client()
+    profile = db.query(Profile).filter(Profile.id == profile_id).first()
+    if not profile:
+        return None
+
+    file = db.query(File).filter(File.id == profile.file_id).first()
+    if not file:
+        return None
+
+    presigned_url = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": BUCKET_NAME, "Key": file.path},
+        ExpiresIn=PRESIGNED_URL_EXPIRATION,
+    )
+
+    return presigned_url
 
 
 class RegisterRequestBody(BaseModel):
@@ -179,18 +209,23 @@ def get_user_session(
     if not school:
         raise HTTPException(404)
 
+    profile_url = None
+    if user.profile and user.profile.id:
+        profile_url = get_profile_url(db=db, profile_id=user.profile.id)
+
     return {
         "user_id": auth_context.user_id,
-        "roles": user.roles,
-        "school_id": school_id,
         "name": user.name,
         "email": user.email,
+        "profile_url": profile_url if profile_url else None,
         "school": {
-            "id": school_id,
+            "id": school.id,
             "name": school.name,
             "number": school.school_number,
             "address": school.address,
         },
+        "roles": user.roles,
+        "permissions": user.all_permissions,
     }
 
 
@@ -340,4 +375,48 @@ def reset_password(
     logout_all(db, user.id)
 
     db.flush()
+    db.commit()
     return {"message": "password-reset-successfully"}
+
+
+#
+# LETS ONLY ADD OTP WHEN WE HAVE MONEY TO COVER EMAIL COSTS AND HAVE RATE LIMITER IN PLACE
+#
+# class GenerateAccountantUserTOTPRequestBody(BaseModel):
+#     identity: str
+#     password: str
+
+
+# @router.post("/auth/user/generate_totp")
+# def generate_totp_code_and_send_to_user_email(
+#     body: GenerateAccountantUserTOTPRequestBody,
+#     db: DatabaseDependency,
+#     email_service: EmailServiceDependency,
+# ):
+#     user = db.query(User).filter(User.email == body.identity).first()
+
+#     if not user:
+#         raise HTTPException(status_code=404)
+
+#     if not verify_password(body.password, user.password_hash):
+#         raise HTTPException(status_code=404)
+
+#     time_based_one_time_password_code = TOTP(
+#         user.secret_key,
+#         digest=hashlib.sha256,
+#         digits=6,
+#         interval=300,
+#     ).now()
+
+#     # ---
+
+#     email_params = SendEmailParams(
+#         email=user.email,
+#         subject="VERIFICATION CODE",
+#         message=f"Your CODE: {time_based_one_time_password_code}",
+#     )
+#     email_service.send(email_params)
+
+#     return {"message": "login-verification-code-sent"}
+
+# ---

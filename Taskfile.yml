@@ -9,12 +9,12 @@ tasks:
   stop:
     desc: "Stop the Docker services"
     cmds:
-      - docker compose -f infrastructure_services/docker-compose.dev.yml down
+      - docker compose -f infrastructure_services/docker-compose.dev.yml down -v
 
   restart:
     desc: "Restart the Docker services"
     cmds:
-      - docker compose -f infrastructure_services/docker-compose.dev.yml down
+      - docker compose -f infrastructure_services/docker-compose.dev.yml down -v
       - docker compose -f infrastructure_services/docker-compose.dev.yml up -d
 
   logs:
