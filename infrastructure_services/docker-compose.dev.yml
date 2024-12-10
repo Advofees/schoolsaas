@@ -3,11 +3,11 @@ services:
     image: postgres:17
     container_name: postgres
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: schoolsas
+      POSTGRES_USER: schoolsas
+      POSTGRES_PASSWORD: schoolsas
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   minio:
     image: minio/minio:latest
