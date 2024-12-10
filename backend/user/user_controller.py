@@ -298,8 +298,6 @@ def generate_link_to_reset_password_and_send_to_users_email(
         algorithm="HS256",
     )
 
-    print(token)
-
     reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
 
     email_params = SendEmailParams(
