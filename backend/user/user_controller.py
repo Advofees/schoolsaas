@@ -215,18 +215,17 @@ def get_user_session(
 
     return {
         "user_id": auth_context.user_id,
-        "roles": user.roles,
-        "school_id": school_id,
         "name": user.name,
         "email": user.email,
-        "permissions": user.all_permissions,
         "profile_url": profile_url if profile_url else None,
         "school": {
-            "id": school_id,
+            "id": school.id,
             "name": school.name,
             "number": school.school_number,
             "address": school.address,
         },
+        "roles": user.roles,
+        "permissions": user.all_permissions,
     }
 
 
