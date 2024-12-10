@@ -4,7 +4,7 @@ tasks:
   start:
     desc: "Start the Docker services in detached mode"
     cmds:
-      - docker compose -f infrastructure_services/docker-compose.dev.yml up 
+      - docker-compose -f infrastructure_services/docker-compose.dev.yml up 
 
   stop:
     desc: "Stop the Docker services"
