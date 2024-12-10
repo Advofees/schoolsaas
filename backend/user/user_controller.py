@@ -70,14 +70,13 @@ def register(
 
     if school_user:
         raise HTTPException(
-            status_code=409, detail="School with that email already exists"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="school-with-email-already-exists",
         )
 
     school = db.query(School).filter(School.school_number == body.school_number).first()
     if school:
-        raise HTTPException(
-            status_code=409, detail="School with that number already exists"
-        )
+        raise HTTPException(status_code=409, detail="school-code-already-exists")
 
     user = User(
         email=body.email,
@@ -119,11 +118,15 @@ def login(
     )
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-found"
+        )
     school_id = user.school_id or raise_exception()
 
     if not verify_password(body.password, user.password_hash):
-        raise HTTPException(status_code=404, detail="Invalid password or username")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="invalid-credentials"
+        )
 
     db.query(UserSession).filter(
         UserSession.user_id == user.id,
@@ -197,17 +200,21 @@ def get_user_session(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-found"
+        )
 
     if not user.roles:
-        raise HTTPException(status_code=403, detail="You don't have permission")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
+        )
 
     school_id = user.school_id or raise_exception()
 
     school = db.query(School).filter(School.id == school_id).first()
 
     if not school:
-        raise HTTPException(404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     profile_url = None
     if user.profile and user.profile.id:
@@ -250,7 +257,9 @@ def set_password(
             algorithms=["HS256"],
         )
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=409, detail="expired-token")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="expired-token"
+        )
 
     token_data = SetPasswordTokenData.model_validate(raw_payload)
 
@@ -313,7 +322,7 @@ def generate_link_to_reset_password_and_send_to_authenticated_users_email(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     token = jwt.encode(
         {
@@ -366,7 +375,7 @@ def reset_password(
     user = db.query(User).filter(User.id == token_data.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     user.password_hash = hash_password(body.new_password)
 
