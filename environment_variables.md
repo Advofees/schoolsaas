@@ -5,7 +5,7 @@ GIT_COMMIT_SHA="shooooo"
 SECRET_STRING="secret-string"
 JWT_SECRET_KEY="jwt-secret-key"
 
-DATABASE_HOST="localhost:5432"
+DATABASE_HOST="localhost:5433"
 DATABASE_NAME="postgres"
 DATABASE_USER="postgres"
 DATABASE_PASSWORD="postgres"
