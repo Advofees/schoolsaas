@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from backend.database.database import DatabaseDependency
-from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
 from backend.school.school_model import School
 from backend.teacher.teacher_model import Teacher
-from backend.user.user_models import RoleType, User
-from backend.user.passwords import generate_temp_password, hash_password
+from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
+from backend.user.passwords import hash_password
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
 router = APIRouter()
@@ -49,11 +48,11 @@ class TeacherModel(BaseModel):
     last_name: str
     email: str
     phone: str
+    password: str
 
 
 @router.post("/school/teachers/create")
 async def create_teacher_in_particular_school(
-    email_service: EmailServiceDependency,
     body: TeacherModel,
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -61,55 +60,63 @@ async def create_teacher_in_particular_school(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="user-not-found")
 
     if not user.has_role_type(RoleType.SCHOOL_ADMIN):
-        raise HTTPException(status_code=403, detail="Permission denied")
+        raise HTTPException(status_code=403, detail="permission-denied")
 
-    school = db.query(School).filter(School.id == user.school_user.id).first()
-
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    if not user.school_id:
+        raise HTTPException(403, detail="user-be-in-a-school")
 
     user_with_email = db.query(User).filter(User.email == body.email).first()
+
     if user_with_email:
         raise HTTPException(
-            status_code=400, detail="User with this email already exists"
+            status_code=400, detail="user-with-this-email-already-exists"
         )
-    temporary_password = generate_temp_password(8)
 
-    email_params = SendEmailParams(
-        email=user.email,
-        subject="Welcome to {school.name}",
-        message=f"You have been added as a teacher in our school : here is temporary password{temporary_password}, change it after login",
-    )
-
-    email_service.send(email_params)
     new_teacher_user = User(
         email=body.email,
-        password_hash=hash_password(password=temporary_password),
+        password_hash=hash_password(password=body.password),
         username=body.email,
     )
     db.add(new_teacher_user)
 
+    teacher_role = db.query(Role).filter(Role.name == RoleType.TEACHER.name).first()
+
+    if not teacher_role:
+        teacher_role = Role(
+            name=RoleType.TEACHER.name,
+            type=RoleType.TEACHER,
+            description=RoleType.TEACHER.value,
+        )
+        db.add(teacher_role)
+        db.flush()
+    else:
+        teacher_role_association = UserRoleAssociation(
+            user_id=new_teacher_user.id, role_id=teacher_role.id
+        )
+        db.add(teacher_role_association)
+        db.flush()
+
     teacher_with_email = (
         db.query(Teacher)
-        .filter(Teacher.email == body.email, Teacher.school_id == school.id)
+        .filter(Teacher.email == body.email, Teacher.school_id == user.school_id)
         .first()
     )
     if teacher_with_email:
         raise HTTPException(
-            status_code=400, detail="Teacher with this email already exists"
+            status_code=400, detail="teacher-with-this-email-already-exists"
         )
 
     new_teacher = Teacher(
         first_name=body.first_name,
         last_name=body.last_name,
         email=body.email,
-        school_id=school.id,
+        school_id=user.school_id,
         user_id=new_teacher_user.id,
     )
     db.add(new_teacher)
     db.commit()
 
-    return {"message": "Teacher created successfully"}
+    return {"message": "teacher-created-successfully"}
