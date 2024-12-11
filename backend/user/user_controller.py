@@ -10,7 +10,14 @@ import typing
 from pydantic import BaseModel
 from backend.email_service.mail_service import EmailServiceDependency, SendEmailParams
 from backend.raise_exception import raise_exception
-from backend.user.user_models import User, UserSession, Profile
+from backend.user.user_models import (
+    Role,
+    RoleType,
+    User,
+    UserRoleAssociation,
+    UserSession,
+    Profile,
+)
 from backend.school.school_model import School
 from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
@@ -79,22 +86,37 @@ def register(
     if school:
         raise HTTPException(status_code=409, detail="school-code-already-exists")
 
-    user = User(
+    school_admin_user = User(
         email=body.email,
         password_hash=hash_password(body.password),
         username=body.username,
     )
 
-    db.add(user)
+    db.add(school_admin_user)
     db.flush()
 
     new_school = School(
         name=body.name,
         school_number=body.school_number,
         country=body.country,
-        user_id=user.id,
+        user_id=school_admin_user.id,
     )
     db.add(new_school)
+    db.flush()
+
+    school_admin_role = Role(
+        name=RoleType.SCHOOL_ADMIN.name,
+        type=RoleType.SCHOOL_ADMIN,
+        description=RoleType.SCHOOL_ADMIN.value,
+    )
+
+    db.add(school_admin_role)
+    db.flush()
+
+    school_user_role_association = UserRoleAssociation(
+        user_id=school_admin_user.id, role_id=school_admin_role.id
+    )
+    db.add(school_user_role_association)
     db.flush()
     db.commit()
 
