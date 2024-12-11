@@ -104,20 +104,25 @@ def register(
     db.add(new_school)
     db.flush()
 
-    school_admin_role = Role(
-        name=RoleType.SCHOOL_ADMIN.name,
-        type=RoleType.SCHOOL_ADMIN,
-        description=RoleType.SCHOOL_ADMIN.value,
+    school_admin_role = (
+        db.query(Role).filter(Role.name == RoleType.SCHOOL_ADMIN.name).first()
     )
+    if not school_admin_role:
+        school_admin_role = Role(
+            name=RoleType.SCHOOL_ADMIN.name,
+            type=RoleType.SCHOOL_ADMIN,
+            description=RoleType.SCHOOL_ADMIN.value,
+        )
 
-    db.add(school_admin_role)
-    db.flush()
+        db.add(school_admin_role)
+        db.flush()
+    else:
+        school_user_role_association = UserRoleAssociation(
+            user_id=school_admin_user.id, role_id=school_admin_role.id
+        )
+        db.add(school_user_role_association)
+        db.flush()
 
-    school_user_role_association = UserRoleAssociation(
-        user_id=school_admin_user.id, role_id=school_admin_role.id
-    )
-    db.add(school_user_role_association)
-    db.flush()
     db.commit()
 
     return {"message": "school-registered-successfully"}
