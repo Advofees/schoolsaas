@@ -194,8 +194,6 @@ def get_user_session(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
 ):
-    if not auth_context:
-        raise HTTPException(status_code=404)
 
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
