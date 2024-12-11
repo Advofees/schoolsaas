@@ -71,7 +71,7 @@ def register(
     if school_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="school-with-email-already-exists",
+            detail="school-with-email-or-username-already-exists",
         )
 
     school = db.query(School).filter(School.school_number == body.school_number).first()
