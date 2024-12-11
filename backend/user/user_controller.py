@@ -2,6 +2,8 @@ import os
 import jwt
 import uuid
 import datetime
+from sqlalchemy.orm import Session
+import typing
 
 # from pyotp import TOTP
 # import hashlib
@@ -15,8 +17,7 @@ from backend.database.database import DatabaseDependency
 from backend.user.passwords import hash_password, verify_password
 from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.file.file_model import File
-from sqlalchemy.orm import Session
-import typing
+
 from backend.s3.aws_s3_service import init_s3_client
 from backend.s3.s3_constants import BUCKET_NAME, PRESIGNED_URL_EXPIRATION
 

@@ -1,13 +1,13 @@
 import jwt
 import os
 import uuid
+from typing import Annotated
+from fastapi import Cookie, Depends, HTTPException
+from dataclasses import dataclass
+
 from pydantic import BaseModel
 from backend.database.database import DatabaseDependency
 from backend.user.user_models import UserSession
-from typing import Annotated
-
-from fastapi import Cookie, Depends, HTTPException
-from dataclasses import dataclass
 
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 

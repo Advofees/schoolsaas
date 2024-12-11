@@ -2,10 +2,11 @@
 - users
   - school-admin
   - teachers
-    - roles:
+  - student/parent
+- roles:
       - TEACHER
       - CLASS_TEACHER
-  - student/parent
+      - STUDENT/PARENT
 
 - registration
   - registration is for schools only
@@ -24,10 +25,10 @@
 
   - info
 
-    - [ ] School name 
-    - [ ] School email 
-    - [ ] School logo
-    - [ ] School contact number 
+    - [ ] name 
+    - [ ] email 
+    - [ ] logo/profile_picture
+    - [ ] contact number 
 
   - stats
 
@@ -43,7 +44,8 @@
         
     - [ ] Yearly enrollment trends
     - [ ] Payment analytics
-          - Revenue overview
+          - money-in
+          - money-out
           - Outstanding payments
           - Payment history
 
@@ -86,12 +88,12 @@
 - [ ] Attendance management endpoints
 - [ ] Communication endpoints
 
-## Filters & Search
-- [ ] Classroom filter
-- [ ] Year filter
-- [ ] Term filter
-- [ ] Date range filter for messages
-- [ ] Student search functionality
+## Filters & Search by
+- [ ] Classroom
+- [ ] Year 
+- [ ] Academic Term 
+- [ ] Date range 
+- [ ] Student 
 
 ## Additional Features
 - [ ] Role-based view restrictions
