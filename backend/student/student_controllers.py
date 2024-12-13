@@ -6,7 +6,6 @@ from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, StringConstraints, EmailStr
 
 from backend.school.school_model import SchoolParent, SchoolStudentAssociation
-from backend.teacher.teacher_model import ClassTeacherAssociation
 from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
 from backend.student.student_model import Student
 from backend.classroom.classroom_model import Classroom
@@ -224,37 +223,21 @@ async def get_all_students_for_a_particular_school(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
         )
-    if user.has_role_type(RoleType.SCHOOL_ADMIN):
-        students = (
-            db.query(Student)
-            .join(SchoolStudentAssociation)
-            .filter(SchoolStudentAssociation.school_id == user.school_id)
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
-    elif user.has_role_type(RoleType.CLASS_TEACHER):
-        teacher_id = user.teacher_user.id
-        if not user.teacher_user.id:
-            raise Exception()
-
-        teacher_id = user.teacher_user.id
-        students = (
-            db.query(Student)
-            .join(Student.classroom)
-            .join(Classroom.teacher_associations)
-            .filter(
-                ClassTeacherAssociation.teacher_id == teacher_id,
-                ClassTeacherAssociation.is_primary == True,
-            )
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
-    else:
+    if not user.has_role_type(RoleType.SCHOOL_ADMIN) or user.has_role_type(
+        RoleType.SCHOOL_ADMIN
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
         )
+
+    students = (
+        db.query(Student)
+        .join(SchoolStudentAssociation)
+        .filter(SchoolStudentAssociation.school_id == user.school_id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
     return students
