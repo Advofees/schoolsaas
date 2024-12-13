@@ -1,4 +1,7 @@
 import uuid
+import typing
+from pydantic import BaseModel, StringConstraints, EmailStr
+
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
 from backend.database.database import DatabaseDependency
@@ -10,13 +13,15 @@ router = APIRouter()
 
 
 class CreateParent(BaseModel):
-    first_name: str
-    last_name: str
-    phone_number: str
+    first_name: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
+    last_name: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
+    phone_number: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
     gender: str
-    email: str
-    role_id: str
-    national_id_number: str
+    email: typing.Annotated[
+        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
+    ]
+    role_id: uuid.UUID
+    national_id_number: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
 
 
 @router.post("/parent/create", status_code=status.HTTP_201_CREATED)
@@ -42,7 +47,9 @@ async def create_parent(
     )
 
     if school_parent:
-        raise HTTPException(status_code=409, detail="School Parent already exists")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="School Parent already exists"
+        )
 
     new_school_parent = SchoolParent(
         first_name=body.first_name,
@@ -109,7 +116,9 @@ async def update_parent(
     )
 
     if not school_parent:
-        raise HTTPException(status_code=404, detail="School Parent not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="School Parent not found"
+        )
 
     school_parent.first_name = body.first_name
     school_parent.last_name = body.last_name

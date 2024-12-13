@@ -2,10 +2,11 @@ import datetime
 import typing
 import uuid
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, StringConstraints, EmailStr
 
 from backend.school.school_model import SchoolParent, SchoolStudentAssociation
+from backend.teacher.teacher_model import ClassTeacherAssociation
 from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
 from backend.student.student_model import Student
 from backend.classroom.classroom_model import Classroom
@@ -45,7 +46,10 @@ async def create_student(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=403)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     parent = db.query(SchoolParent).filter(SchoolParent.id == body.parent_id).first()
 
@@ -127,7 +131,10 @@ async def get_student(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=403)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     student = db.query(Student).filter(Student.id == student_id).first()
 
@@ -147,7 +154,10 @@ async def get_student_parents(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=403)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     student = db.query(Student).filter(Student.id == student_id).first()
 
@@ -169,11 +179,16 @@ async def get_students_in_classroom(
     db: DatabaseDependency,
     classroom_id: uuid.UUID,
     auth_context: UserAuthenticationContextDependency,
+    limit: int = Query(10, ge=1),
+    offset: int = Query(0, ge=0),
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=403)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     classroom = (
         db.query(Classroom)
@@ -184,6 +199,62 @@ async def get_students_in_classroom(
     if not classroom:
         raise HTTPException(status_code=404, detail="Classroom not found")
 
-    students = db.query(Student).filter(Student.classroom_id == classroom.id).all()
+    students = (
+        db.query(Student)
+        .filter(Student.classroom_id == classroom.id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    return students
+
+
+@router.get("/students/list")
+async def get_all_students_for_a_particular_school(
+    db: DatabaseDependency,
+    auth_context: UserAuthenticationContextDependency,
+    limit: int = Query(10, ge=1),
+    offset: int = Query(0, ge=0),
+):
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
+    if user.has_role_type(RoleType.SCHOOL_ADMIN):
+        students = (
+            db.query(Student)
+            .join(SchoolStudentAssociation)
+            .filter(SchoolStudentAssociation.school_id == user.school_id)
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+    elif user.has_role_type(RoleType.CLASS_TEACHER):
+        teacher_id = user.teacher_user.id
+        if not user.teacher_user.id:
+            raise Exception()
+
+        teacher_id = user.teacher_user.id
+        students = (
+            db.query(Student)
+            .join(Student.classroom)
+            .join(Classroom.teacher_associations)
+            .filter(
+                ClassTeacherAssociation.teacher_id == teacher_id,
+                ClassTeacherAssociation.is_primary == True,
+            )
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     return students
