@@ -255,8 +255,7 @@ def dashboard_resources_dto(
     teachers: list[Teacher],
     total_students_managed: int,
     total_current_year_students_enrollment: int,
-    page: int,
-    total_pages: int,
+    total_teachers_managed: int,
     payments: PaymentStats,
     current_year: int,
     attendance_metrics: AttendanceMetrics,
@@ -266,13 +265,11 @@ def dashboard_resources_dto(
         "current_year": current_year,
         "students_total": total_students_managed,
         "current_year_students_enrollment_total": total_current_year_students_enrollment,
-        "teachers_total": len(teachers),
+        "teachers_total": total_teachers_managed,
         "attendance": attendance_metrics,
         "teachers" "payments": payments,
         "teachers": [teacher_dto(teacher) for teacher in teachers],
         "students": [student_dto(student) for student in students],
-        "page": page,
-        "total_pages": total_pages,
     }
 
 
@@ -284,8 +281,6 @@ async def get_all_students(
     filter_date: typing.Optional[datetime.datetime] = Query(
         None, description="Filter date, defaults to today"
     ),
-    page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(10, ge=1, le=100, description="students per page"),
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
@@ -293,8 +288,6 @@ async def get_all_students(
         raise HTTPException(status_code=403)
 
     school_id = user.school_id or raise_exception()
-
-    skip = (page - 1) * page_size
 
     current_year = datetime.datetime.now().year
     year_start = datetime.datetime(current_year, 1, 1)
@@ -321,7 +314,11 @@ async def get_all_students(
             .filter(SchoolStudentAssociation.school_id == school_id)
             .scalar()
         )
-
+        total_teachers_managed = (
+            db.query(func.count(Teacher.id))
+            .filter(Teacher.school_id == school_id)
+            .scalar()
+        )
         overall_school_students_created_this_year = (
             db.query(func.count(Student.id))
             .join(SchoolStudentAssociation)
@@ -337,17 +334,12 @@ async def get_all_students(
             db.query(Student)
             .join(SchoolStudentAssociation)
             .filter(SchoolStudentAssociation.school_id == school_id)
-            .offset(skip)
-            .limit(page_size)
+            .limit(6)
             .all()
         )
 
         teachers = (
-            db.query(Teacher)
-            .filter(Teacher.school_id == school_id)
-            .offset(skip)
-            .limit(page_size)
-            .all()
+            db.query(Teacher).filter(Teacher.school_id == school_id).limit(6).all()
         )
         #
         #
@@ -394,8 +386,7 @@ async def get_all_students(
                 ClassTeacherAssociation.teacher_id == teacher_id,
                 ClassTeacherAssociation.is_primary == True,
             )
-            .offset(skip)
-            .limit(page_size)
+            .limit(6)
             .all()
         )
         #
@@ -413,12 +404,17 @@ async def get_all_students(
         if not classroom:
             raise Exception()
 
+        total_teachers_managed = (
+            db.query(func.count(Teacher.id))
+            .join(ClassTeacherAssociation)
+            .filter(ClassTeacherAssociation.classroom_id == classroom.id)
+            .scalar()
+        )
         teachers = (
             db.query(Teacher)
             .join(ClassTeacherAssociation)
             .filter(ClassTeacherAssociation.classroom_id == classroom.id)
-            .offset(skip)
-            .limit(page_size)
+            .limit(6)
             .all()
         )
 
@@ -433,19 +429,15 @@ async def get_all_students(
     else:
         raise HTTPException(403)
 
-    total_pages = total_students_managed // page_size + (
-        1 if total_students_managed % page_size else 0
-    )
     return dashboard_resources_dto(
         students=students,
         total_students_managed=total_students_managed,
         total_current_year_students_enrollment=overall_school_students_created_this_year,
-        page=page,
-        total_pages=total_pages,
         current_year=current_year,
         payments=payment_summary,
         attendance_metrics=attendance_metrics,
         teachers=teachers,
+        total_teachers_managed=total_teachers_managed,
     )
 
 
