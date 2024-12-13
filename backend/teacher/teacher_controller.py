@@ -1,8 +1,10 @@
+import uuid
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
+from backend.classroom.classroom_model import Classroom
 from backend.database.database import DatabaseDependency
 from backend.school.school_model import School
-from backend.teacher.teacher_model import Teacher
+from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
 from backend.user.passwords import hash_password
 from backend.user.user_authentication import UserAuthenticationContextDependency
@@ -10,7 +12,7 @@ from backend.user.user_authentication import UserAuthenticationContextDependency
 router = APIRouter()
 
 
-@router.get("/school/teachers/list")
+@router.get("/teachers/list")
 async def get_teachers_in_a_particular_school(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -30,7 +32,7 @@ async def get_teachers_in_a_particular_school(
     return school.teachers
 
 
-@router.get("/school/teachers/{teacher_id}")
+@router.get("/teachers/{teacher_id}")
 async def get_teacher_in_particular_school_by_id(
     teacher_id: int,
     db: DatabaseDependency,
@@ -51,6 +53,34 @@ async def get_teacher_in_particular_school_by_id(
     return teacher
 
 
+@router.get("/teachers/classroom/{classroom_id}")
+async def get_teacher_in_particular_school_classroom(
+    classroom_id: uuid.UUID,
+    db: DatabaseDependency,
+    auth_context: UserAuthenticationContextDependency,
+):
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
+
+    if not classroom:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    teachers = (
+        db.query(Teacher)
+        .join(ClassTeacherAssociation)
+        .filter(ClassTeacherAssociation.classroom_id == classroom.id)
+        .all()
+    )
+    if not teachers:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
+
+    return teachers
+
+
 class TeacherModel(BaseModel):
     first_name: str
     last_name: str
@@ -59,7 +89,7 @@ class TeacherModel(BaseModel):
     password: str
 
 
-@router.post("/school/teachers/create")
+@router.post("/teachers/create")
 async def create_teacher_in_particular_school(
     body: TeacherModel,
     db: DatabaseDependency,
