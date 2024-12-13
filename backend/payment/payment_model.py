@@ -11,8 +11,22 @@ from backend.teacher.teacher_model import Teacher
 
 class PaymentMethod(enum.Enum):
     MPESA = "mpesa"
-    BANK = "bank"
     CASH = "cash"
+    CREDIT_CARD = "credit_card"
+    DEBIT_CARD = "debit_card"
+    BANK_TRANSFER = "bank_transfer"
+    CHECK = "check"
+    MOBILE_PAYMENT = "mobile_payment"
+    CRYPTOCURRENCY = "cryptocurrency"
+
+
+class PaymentStatus(enum.Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    REFUNDED = "refunded"
+    CANCELLED = "cancelled"
+    PROCESSING = "processing"
 
 
 class Payment(Base):
@@ -23,6 +37,7 @@ class Payment(Base):
     date: Mapped[datetime.datetime] = mapped_column()
     method: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column()
+    status: Mapped[str] = mapped_column()
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(onupdate=func.now())
 
@@ -42,10 +57,12 @@ class Payment(Base):
         amount: float,
         date: datetime.datetime,
         method: PaymentMethod,
+        status: PaymentStatus,
         school_id: uuid.UUID,
     ):
         super().__init__()
         self.amount = amount
         self.date = date
         self.method = method.value
+        self.status = status.value
         self.school_id = school_id

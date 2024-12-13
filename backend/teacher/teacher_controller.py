@@ -1,6 +1,7 @@
+import typing
 import uuid
 from fastapi import APIRouter, HTTPException, status, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints, EmailStr
 from backend.classroom.classroom_model import Classroom
 from backend.database.database import DatabaseDependency
 from backend.school.school_model import School
@@ -98,10 +99,12 @@ async def get_teacher_in_particular_school_classroom_by_classroom_id(
 
 
 class TeacherModel(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
-    phone: str
+    first_name: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
+    last_name: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
+    email: typing.Annotated[
+        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
+    ]
+    phone: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
     password: str
 
 

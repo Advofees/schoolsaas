@@ -472,7 +472,7 @@ def get_school(
 class UpdateSchool(BaseModel):
     name: typing.Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     location: str
-    phone_number: str
+    phone_number: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
     email: typing.Annotated[
         EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
     ]
