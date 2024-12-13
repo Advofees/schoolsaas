@@ -271,7 +271,7 @@ def dashboard_resources_dto(
         "current_year_students_enrollment_total": total_current_year_students_enrollment,
         "teachers_total": total_teachers_managed,
         "attendance": attendance_metrics,
-        "teachers" "payments": payments,
+        "payments": payments,
         "teachers": [teacher_dto(teacher) for teacher in teachers],
         "students": [student_dto(student) for student in students],
     }
