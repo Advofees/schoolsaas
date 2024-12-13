@@ -10,7 +10,6 @@ if typing.TYPE_CHECKING:
     from backend.user.user_models import User
     from backend.school.school_model import School
     from backend.module.module_model import Module
-    from backend.payment.payment_model import Payment
     from backend.classroom.classroom_model import Classroom
 
 
@@ -61,10 +60,6 @@ class Teacher(Base):
     )
 
     # ---
-
-    payments: Mapped[list["Payment"]] = relationship(
-        "Payment", back_populates="teacher"
-    )
 
     modules: Mapped[list["Module"]] = relationship(
         "Module",

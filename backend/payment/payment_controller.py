@@ -7,9 +7,9 @@ from sqlalchemy.orm import Query as SQLQUERY
 from sqlalchemy import asc, desc
 import datetime
 from backend.database.database import DatabaseDependency
-from backend.user.user_models import RoleType, User
 from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.payment.payment_model import Payment, PaymentMethod, PaymentStatus
+from backend.user.user_models import RoleType, User
 
 router = APIRouter()
 
@@ -28,7 +28,7 @@ def get_payments(
     max_amount: decimal.Decimal | None = None,
     payment_method: PaymentMethod | None = None,
     payment_status: PaymentStatus | None = None,
-    teacher_id: uuid.UUID | None = None,
+    student_id: uuid.UUID | None = None,
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
@@ -52,8 +52,6 @@ def get_payments(
         query = query.filter(Payment.method == payment_method)
     if payment_status:
         query = query.filter(Payment.status == payment_status)
-    if teacher_id:
-        query = query.filter(Payment.teacher_id == teacher_id)
 
     if sort_by:
         query = apply_sort(query, sort_by, sort_order)

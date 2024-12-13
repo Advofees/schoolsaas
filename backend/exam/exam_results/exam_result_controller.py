@@ -47,7 +47,7 @@ def exam_result_response(exam_result: ExamResult) -> dict:
     }
 
 
-@router.get("/school/student/classroom/{classroom_id}/exam_results/{exam_id}")
+@router.get("/exam_results/{exam_id}/classroom/{classroom_id}")
 def get_module_exam_result_for_classroom(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -69,9 +69,7 @@ def get_module_exam_result_for_classroom(
     return results
 
 
-@router.get(
-    "/school/student/classroom/{classroom_id}/exam_results/{exam_id}/{student_id}"
-)
+@router.get("exam_results/{exam_id}/student/{student_id}/classroom/{classroom_id}")
 def get_module_exam_result_for_student_in_a_classroom(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -99,7 +97,7 @@ def get_module_exam_result_for_student_in_a_classroom(
     return results
 
 
-@router.get("/school/student/{student_id}/module/{module_id}/exam_results/{exam_id}")
+@router.get("/exam_results/{exam_id}/student/{student_id}/module/{module_id}")
 def get_specific_module_exam_results_for_student(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -123,7 +121,7 @@ def get_specific_module_exam_results_for_student(
     return exam_result
 
 
-@router.get("/school/exam/{exam_id}/exam_results")
+@router.get("/exam_results/exam/{exam_id}")
 def get_exam_results_by_student_id(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -146,7 +144,7 @@ class CreateModuleExamResult(BaseModel):
     marks_obtained: decimal.Decimal
 
 
-@router.post("/school/exam_results/create")
+@router.post("/exam_results/create")
 def create_exam_results(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -205,7 +203,7 @@ class UpdateModuleExamResult(BaseModel):
     marks_obtained: decimal.Decimal
 
 
-@router.put("/school/exam_results/update")
+@router.put("/exam_results/update")
 def update_exam_results(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import decimal
 import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
@@ -21,7 +22,7 @@ router = APIRouter()
 
 
 class PaymentMethodStats(BaseModel):
-    amount: float
+    amount: decimal.Decimal
     count: int
 
 
@@ -198,19 +199,21 @@ def get_entire_school_attendance_metrics(
 
 
 class PaymentStats(BaseModel):
-    total_received_amount: float
+    total_received_amount: decimal.Decimal
     by_method: dict[str, PaymentMethodStats]
     year: int
 
     @classmethod
     def from_payments(cls, payments: list[Payment], year: int) -> "PaymentStats":
         method_stats: dict[str, PaymentMethodStats] = {}
-        total_received_amount = 0
+        total_received_amount = decimal.Decimal("0")  # Initialize as Decimal
 
         # Group payments by method and calculate stats
         for payment in payments:
             if payment.method not in method_stats:
-                method_stats[payment.method] = PaymentMethodStats(amount=0, count=0)
+                method_stats[payment.method] = PaymentMethodStats(
+                    amount=decimal.Decimal("0"), count=0
+                )
 
             method_stats[payment.method].amount += payment.amount
             method_stats[payment.method].count += 1

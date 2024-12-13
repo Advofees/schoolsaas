@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: 1bf3b60de0d2
+Revision ID: afe4866bf5af
 Revises: 
-Create Date: 2024-12-09 14:25:56.680055
+Create Date: 2024-12-14 00:50:29.420678
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '1bf3b60de0d2'
+revision: str = 'afe4866bf5af'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -164,6 +164,23 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('payments',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('amount', sa.Numeric(), nullable=False),
+    sa.Column('date', sa.DateTime(), nullable=False),
+    sa.Column('method', sa.String(), nullable=False),
+    sa.Column('category', sa.String(), nullable=False),
+    sa.Column('description', sa.String(), nullable=False),
+    sa.Column('status', sa.String(), nullable=False),
+    sa.Column('reference_number', sa.String(), nullable=False),
+    sa.Column('direction', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('school_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('reference_number')
+    )
     op.create_table('profiles',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('file_id', sa.UUID(), nullable=False),
@@ -240,19 +257,15 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['module_id'], ['modules.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('payments',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('date', sa.DateTime(), nullable=False),
-    sa.Column('method', sa.String(), nullable=False),
-    sa.Column('description', sa.String(), nullable=False),
+    op.create_table('payment_user_associations',
+    sa.Column('payment_id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('type', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('school_id', sa.UUID(), nullable=False),
-    sa.Column('teacher_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
-    sa.ForeignKeyConstraint(['teacher_id'], ['teachers.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['payment_id'], ['payments.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('payment_id', 'user_id')
     )
     op.create_table('students',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -381,13 +394,14 @@ def downgrade() -> None:
     op.drop_table('teacher_module_association')
     op.drop_index('ix_students_search_vector', table_name='students', postgresql_using='gin')
     op.drop_table('students')
-    op.drop_table('payments')
+    op.drop_table('payment_user_associations')
     op.drop_table('exams')
     op.drop_table('class_teacher_associations')
     op.drop_table('calendar_events')
     op.drop_table('teachers')
     op.drop_table('school_parent_associations')
     op.drop_table('profiles')
+    op.drop_table('payments')
     op.drop_table('inventories')
     op.drop_table('classrooms')
     op.drop_table('academic_terms')

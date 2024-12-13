@@ -8,7 +8,12 @@ import backend.database.all_models  # pyright: ignore [reportUnusedImport]
 from backend.database.all_models import get_all_models
 
 get_all_models()
-
+import datetime
+from sqlalchemy import MetaData, create_engine
+from alembic import command
+from alembic.config import Config
+import mimetypes
+import os
 import random
 import decimal
 from faker import Faker
@@ -43,13 +48,16 @@ from backend.exam.exam_results.exam_result_model import ExamResult
 from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.passwords import hash_password
 from backend.database.database import get_db
-import datetime
-from sqlalchemy import MetaData, create_engine
-from backend.database.database import DATABASE_URL, get_db
-from alembic import command
-from alembic.config import Config
-import mimetypes
-import os
+from backend.database.database import DATABASE_URL
+from backend.payment.payment_model import (
+    PaymentUserAssociation,
+    Payment,
+    PaymentCategory,
+    PaymentDirection,
+    PaymentMethod,
+    PaymentStatus,
+    PaymentUserType,
+)
 
 engine = create_engine(DATABASE_URL)
 metadata = MetaData()
@@ -685,6 +693,99 @@ with get_db() as db:
                     module_id=module.id,
                 )
                 db.add(exam_result)
+        db.flush()
+
+    for student in all_students:
+
+        term1_payment = Payment(
+            amount=decimal.Decimal("15000.00"),
+            date=datetime.datetime(2024, 1, 5),
+            method=PaymentMethod.BANK_TRANSFER,
+            category=PaymentCategory.TUITION,
+            status=PaymentStatus.COMPLETED,
+            direction=PaymentDirection.INBOUND,
+            school_id=sunrise_academy.id,
+            recorded_by_id=school_admin_user.id,
+            reference_number=f"T1FEE-{uuid.uuid4().hex[:6]}",
+            description=f"Term 1 2024 Tuition Fee - {student.first_name} {student.last_name}",
+            payment_is_for_or_from_user_id=student.user_id,
+        )
+        db.add(term1_payment)
+        db.flush()
+
+        student_payment_assoc = PaymentUserAssociation(
+            payment_id=term1_payment.id,
+            user_id=student.user_id,
+            type=PaymentUserType.RELATED,
+        )
+        recorder_payment_assoc = PaymentUserAssociation(
+            payment_id=term1_payment.id,
+            user_id=school_admin_user.id,
+            type=PaymentUserType.RECORDER,
+        )
+        db.add_all([student_payment_assoc, recorder_payment_assoc])
+        db.flush()
+
+        term2_payment = Payment(
+            amount=decimal.Decimal("15000.00"),
+            date=datetime.datetime(2024, 5, 3),
+            method=PaymentMethod.MPESA,
+            category=PaymentCategory.TUITION,
+            status=PaymentStatus.COMPLETED,
+            direction=PaymentDirection.INBOUND,
+            school_id=sunrise_academy.id,
+            recorded_by_id=school_admin_user.id,
+            reference_number=f"T2FEE-{uuid.uuid4().hex[:6]}",
+            description=f"Term 2 2024 Tuition Fee - {student.first_name} {student.last_name}",
+            payment_is_for_or_from_user_id=student.user_id,
+        )
+        db.add(term2_payment)
+        db.flush()
+
+        student_payment_assoc2 = PaymentUserAssociation(
+            payment_id=term2_payment.id,
+            user_id=student.user_id,
+            type=PaymentUserType.RELATED,
+        )
+        recorder_payment_assoc2 = PaymentUserAssociation(
+            payment_id=term2_payment.id,
+            user_id=school_admin_user.id,
+            type=PaymentUserType.RECORDER,
+        )
+        db.add_all([student_payment_assoc2, recorder_payment_assoc2])
+        db.flush()
+
+    # Create salary payments for teachers (school paying money)
+    teachers = [math_teacher, science_teacher]
+    for teacher in teachers:
+        # January salary
+        jan_salary = Payment(
+            amount=decimal.Decimal("45000.00"),
+            date=datetime.datetime(2024, 1, 31),
+            method=PaymentMethod.BANK_TRANSFER,
+            category=PaymentCategory.OTHER,
+            status=PaymentStatus.COMPLETED,
+            direction=PaymentDirection.OUTBOUND,
+            school_id=sunrise_academy.id,
+            recorded_by_id=school_admin_user.id,
+            reference_number=f"SAL-JAN-{uuid.uuid4().hex[:6]}",
+            description=f"January 2024 Salary - {teacher.first_name} {teacher.last_name}",
+            payment_is_for_or_from_user_id=teacher.user_id,
+        )
+        db.add(jan_salary)
+        db.flush()
+
+        teacher_payment_assoc = PaymentUserAssociation(
+            payment_id=jan_salary.id,
+            user_id=teacher.user_id,
+            type=PaymentUserType.RELATED,
+        )
+        recorder_payment_assoc = PaymentUserAssociation(
+            payment_id=jan_salary.id,
+            user_id=school_admin_user.id,
+            type=PaymentUserType.RECORDER,
+        )
+        db.add_all([teacher_payment_assoc, recorder_payment_assoc])
         db.flush()
 
     db.commit()

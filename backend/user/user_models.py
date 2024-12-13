@@ -17,6 +17,7 @@ from backend.calendar_events.calendar_events_model import CalendarEvent
 from backend.student.student_model import Student
 from backend.school.school_model import School, SchoolParent
 from backend.teacher.teacher_model import Teacher
+from backend.payment.payment_model import PaymentUserAssociation, PaymentUserType
 
 
 class RoleType(enum.Enum):
@@ -237,6 +238,27 @@ class User(Base):
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="user", uselist=False
     )
+
+    payment_associations: Mapped[list["PaymentUserAssociation"]] = relationship(
+        "PaymentUserAssociation",
+        back_populates="user",
+    )
+
+    @property
+    def payments_related(self):
+        return [
+            assoc.payment
+            for assoc in self.payment_associations
+            if assoc.type == PaymentUserType.RELATED.value
+        ]
+
+    @property
+    def payments_recorded(self):
+        return [
+            assoc.payment
+            for assoc in self.payment_associations
+            if assoc.type == PaymentUserType.RECORDER.value
+        ]
 
     @property
     def name(self):

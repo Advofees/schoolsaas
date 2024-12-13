@@ -25,7 +25,7 @@ from backend.teacher.teacher_model import (
     TeacherModuleAssociation,
     ClassTeacherAssociation,
 )
-from backend.payment.payment_model import Payment
+from backend.payment.payment_model import Payment, PaymentUserAssociation
 from backend.attendance.attendance_models import Attendance
 from backend.classroom.classroom_model import Classroom
 from backend.academic_term.academic_term_model import AcademicTerm
@@ -55,6 +55,7 @@ def get_all_models() -> list[Type[Base]]:
         Inventory,
         File,
         Payment,
+        PaymentUserAssociation,
         TeacherModuleAssociation,
         ClassTeacherAssociation,
         UserPermission,
