@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel
 from backend.classroom.classroom_model import Classroom
 from backend.database.database import DatabaseDependency
@@ -16,6 +16,8 @@ router = APIRouter()
 async def get_teachers_in_a_particular_school(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
@@ -24,16 +26,25 @@ async def get_teachers_in_a_particular_school(
         )
 
     school = db.query(School).filter(School.id == user.school_user.id).first()
-
     if not school:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="School not found"
         )
-    return school.teachers
+
+    skip = (page - 1) * limit
+    teachers = (
+        db.query(Teacher)
+        .filter(Teacher.school_id == school.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    return teachers
 
 
 @router.get("/teachers/{teacher_id}")
-async def get_teacher_in_particular_school_by_id(
+async def get_teacher_in_particular_school_by_teacher_id(
     teacher_id: int,
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -53,11 +64,13 @@ async def get_teacher_in_particular_school_by_id(
     return teacher
 
 
-@router.get("/teachers/classroom/{classroom_id}")
-async def get_teacher_in_particular_school_classroom(
+@router.get("/teachers/classrooms/{classroom_id}")
+async def get_teacher_in_particular_school_classroom_by_classroom_id(
     classroom_id: uuid.UUID,
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
@@ -68,11 +81,13 @@ async def get_teacher_in_particular_school_classroom(
 
     if not classroom:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
+    skip = (page - 1) * limit
     teachers = (
         db.query(Teacher)
         .join(ClassTeacherAssociation)
         .filter(ClassTeacherAssociation.classroom_id == classroom.id)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     if not teachers:

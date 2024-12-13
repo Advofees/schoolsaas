@@ -18,6 +18,7 @@ from backend.user.user_models import (
     UserSession,
     Profile,
 )
+from pydantic import BaseModel, StringConstraints, EmailStr
 from backend.school.school_model import School
 from fastapi import APIRouter, HTTPException, Response, status
 from backend.database.database import DatabaseDependency
@@ -57,10 +58,14 @@ def get_profile_url(
 
 
 class RegisterRequestBody(BaseModel):
-    email: str
+    email: typing.Annotated[
+        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
+    ]
     password: str
-    username: str
-    name: str
+    username: typing.Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1)
+    ]
+    name: typing.Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     school_number: str
     country: str
 
@@ -300,7 +305,9 @@ def set_password(
 
 
 class TriggerResetPasswordWithEmailRequestBody(BaseModel):
-    email: str
+    email: typing.Annotated[
+        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
+    ]
 
 
 @router.post("/auth/user/forgot-password")

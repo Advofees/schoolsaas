@@ -15,6 +15,7 @@ from backend.user.user_models import User, RoleType
 from backend.user.user_authentication import UserAuthenticationContextDependency
 import datetime
 import typing
+from pydantic import BaseModel, StringConstraints, EmailStr
 
 router = APIRouter()
 
@@ -441,15 +442,6 @@ async def get_all_students(
     )
 
 
-class UpdateSchool(BaseModel):
-    name: str
-    location: str
-    phone_number: str
-    email: str
-    website: str
-    logo: str
-
-
 @router.get("/school/list", status_code=status.HTTP_200_OK)
 def get_school(
     db: DatabaseDependency,
@@ -481,6 +473,17 @@ def get_school(
         ),
         "schools": schools,
     }
+
+
+class UpdateSchool(BaseModel):
+    name: typing.Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+    location: str
+    phone_number: str
+    email: typing.Annotated[
+        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
+    ]
+    website: str
+    logo: str
 
 
 @router.put("/school/{school_id}/update", status_code=status.HTTP_204_NO_CONTENT)

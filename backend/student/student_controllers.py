@@ -1,7 +1,9 @@
 import datetime
+import typing
 import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, StringConstraints, EmailStr
 
 from backend.school.school_model import SchoolParent, SchoolStudentAssociation
 from backend.user.user_models import User
@@ -16,13 +18,19 @@ router = APIRouter()
 
 
 class CreateStudent(BaseModel):
-    first_name: str
-    last_name: str
+    first_name: typing.Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1)
+    ]
+    last_name: typing.Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1)
+    ]
     date_of_birth: datetime.datetime
     gender: str
     grade_level: int
-    password: str
-    email: str
+    password: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
+    email: typing.Annotated[
+        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
+    ]
     classroom_id: uuid.UUID
     parent_id: uuid.UUID
 
