@@ -121,6 +121,13 @@ def register(
 
         db.add(school_admin_role)
         db.flush()
+
+        school_user_role_association = UserRoleAssociation(
+            user_id=school_admin_user.id, role_id=school_admin_role.id
+        )
+        db.add(school_user_role_association)
+        db.flush()
+
     else:
         school_user_role_association = UserRoleAssociation(
             user_id=school_admin_user.id, role_id=school_admin_role.id
@@ -152,13 +159,15 @@ def login(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-found"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid-credentials",
         )
     school_id = user.school_id or raise_exception()
 
     if not verify_password(body.password, user.password_hash):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="invalid-credentials"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid-credentials",
         )
 
     db.query(UserSession).filter(
@@ -232,7 +241,8 @@ def get_user_session(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-found"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
         )
 
     if not user.roles:
@@ -289,7 +299,7 @@ def set_password(
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="expired-token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="expired-token"
         )
 
     token_data = SetPasswordTokenData.model_validate(raw_payload)
@@ -297,7 +307,7 @@ def set_password(
     user = db.query(User).filter(User.id == token_data.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     user.password_hash = hash_password(body.password)
 
@@ -319,7 +329,7 @@ def generate_link_to_reset_password_and_send_to_users_email(
     user = db.query(User).filter(User.email == body.email).first()
 
     if not user:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     token = jwt.encode(
         {
@@ -353,7 +363,10 @@ def generate_link_to_reset_password_and_send_to_authenticated_users_email(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     token = jwt.encode(
         {
@@ -399,14 +412,16 @@ def reset_password(
             algorithms=["HS256"],
         )
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=409, detail="expired-token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="expired-token"
+        )
 
     token_data = ResetPasswordTokenData.model_validate(raw_payload)
 
     user = db.query(User).filter(User.id == token_data.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=400, detail="invalid-token")
 
     user.password_hash = hash_password(body.new_password)
 

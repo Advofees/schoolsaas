@@ -22,7 +22,8 @@ async def get_teachers_in_a_particular_school(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-found"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
         )
 
     school = db.query(School).filter(School.id == user.school_user.id).first()
@@ -52,7 +53,8 @@ async def get_teacher_in_particular_school_by_teacher_id(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
         )
 
     teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
@@ -75,7 +77,8 @@ async def get_teacher_in_particular_school_classroom_by_classroom_id(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
         )
     classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
 
@@ -90,8 +93,6 @@ async def get_teacher_in_particular_school_classroom_by_classroom_id(
         .limit(limit)
         .all()
     )
-    if not teachers:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
 
     return teachers
 
@@ -114,7 +115,8 @@ async def create_teacher_in_particular_school(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-found"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
         )
 
     if not user.has_role_type(RoleType.SCHOOL_ADMIN):
@@ -152,12 +154,12 @@ async def create_teacher_in_particular_school(
         )
         db.add(teacher_role)
         db.flush()
-    else:
-        teacher_role_association = UserRoleAssociation(
-            user_id=new_teacher_user.id, role_id=teacher_role.id
-        )
-        db.add(teacher_role_association)
-        db.flush()
+
+    teacher_role_association = UserRoleAssociation(
+        user_id=new_teacher_user.id, role_id=teacher_role.id
+    )
+    db.add(teacher_role_association)
+    db.flush()
 
     teacher_with_email = (
         db.query(Teacher)

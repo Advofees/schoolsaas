@@ -27,7 +27,10 @@ async def create_parent(
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     school_parent = (
         db.query(SchoolParent)
@@ -69,23 +72,14 @@ async def get_parent(
 
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    total_parents = db.query(SchoolParent).count()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     parents = db.query(SchoolParent).offset(offset).limit(limit).all()
-    next_offset = offset + limit
-    has_next = next_offset < total_parents
 
-    return {
-        "total": total_parents,
-        "limit": limit,
-        "offset": offset,
-        "next": (
-            f"/parent/list?limit={limit}&offset={next_offset}" if has_next else None
-        ),
-        "parents": parents,
-    }
+    return parents
 
 
 class UpdateParent(BaseModel):
@@ -105,7 +99,10 @@ async def update_parent(
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     school_parent = (
         db.query(SchoolParent).filter(SchoolParent.id == body.student_id).first()
@@ -135,7 +132,10 @@ async def delete_parent(
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     school_parent = (
         db.query(SchoolParent).filter(SchoolParent.id == school_parent_id).first()

@@ -286,7 +286,10 @@ async def get_all_students(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=403)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     school_id = user.school_id or raise_exception()
 
@@ -453,26 +456,17 @@ def get_school(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="user-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     if not user.has_role_type(RoleType.SUPER_ADMIN):
         raise HTTPException(status_code=403, detail="permission-denied")
 
-    total_schools = db.query(School).count()
-
     schools = db.query(School).offset(offset).limit(limit).all()
-    next_offset = offset + limit
-    has_next = next_offset < total_schools
 
-    return {
-        "total": total_schools,
-        "limit": limit,
-        "offset": offset,
-        "next": (
-            f"/school/list?limit={limit}&offset={next_offset}" if has_next else None
-        ),
-        "schools": schools,
-    }
+    return schools
 
 
 class UpdateSchool(BaseModel):
@@ -497,7 +491,10 @@ def update_school(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="user-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     school = db.query(School).filter(School.id == school_id).first()
     if not school:
@@ -519,7 +516,10 @@ def get_school_by_id(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="user-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
 
     school = db.query(School).filter(School.id == school_id).first()
     if not school:
