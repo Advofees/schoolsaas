@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from backend.database.database import DatabaseDependency
 from backend.school.school_model import School
@@ -17,12 +17,16 @@ async def get_teachers_in_a_particular_school(
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-found"
+        )
 
     school = db.query(School).filter(School.id == user.school_user.id).first()
 
     if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="School not found"
+        )
     return school.teachers
 
 
@@ -34,11 +38,15 @@ async def get_teacher_in_particular_school_by_id(
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
     if not teacher:
-        raise HTTPException(status_code=404, detail="Teacher not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Teacher not found"
+        )
 
     return teacher
 
@@ -60,19 +68,26 @@ async def create_teacher_in_particular_school(
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="user-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-found"
+        )
 
     if not user.has_role_type(RoleType.SCHOOL_ADMIN):
-        raise HTTPException(status_code=403, detail="permission-denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
+        )
 
     if not user.school_id:
-        raise HTTPException(403, detail="user-be-in-a-school")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="user-be-in-a-school"
+        )
 
     user_with_email = db.query(User).filter(User.email == body.email).first()
 
     if user_with_email:
         raise HTTPException(
-            status_code=400, detail="user-with-this-email-already-exists"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="user-with-this-email-already-exists",
         )
 
     new_teacher_user = User(
@@ -106,7 +121,8 @@ async def create_teacher_in_particular_school(
     )
     if teacher_with_email:
         raise HTTPException(
-            status_code=400, detail="teacher-with-this-email-already-exists"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="teacher-with-this-email-already-exists",
         )
 
     new_teacher = Teacher(
