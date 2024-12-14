@@ -69,7 +69,7 @@ def get_module_exam_result_for_classroom(
     return results
 
 
-@router.get("exam_results/{exam_id}/student/{student_id}/classroom/{classroom_id}")
+@router.get("/exam_results/{exam_id}/student/{student_id}/classroom/{classroom_id}")
 def get_module_exam_result_for_student_in_a_classroom(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
