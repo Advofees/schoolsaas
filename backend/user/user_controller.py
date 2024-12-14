@@ -122,18 +122,11 @@ def register(
         db.add(school_admin_role)
         db.flush()
 
-        school_user_role_association = UserRoleAssociation(
-            user_id=school_admin_user.id, role_id=school_admin_role.id
-        )
-        db.add(school_user_role_association)
-        db.flush()
-
-    else:
-        school_user_role_association = UserRoleAssociation(
-            user_id=school_admin_user.id, role_id=school_admin_role.id
-        )
-        db.add(school_user_role_association)
-        db.flush()
+    school_user_role_association = UserRoleAssociation(
+        user_id=school_admin_user.id, role_id=school_admin_role.id
+    )
+    db.add(school_user_role_association)
+    db.flush()
 
     db.commit()
 
