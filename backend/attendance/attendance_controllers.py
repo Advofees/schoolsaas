@@ -1,13 +1,15 @@
 import datetime
 import uuid
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 
 from backend.attendance.attendance_models import AttendanceStatus
 from backend.database.database import DatabaseDependency
 
 
+from backend.school.school_model import School
 from backend.user.user_models import (
+    RoleType,
     User,
 )
 
@@ -22,67 +24,74 @@ import typing
 router = APIRouter()
 
 
-@router.get(
-    "/attendance/school/{school_id}/{classroom_id}/{start_date}/{end_date}/list"
-)
+@router.get("/attendance/list")
 def get_all_attendance_for_a_specific_classroom_in_a_date_range(
     db: DatabaseDependency,
-    classroom_id: uuid.UUID,
-    school_id: uuid.UUID,
-    start_date: datetime.datetime,
-    end_date: datetime.datetime,
+    auth_context: UserAuthenticationContextDependency,
+    attendance_status: typing.Optional[AttendanceStatus] = None,
+    classroom_id: typing.Optional[uuid.UUID] = None,
+    academic_term_id: typing.Optional[uuid.UUID] = None,
+    start_date: typing.Optional[datetime.datetime] = None,
+    end_date: typing.Optional[datetime.datetime] = None,
 ):
-    attendance = (
-        db.query(Attendance)
-        .filter(
-            Attendance.classroom_id == classroom_id,
-            Attendance.school_id == school_id,
-            Attendance.date.between(start_date, end_date),
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
         )
-        .all()
-    )
-    return attendance
+    query = db.query(Attendance).filter(Attendance.school_id == user.school_id)
 
+    if attendance_status:
+        query = query.filter(Attendance.status == attendance_status.value)
 
-@router.get("/attendance/school/{school_id}/{academic_term_id}/list")
-def get_attendance_statistics_for_a_school_in_an_academic_term(
-    db: DatabaseDependency,
-    academic_term_id: uuid.UUID,
-    school_id: uuid.UUID,
-):
-    school_term_attendance = (
-        db.query(Attendance)
-        .filter(
-            Attendance.school_id == school_id,
+    if classroom_id is not None:
+        query = query.filter(
+            Attendance.classroom_id == classroom_id,
+        )
+
+    if start_date is not None and end_date is not None:
+        query = query.filter(Attendance.date.between(start_date, end_date))
+
+    if academic_term_id is not None:
+        query = query.filter(
             Attendance.academic_term_id == academic_term_id,
         )
-        .all()
-    )
-    return school_term_attendance
+
+    attendance = query.all()
+    return attendance
 
 
 class SchoolAttendanceDTO(BaseModel):
     student_id: uuid.UUID
     classroom_id: uuid.UUID
-    school_id: uuid.UUID
     academic_term_id: uuid.UUID
     remarks: str
     status: AttendanceStatus
     date: datetime.datetime
 
 
-@router.post("/attendance/school/create")
+@router.post("/attendance/create")
 def create_student_class_attendance(
     db: DatabaseDependency,
-    authentication_context: UserAuthenticationContextDependency,
+    auth_context: UserAuthenticationContextDependency,
     body: SchoolAttendanceDTO,
 ):
-    user = db.query(User).filter(User.id == authentication_context.user_id).first()
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
-        raise HTTPException(404, detail="not-found")
-    if not user.teacher_user:
-        raise HTTPException(403, detail="needs-to-teacher")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
+        )
+
+    if (
+        not user.teacher_user
+        or not user.has_role_type(RoleType.TEACHER)
+        or not user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.SCHOOL_ADMIN)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
+        )
 
     student = (
         db.query(Student)
@@ -92,7 +101,9 @@ def create_student_class_attendance(
         .first()
     )
     if not student:
-        raise HTTPException(404, detail="student-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="student-not-found"
+        )
 
     attendance = (
         db.query(Attendance)
@@ -100,13 +111,21 @@ def create_student_class_attendance(
         .first()
     )
     if attendance:
-        raise HTTPException(403, detail="student-attendance-already-recorded")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="student-attendance-already-recorded",
+        )
+
+    school = db.query(School).filter(School.id == user.school_id).first()
+
+    if not school:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     attendance = Attendance(
         student_id=body.student_id,
         status=body.status,
         date=body.date,
-        school_id=body.school_id,
+        school_id=school.id,
         classroom_id=body.classroom_id,
         academic_term_id=body.academic_term_id,
         remarks=body.remarks,
@@ -123,7 +142,7 @@ class AttendanceUpdateDTO(BaseModel):
     date: typing.Optional[datetime.datetime]
 
 
-@router.patch("/attendance/school/{attendance_id}")
+@router.patch("/attendance/{attendance_id}")
 def partial_update_student_attendance(
     attendance_id: uuid.UUID,
     body: AttendanceUpdateDTO,
@@ -163,13 +182,13 @@ def partial_update_student_attendance(
     if body.date:
         attendance.date = body.date
 
+    db.flush()
     db.commit()
-    db.refresh(attendance)
 
     return {}
 
 
-@router.delete("/attendance/school/{attendance_id}")
+@router.delete("/attendance/{attendance_id}")
 def delete_student_attendance(
     attendance_id: uuid.UUID,
     db: DatabaseDependency,

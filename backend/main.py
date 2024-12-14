@@ -23,6 +23,7 @@ from backend.exam.exam_results.exam_result_controller import (
     router as exam_result_router,
 )
 from backend.file.file_controller import router as file_router
+from backend.attendance.attendance_controllers import router as attendance_router
 
 # ---
 app = FastAPI(docs_url="/")
@@ -44,7 +45,7 @@ app.include_router(permissions_router, tags=["permissions"])
 # ---
 app.include_router(school_router, tags=["school"])
 app.include_router(teacher_router, tags=["teacher"])
-
+app.include_router(attendance_router, tags=["attendance"])
 
 app.include_router(exam_result_router, tags=["Exam Results"])
 

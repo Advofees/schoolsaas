@@ -315,7 +315,8 @@ class User(Base):
                 )
             return active_association.school_id
 
-        return None
+        else:
+            raise Exception()
 
     @property
     def all_permissions(self) -> set[UserPermission]:
