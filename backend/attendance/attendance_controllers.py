@@ -83,10 +83,10 @@ def create_student_class_attendance(
             status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
         )
 
-    if (
-        not user.teacher_user
-        or not user.has_role_type(RoleType.TEACHER)
-        or not user.has_role_type(RoleType.CLASS_TEACHER)
+    if not (
+        user.teacher_user
+        or user.has_role_type(RoleType.TEACHER)
+        or user.has_role_type(RoleType.CLASS_TEACHER)
         or user.has_role_type(RoleType.SCHOOL_ADMIN)
     ):
         raise HTTPException(
