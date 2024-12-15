@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import String, DateTime, ForeignKey, UUID, func
+from sqlalchemy import String, ForeignKey, UUID, func
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
 from backend.database.base import Base
@@ -33,12 +33,16 @@ class Student(Base):
     last_name: Mapped[str] = mapped_column()
     date_of_birth: Mapped[datetime.datetime] = mapped_column()
     gender: Mapped[str] = mapped_column(String)
-    grade_level: Mapped[int] = mapped_column()
+    grade_level: Mapped[int] = mapped_column(nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime, default=func.now(), nullable=False
+        default=func.now(), nullable=False
     )
+    # National Education Management Information System
+    # --- nemis number is issued by the govt of kenya from the time the child starts the kenyan education system
+    #
+    nemis_number: Mapped[typing.Optional[str]] = mapped_column()
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime, onupdate=func.now(), nullable=True
+        onupdate=func.now(), nullable=True
     )
 
     classroom_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("classrooms.id"))
