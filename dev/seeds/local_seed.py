@@ -37,7 +37,8 @@ from backend.file.file_model import Profile, File
 from backend.s3.aws_s3_service import init_s3_client
 from backend.s3.s3_constants import BUCKET_NAME
 from backend.module.module_model import Module, ModuleEnrollment
-from backend.school.school_model import School
+from backend.school.school_model import School, SchoolParent, SchoolParentAssociation
+from backend.parent.parent_model import ParentStudentAssociation
 from backend.student.student_model import Student, Gender
 from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.classroom.classroom_model import Classroom
@@ -554,6 +555,138 @@ with get_db() as db:
     db.add(student_alexander_martinez_school_assoc)
     db.flush()
 
+    #
+    # ---
+    #
+
+    parent_role = Role(
+        name=RoleType.PARENT.name,
+        type=RoleType.PARENT,
+        description=RoleType.PARENT.value,
+    )
+    db.add(parent_role)
+    db.flush()
+
+    # Create parent users and associations for John Davis
+    john_davis_parent_user = User(
+        username="davis.parent",
+        email="davis.parent@email.com",
+        password_hash=hash_password("password123"),
+    )
+    db.add(john_davis_parent_user)
+    db.flush()
+
+    parent_davis_role_assoc = UserRoleAssociation(
+        user_id=john_davis_parent_user.id, role_id=parent_role.id
+    )
+    db.add(parent_davis_role_assoc)
+    db.flush()
+
+    davis_parent = SchoolParent(
+        first_name="Robert",
+        last_name="Davis",
+        gender="male",
+        email="davis.parent@email.com",
+        phone_number="1234567890",
+        national_id_number="ID123456",
+        user_id=john_davis_parent_user.id,
+    )
+    db.add(davis_parent)
+    db.flush()
+
+    davis_school_association = SchoolParentAssociation(
+        school_id=sunrise_academy.id, parent_id=davis_parent.id
+    )
+    db.add(davis_school_association)
+    db.flush()
+
+    davis_student_association = ParentStudentAssociation(
+        parent_id=davis_parent.id,
+        student_id=student_john_davis.id,
+        relationship_type="father",
+    )
+    db.add(davis_student_association)
+    db.flush()
+
+    patel_parent_user = User(
+        username="patel.parent",
+        email="patel.parent@email.com",
+        password_hash=hash_password("password123"),
+    )
+    db.add(patel_parent_user)
+    db.flush()
+
+    parent_patel_role_assoc = UserRoleAssociation(
+        user_id=patel_parent_user.id, role_id=parent_role.id
+    )
+    db.add(parent_patel_role_assoc)
+    db.flush()
+
+    patel_parent = SchoolParent(
+        first_name="Priya",
+        last_name="Patel",
+        gender="female",
+        email="patel.parent@email.com",
+        phone_number="9876543210",
+        national_id_number="ID789012",
+        user_id=patel_parent_user.id,
+    )
+    db.add(patel_parent)
+    db.flush()
+
+    patel_school_association = SchoolParentAssociation(
+        school_id=sunrise_academy.id, parent_id=patel_parent.id
+    )
+    db.add(patel_school_association)
+    db.flush()
+
+    patel_student_association = ParentStudentAssociation(
+        parent_id=patel_parent.id,
+        student_id=student_sofia_patel.id,
+        relationship_type="mother",
+    )
+    db.add(patel_student_association)
+    db.flush()
+
+    chang_parent_user = User(
+        username="chang.parent",
+        email="chang.parent@email.com",
+        password_hash=hash_password("password123"),
+    )
+    db.add(chang_parent_user)
+    db.flush()
+
+    parent_chang_role_assoc = UserRoleAssociation(
+        user_id=chang_parent_user.id, role_id=parent_role.id
+    )
+    db.add(parent_chang_role_assoc)
+    db.flush()
+
+    chang_parent = SchoolParent(
+        first_name="Wei",
+        last_name="Chang",
+        gender="male",
+        email="chang.parent@email.com",
+        phone_number="5555555555",
+        national_id_number="ID345678",
+        user_id=chang_parent_user.id,
+    )
+    db.add(chang_parent)
+    db.flush()
+
+    chang_school_association = SchoolParentAssociation(
+        school_id=sunrise_academy.id, parent_id=chang_parent.id
+    )
+    db.add(chang_school_association)
+    db.flush()
+
+    chang_student_association = ParentStudentAssociation(
+        parent_id=chang_parent.id,
+        student_id=student_micheal_chang.id,
+        relationship_type="father",
+    )
+    db.add(chang_student_association)
+    db.flush()
     #
     # ---
     #

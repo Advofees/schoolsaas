@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: afe4866bf5af
+Revision ID: fd5ef5d33031
 Revises: 
-Create Date: 2024-12-14 00:50:29.420678
+Create Date: 2024-12-17 15:17:29.735861
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'afe4866bf5af'
+revision: str = 'fd5ef5d33031'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -273,8 +273,9 @@ def upgrade() -> None:
     sa.Column('last_name', sa.String(), nullable=False),
     sa.Column('date_of_birth', sa.DateTime(), nullable=False),
     sa.Column('gender', sa.String(), nullable=False),
-    sa.Column('grade_level', sa.Integer(), nullable=False),
+    sa.Column('grade_level', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('nemis_number', sa.String(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('classroom_id', sa.UUID(), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
@@ -350,6 +351,7 @@ def upgrade() -> None:
     sa.Column('parent_id', sa.UUID(), nullable=False),
     sa.Column('student_id', sa.UUID(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('relationship_type', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['parent_id'], ['school_parents.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
     sa.PrimaryKeyConstraint('parent_id', 'student_id')

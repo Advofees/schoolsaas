@@ -8,6 +8,15 @@ if typing.TYPE_CHECKING:
     from backend.school.school_model import SchoolParent
     from backend.student.student_model import Student
 
+import enum
+
+
+class ParentRelationshipType(enum.Enum):
+    FATHER = "father"
+    MOTHER = "mother"
+    GUARDIAN = "guardian"
+    OTHER = "other"
+
 
 class ParentStudentAssociation(Base):
     __tablename__ = "parent_student_associations"
@@ -25,8 +34,12 @@ class ParentStudentAssociation(Base):
     student: Mapped["Student"] = relationship(
         "Student", back_populates="parent_student_associations"
     )
+    relationship_type: Mapped[str] = mapped_column()
 
-    def __init__(self, parent_id: uuid.UUID, student_id: uuid.UUID):
+    def __init__(
+        self, parent_id: uuid.UUID, student_id: uuid.UUID, relationship_type: str
+    ):
         super().__init__()
         self.parent_id = parent_id
         self.student_id = student_id
+        self.relationship_type = relationship_type

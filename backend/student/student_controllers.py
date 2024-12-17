@@ -5,11 +5,15 @@ from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, StringConstraints, EmailStr
 
-from backend.school.school_model import SchoolParent, SchoolStudentAssociation
+from backend.school.school_model import (
+    SchoolParent,
+    SchoolParentAssociation,
+    SchoolStudentAssociation,
+)
 from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
 from backend.student.student_model import Student
 from backend.classroom.classroom_model import Classroom
-from backend.parent.parent_model import ParentStudentAssociation
+from backend.parent.parent_model import ParentRelationshipType, ParentStudentAssociation
 from backend.database.database import DatabaseDependency
 from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.user.passwords import hash_password
@@ -31,8 +35,10 @@ class CreateStudent(BaseModel):
     email: typing.Annotated[
         EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
     ]
+    username: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
     classroom_id: uuid.UUID
     parent_id: uuid.UUID
+    parent_relationship_type: ParentRelationshipType
 
 
 @router.post("/students/create")
@@ -41,7 +47,6 @@ async def create_student(
     body: CreateStudent,
     auth_context: UserAuthenticationContextDependency,
 ):
-
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
     if not user:
@@ -50,10 +55,22 @@ async def create_student(
             detail="User not authorized",
         )
 
-    parent = db.query(SchoolParent).filter(SchoolParent.id == body.parent_id).first()
+    parent = (
+        db.query(SchoolParent)
+        .join(SchoolParentAssociation)
+        .filter(
+            SchoolParent.id == body.parent_id,
+            SchoolParentAssociation.school_id == user.school_id,
+            SchoolParentAssociation.is_active == True,
+        )
+        .first()
+    )
 
     if not parent:
-        raise HTTPException(status_code=404, detail="Parent  not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Parent not found or not associated with this school",
+        )
 
     classroom = (
         db.query(Classroom)
@@ -64,15 +81,15 @@ async def create_student(
     )
 
     if not classroom:
-        raise HTTPException(status_code=404, detail="classroom-not-found")
+        raise HTTPException(status_code=404, detail="Classroom not found")
 
-    # ---
     new_student_user = User(
         email=body.email,
-        username=body.first_name + body.last_name,
+        username=body.username,
         password_hash=hash_password(body.password),
     )
     db.add(new_student_user)
+    db.flush()
 
     student = Student(
         first_name=body.first_name,
@@ -83,7 +100,6 @@ async def create_student(
         classroom_id=classroom.id,
         user_id=new_student_user.id,
     )
-
     db.add(student)
     db.flush()
 
@@ -92,14 +108,16 @@ async def create_student(
     )
     db.add(student_school_association)
     db.flush()
-    # ---
+
     parent_student_association = ParentStudentAssociation(
-        parent_id=body.parent_id, student_id=student.id
+        parent_id=body.parent_id,
+        student_id=student.id,
+        relationship_type=body.parent_relationship_type.value,
     )
     db.add(parent_student_association)
     db.flush()
 
-    student_role = db.query(Role).filter(Role.name == RoleType.TEACHER.name).first()
+    student_role = db.query(Role).filter(Role.type == RoleType.STUDENT).first()
 
     if not student_role:
         student_role = Role(

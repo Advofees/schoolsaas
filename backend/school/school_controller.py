@@ -6,13 +6,20 @@ from fastapi import APIRouter, HTTPException, status, Query
 from sqlalchemy import func
 from backend.classroom.classroom_model import Classroom
 from backend.database.database import DatabaseDependency
+from backend.parent.parent_model import ParentStudentAssociation
 from backend.payment.payment_model import Payment
 from backend.raise_exception import raise_exception
-from backend.school.school_model import School, SchoolStudentAssociation
+from backend.school.school_model import (
+    School,
+    SchoolStudentAssociation,
+    SchoolParentAssociation,
+    SchoolParent,
+)
 from backend.student.student_model import Student, Gender
 from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.user_models import User, RoleType
+
 from backend.user.user_authentication import UserAuthenticationContextDependency
 import datetime
 import typing
@@ -257,9 +264,10 @@ def teacher_dto(teacher: Teacher) -> dict:
 def dashboard_resources_dto(
     students: list[Student],
     teachers: list[Teacher],
-    total_students_managed: int,
-    total_current_year_students_enrollment: int,
-    total_teachers_managed: int,
+    total_students_managed: int | None,
+    total_current_year_students_enrollment: int | None,
+    total_teachers_managed: int | None,
+    parents_total: int | None,
     payments: PaymentStats,
     current_year: int,
     attendance_metrics: AttendanceMetrics,
@@ -270,6 +278,7 @@ def dashboard_resources_dto(
         "students_total": total_students_managed,
         "current_year_students_enrollment_total": total_current_year_students_enrollment,
         "teachers_total": total_teachers_managed,
+        "parents_total": parents_total,
         "attendance": attendance_metrics,
         "payments": payments,
         "teachers": [teacher_dto(teacher) for teacher in teachers],
@@ -319,6 +328,12 @@ async def get_all_students(
             db.query(func.count(Student.id))
             .join(SchoolStudentAssociation)
             .filter(SchoolStudentAssociation.school_id == school_id)
+            .scalar()
+        )
+        total_parents = (
+            db.query(func.count(SchoolParent.id))
+            .join(SchoolParentAssociation)
+            .filter(SchoolParentAssociation.school_id == school_id)
             .scalar()
         )
         total_teachers_managed = (
@@ -417,6 +432,14 @@ async def get_all_students(
             .filter(ClassTeacherAssociation.classroom_id == classroom.id)
             .scalar()
         )
+
+        total_parents = (
+            db.query(func.count(SchoolParent.id))
+            .join(ParentStudentAssociation)
+            .join(Student)
+            .filter(Student.classroom_id == classroom.id)
+            .scalar()
+        )
         teachers = (
             db.query(Teacher)
             .join(ClassTeacherAssociation)
@@ -445,6 +468,7 @@ async def get_all_students(
         attendance_metrics=attendance_metrics,
         teachers=teachers,
         total_teachers_managed=total_teachers_managed,
+        parents_total=total_parents,
     )
 
 
