@@ -1,11 +1,11 @@
 ```bash
 
-FRONTEND_URL="http://localhost:5173"
+FRONTEND_URL="http://localhost:3000"
 GIT_COMMIT_SHA="shooooo"
 SECRET_STRING="secret-string"
 JWT_SECRET_KEY="jwt-secret-key"
 
-DATABASE_HOST="localhost:5433"
+DATABASE_HOST="localhost:5432"
 DATABASE_NAME="postgres"
 DATABASE_USER="postgres"
 DATABASE_PASSWORD="postgres"
@@ -23,7 +23,6 @@ S3_LOCAL_ENDPOINT_URL="http://localhost:9000"
 
 ENVIRONMENT="development"
 BUCKET_NAME="main"
-
 ```
 
 

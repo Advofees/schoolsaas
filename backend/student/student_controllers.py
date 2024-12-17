@@ -153,12 +153,34 @@ async def get_student(
             detail="User not authorized",
         )
 
-    student = db.query(Student).filter(Student.id == student_id).first()
+    if not (
+        user.has_role_type(RoleType.SUPER_ADMIN)
+        or user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+    ):
 
+        raise HTTPException(status_code=403, detail="permission-denied")
+
+    student = (
+        db.query(Student)
+        .join(SchoolStudentAssociation)
+        .filter(
+            Student.id == student_id,
+            SchoolStudentAssociation.school_id == user.school_id,
+            SchoolStudentAssociation.is_active == True,
+        )
+        .first()
+    )
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    return student
+    return {
+        "id": student.id,
+        "nemis_number": student.nemis_number,
+        "email": student.user.email,
+        "user_id": student.user_id,
+        "profile_url": student.user.profile.file.path,
+    }
 
 
 @router.get("/students/{student_id}/parents")
