@@ -61,6 +61,16 @@ def get_payments(
     return payments
 
 
+@router.get("/payment/payment-id/{payment_id}")
+def get_payment_by_id():
+    pass
+
+
+@router.get("/payment/student-id/{student_id}")
+def get_payment_by_student_id():
+    pass
+
+
 def apply_sort(
     query: SQLQUERY[Payment], sort_by: str, sort_order: str
 ) -> SQLQUERY[Payment]:
@@ -114,14 +124,4 @@ def update_payment():
 
 @router.delete("/payment/delete/{payment_id}")
 def delete_payment():
-    pass
-
-
-@router.get("/payment/payment-id/{payment_id}")
-def get_payment_by_id():
-    pass
-
-
-@router.get("/payment/student-id/{student_id}")
-def get_payment_by_student_id():
     pass

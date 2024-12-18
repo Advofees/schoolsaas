@@ -21,124 +21,6 @@ from backend.user.passwords import hash_password
 router = APIRouter()
 
 
-class CreateStudent(BaseModel):
-    first_name: typing.Annotated[
-        str, StringConstraints(strip_whitespace=True, min_length=1)
-    ]
-    last_name: typing.Annotated[
-        str, StringConstraints(strip_whitespace=True, min_length=1)
-    ]
-    date_of_birth: datetime.datetime
-    gender: str
-    grade_level: int
-    password: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
-    email: typing.Annotated[
-        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
-    ]
-    username: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
-    classroom_id: uuid.UUID
-    parent_id: uuid.UUID
-    parent_relationship_type: ParentRelationshipType
-
-
-@router.post("/students/create")
-async def create_student(
-    db: DatabaseDependency,
-    body: CreateStudent,
-    auth_context: UserAuthenticationContextDependency,
-):
-    user = db.query(User).filter(User.id == auth_context.user_id).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized",
-        )
-
-    parent = (
-        db.query(SchoolParent)
-        .join(SchoolParentAssociation)
-        .filter(
-            SchoolParent.id == body.parent_id,
-            SchoolParentAssociation.school_id == user.school_id,
-            SchoolParentAssociation.is_active == True,
-        )
-        .first()
-    )
-
-    if not parent:
-        raise HTTPException(
-            status_code=404,
-            detail="Parent not found or not associated with this school",
-        )
-
-    classroom = (
-        db.query(Classroom)
-        .filter(
-            Classroom.id == body.classroom_id, Classroom.school_id == user.school_id
-        )
-        .first()
-    )
-
-    if not classroom:
-        raise HTTPException(status_code=404, detail="Classroom not found")
-
-    new_student_user = User(
-        email=body.email,
-        username=body.username,
-        password_hash=hash_password(body.password),
-    )
-    db.add(new_student_user)
-    db.flush()
-
-    student = Student(
-        first_name=body.first_name,
-        last_name=body.last_name,
-        date_of_birth=body.date_of_birth,
-        gender=body.gender,
-        grade_level=body.grade_level,
-        classroom_id=classroom.id,
-        user_id=new_student_user.id,
-    )
-    db.add(student)
-    db.flush()
-
-    student_school_association = SchoolStudentAssociation(
-        student_id=student.id, school_id=classroom.school_id
-    )
-    db.add(student_school_association)
-    db.flush()
-
-    parent_student_association = ParentStudentAssociation(
-        parent_id=body.parent_id,
-        student_id=student.id,
-        relationship_type=body.parent_relationship_type.value,
-    )
-    db.add(parent_student_association)
-    db.flush()
-
-    student_role = db.query(Role).filter(Role.type == RoleType.STUDENT).first()
-
-    if not student_role:
-        student_role = Role(
-            name=RoleType.STUDENT.name,
-            type=RoleType.STUDENT,
-            description=RoleType.STUDENT.value,
-        )
-        db.add(student_role)
-        db.flush()
-
-    student_role_association = UserRoleAssociation(
-        user_id=new_student_user.id, role_id=student_role.id
-    )
-    db.add(student_role_association)
-    db.flush()
-
-    db.commit()
-
-    return {"message": "student-registered-successfully"}
-
-
 @router.get("/students/{student_id}")
 async def get_student(
     db: DatabaseDependency,
@@ -284,3 +166,121 @@ async def get_all_students_for_a_particular_school(
     )
 
     return students
+
+
+class CreateStudent(BaseModel):
+    first_name: typing.Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1)
+    ]
+    last_name: typing.Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1)
+    ]
+    date_of_birth: datetime.datetime
+    gender: str
+    grade_level: int
+    password: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
+    email: typing.Annotated[
+        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
+    ]
+    username: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
+    classroom_id: uuid.UUID
+    parent_id: uuid.UUID
+    parent_relationship_type: ParentRelationshipType
+
+
+@router.post("/students/create")
+async def create_student(
+    db: DatabaseDependency,
+    body: CreateStudent,
+    auth_context: UserAuthenticationContextDependency,
+):
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
+
+    parent = (
+        db.query(SchoolParent)
+        .join(SchoolParentAssociation)
+        .filter(
+            SchoolParent.id == body.parent_id,
+            SchoolParentAssociation.school_id == user.school_id,
+            SchoolParentAssociation.is_active == True,
+        )
+        .first()
+    )
+
+    if not parent:
+        raise HTTPException(
+            status_code=404,
+            detail="Parent not found or not associated with this school",
+        )
+
+    classroom = (
+        db.query(Classroom)
+        .filter(
+            Classroom.id == body.classroom_id, Classroom.school_id == user.school_id
+        )
+        .first()
+    )
+
+    if not classroom:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+
+    new_student_user = User(
+        email=body.email,
+        username=body.username,
+        password_hash=hash_password(body.password),
+    )
+    db.add(new_student_user)
+    db.flush()
+
+    student = Student(
+        first_name=body.first_name,
+        last_name=body.last_name,
+        date_of_birth=body.date_of_birth,
+        gender=body.gender,
+        grade_level=body.grade_level,
+        classroom_id=classroom.id,
+        user_id=new_student_user.id,
+    )
+    db.add(student)
+    db.flush()
+
+    student_school_association = SchoolStudentAssociation(
+        student_id=student.id, school_id=classroom.school_id
+    )
+    db.add(student_school_association)
+    db.flush()
+
+    parent_student_association = ParentStudentAssociation(
+        parent_id=body.parent_id,
+        student_id=student.id,
+        relationship_type=body.parent_relationship_type.value,
+    )
+    db.add(parent_student_association)
+    db.flush()
+
+    student_role = db.query(Role).filter(Role.type == RoleType.STUDENT).first()
+
+    if not student_role:
+        student_role = Role(
+            name=RoleType.STUDENT.name,
+            type=RoleType.STUDENT,
+            description=RoleType.STUDENT.value,
+        )
+        db.add(student_role)
+        db.flush()
+
+    student_role_association = UserRoleAssociation(
+        user_id=new_student_user.id, role_id=student_role.id
+    )
+    db.add(student_role_association)
+    db.flush()
+
+    db.commit()
+
+    return {"message": "student-registered-successfully"}

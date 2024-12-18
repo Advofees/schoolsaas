@@ -12,6 +12,26 @@ from backend.user.user_authentication import UserAuthenticationContextDependency
 router = APIRouter()
 
 
+@router.get("/parent/list", status_code=status.HTTP_200_OK)
+async def get_parent(
+    auth_context: UserAuthenticationContextDependency,
+    db: DatabaseDependency,
+    limit: int = Query(10, ge=1),
+    offset: int = Query(0, ge=0),
+):
+
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
+
+    parents = db.query(SchoolParent).offset(offset).limit(limit).all()
+
+    return parents
+
+
 class CreateParent(BaseModel):
     first_name: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
     last_name: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
@@ -67,26 +87,6 @@ async def create_parent(
     return {
         "message": "School Parent created successfully",
     }
-
-
-@router.get("/parent/list", status_code=status.HTTP_200_OK)
-async def get_parent(
-    auth_context: UserAuthenticationContextDependency,
-    db: DatabaseDependency,
-    limit: int = Query(10, ge=1),
-    offset: int = Query(0, ge=0),
-):
-
-    user = db.query(User).filter(User.id == auth_context.user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized",
-        )
-
-    parents = db.query(SchoolParent).offset(offset).limit(limit).all()
-
-    return parents
 
 
 class UpdateParent(BaseModel):

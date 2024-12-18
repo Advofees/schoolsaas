@@ -35,6 +35,52 @@ FRONTEND_URL = os.environ["FRONTEND_URL"]
 router = APIRouter()
 
 
+@router.get("/auth/user/session", status_code=status.HTTP_200_OK)
+def get_user_session(
+    db: DatabaseDependency,
+    auth_context: UserAuthenticationContextDependency,
+):
+
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
+
+    if not user.roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
+        )
+
+    school_id = user.school_id or raise_exception()
+
+    school = db.query(School).filter(School.id == school_id).first()
+
+    if not school:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    profile_url = None
+    if user.profile and user.profile.id:
+        profile_url = get_profile_url(db=db, profile_id=user.profile.id)
+
+    return {
+        "user_id": auth_context.user_id,
+        "name": user.name,
+        "email": user.email,
+        "profile_url": profile_url if profile_url else None,
+        "school": {
+            "id": school.id,
+            "name": school.name,
+            "number": school.school_number,
+            "address": school.address,
+        },
+        "roles": user.roles,
+        "permissions": user.all_permissions,
+    }
+
+
 def get_profile_url(
     profile_id: uuid.UUID,
     db: Session,
@@ -222,52 +268,6 @@ def logout_all(
     db.query(UserSession).filter(
         UserSession.user_id == user_id,
     ).delete()
-
-
-@router.get("/auth/user/session", status_code=status.HTTP_200_OK)
-def get_user_session(
-    db: DatabaseDependency,
-    auth_context: UserAuthenticationContextDependency,
-):
-
-    user = db.query(User).filter(User.id == auth_context.user_id).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized",
-        )
-
-    if not user.roles:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
-        )
-
-    school_id = user.school_id or raise_exception()
-
-    school = db.query(School).filter(School.id == school_id).first()
-
-    if not school:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    profile_url = None
-    if user.profile and user.profile.id:
-        profile_url = get_profile_url(db=db, profile_id=user.profile.id)
-
-    return {
-        "user_id": auth_context.user_id,
-        "name": user.name,
-        "email": user.email,
-        "profile_url": profile_url if profile_url else None,
-        "school": {
-            "id": school.id,
-            "name": school.name,
-            "number": school.school_number,
-            "address": school.address,
-        },
-        "roles": user.roles,
-        "permissions": user.all_permissions,
-    }
 
 
 class SetPasswordRequestBody(BaseModel):

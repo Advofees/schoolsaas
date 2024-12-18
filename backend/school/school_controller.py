@@ -496,6 +496,28 @@ def get_school(
     return schools
 
 
+@router.get("/school/{school_id}")
+def get_school_by_id(
+    db: DatabaseDependency,
+    school_id: int,
+    auth_context: UserAuthenticationContextDependency,
+):
+
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
+
+    school = db.query(School).filter(School.id == school_id).first()
+    if not school:
+        raise HTTPException(status_code=404, detail="school-not-found")
+
+    return school
+
+
 class UpdateSchool(BaseModel):
     name: typing.Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     location: str
@@ -531,25 +553,3 @@ def update_school(
 
     db.commit()
     return {}
-
-
-@router.get("/school/{school_id}/delete", status_code=status.HTTP_200_OK)
-def get_school_by_id(
-    db: DatabaseDependency,
-    school_id: int,
-    auth_context: UserAuthenticationContextDependency,
-):
-
-    user = db.query(User).filter(User.id == auth_context.user_id).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized",
-        )
-
-    school = db.query(School).filter(School.id == school_id).first()
-    if not school:
-        raise HTTPException(status_code=404, detail="school-not-found")
-
-    return school
