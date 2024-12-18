@@ -13,6 +13,19 @@ from backend.user.user_authentication import UserAuthenticationContextDependency
 router = APIRouter()
 
 
+def to_teacher_dto(teacher: Teacher) -> dict:
+    return {
+        "id": teacher.id,
+        "first_name": teacher.first_name,
+        "last_name": teacher.last_name,
+        "email": teacher.email,
+        "phone_number": teacher.phone_number,
+        "user_id": teacher.user_id,
+        "created_at": teacher.created_at,
+        "updated_at": teacher.updated_at,
+    }
+
+
 @router.get("/teachers/list")
 async def get_teachers_in_a_particular_school(
     db: DatabaseDependency,
@@ -42,7 +55,7 @@ async def get_teachers_in_a_particular_school(
         .all()
     )
 
-    return teachers
+    return [to_teacher_dto(teacher) for teacher in teachers]
 
 
 @router.get("/teachers/{teacher_id}")
@@ -56,6 +69,15 @@ async def get_teacher_in_particular_school_by_teacher_id(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
+        )
+    if not (
+        user.has_role_type(RoleType.SUPER_ADMIN)
+        or user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+    ):
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
 
     teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()

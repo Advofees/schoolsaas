@@ -159,7 +159,9 @@ async def get_student(
         or user.has_role_type(RoleType.TEACHER)
     ):
 
-        raise HTTPException(status_code=403, detail="permission-denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
+        )
 
     student = (
         db.query(Student)
@@ -172,14 +174,15 @@ async def get_student(
         .first()
     )
     if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
+        )
 
     return {
         "id": student.id,
         "nemis_number": student.nemis_number,
         "email": student.user.email,
         "user_id": student.user_id,
-        "profile_url": student.user.profile.file.path,
     }
 
 
