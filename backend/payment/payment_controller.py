@@ -185,9 +185,7 @@ def search_payments(
             "direction": payment.direction,
             "category": payment.category,
             "description": payment.description,
-            "payee": (
-                to_user_dto(payment.related_user) if payment.related_user else None
-            ),
+            "payee": (to_user_dto(payment.payee) if payment.payee else None),
             "payment_recorder": (
                 to_user_dto(payment.recorded_by) if payment.recorded_by else None
             ),

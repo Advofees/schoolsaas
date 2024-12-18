@@ -80,7 +80,7 @@ class Payment(Base):
     )
 
     @property
-    def related_user(self):
+    def payee(self):
         association = next(
             (
                 assoc
@@ -115,7 +115,7 @@ class Payment(Base):
         recorded_by_id: uuid.UUID,
         reference_number: str,
         description: str,
-        payment_is_for_or_from_user_id: uuid.UUID,
+        payee: uuid.UUID,
     ):
         super().__init__()
         self.amount = amount
@@ -128,7 +128,7 @@ class Payment(Base):
         self.recorded_by_id = recorded_by_id
         self.reference_number = reference_number
         self.description = description
-        self.payment_is_for_or_from_user_id = payment_is_for_or_from_user_id
+        self.payment_is_for_or_from_user_id = payee
 
 
 class PaymentUserAssociation(Base):

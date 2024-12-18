@@ -841,7 +841,7 @@ with get_db() as db:
             recorded_by_id=school_admin_user.id,
             reference_number=f"T1FEE-{uuid.uuid4().hex[:6]}",
             description=f"Term 1 2024 Tuition Fee - {student.first_name} {student.last_name}",
-            payment_is_for_or_from_user_id=student.user_id,
+            payee=student.user_id,
         )
         db.add(term1_payment)
         db.flush()
@@ -870,7 +870,7 @@ with get_db() as db:
             recorded_by_id=school_admin_user.id,
             reference_number=f"T2FEE-{uuid.uuid4().hex[:6]}",
             description=f"Term 2 2024 Tuition Fee - {student.first_name} {student.last_name}",
-            payment_is_for_or_from_user_id=student.user_id,
+            payee=student.user_id,
         )
         db.add(term2_payment)
         db.flush()
@@ -903,7 +903,7 @@ with get_db() as db:
             recorded_by_id=school_admin_user.id,
             reference_number=f"SAL-JAN-{uuid.uuid4().hex[:6]}",
             description=f"January 2024 Salary - {teacher.first_name} {teacher.last_name}",
-            payment_is_for_or_from_user_id=teacher.user_id,
+            payee=teacher.user_id,
         )
         db.add(jan_salary)
         db.flush()
