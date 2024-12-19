@@ -499,7 +499,7 @@ def get_school(
 @router.get("/school/{school_id}")
 def get_school_by_id(
     db: DatabaseDependency,
-    school_id: int,
+    school_id: uuid.UUID,
     auth_context: UserAuthenticationContextDependency,
 ):
 
@@ -509,6 +509,17 @@ def get_school_by_id(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
+        )
+
+    if not (
+        user.has_role_type(RoleType.SUPER_ADMIN)
+        or user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+        or user.has_role_type(RoleType.SUPER_ADMIN)
+    ):
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
 
     school = db.query(School).filter(School.id == school_id).first()
@@ -552,4 +563,4 @@ def update_school(
     school.name = body.name
 
     db.commit()
-    return {}
+    return {"message": "updated-successfully"}

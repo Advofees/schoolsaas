@@ -37,6 +37,7 @@ async def get_student(
 
     if not (
         user.has_role_type(RoleType.SUPER_ADMIN)
+        or user.has_role_type(RoleType.SCHOOL_ADMIN)
         or user.has_role_type(RoleType.CLASS_TEACHER)
         or user.has_role_type(RoleType.TEACHER)
     ):
@@ -68,36 +69,6 @@ async def get_student(
     }
 
 
-@router.get("/students/{student_id}/parents")
-async def get_student_parents(
-    db: DatabaseDependency,
-    student_id: uuid.UUID,
-    auth_context: UserAuthenticationContextDependency,
-):
-
-    user = db.query(User).filter(User.id == auth_context.user_id).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized",
-        )
-
-    student = db.query(Student).filter(Student.id == student_id).first()
-
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-
-    parents = (
-        db.query(SchoolParent)
-        .join(ParentStudentAssociation)
-        .filter(ParentStudentAssociation.student_id == student_id)
-        .all()
-    )
-
-    return parents
-
-
 @router.get("/students/{classroom_id}")
 async def get_students_in_classroom(
     db: DatabaseDependency,
@@ -112,6 +83,16 @@ async def get_students_in_classroom(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
+        )
+    if not (
+        user.has_role_type(RoleType.SUPER_ADMIN)
+        or user.has_role_type(RoleType.SCHOOL_ADMIN)
+        or user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+    ):
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
 
     classroom = (
@@ -168,7 +149,7 @@ async def get_all_students_for_a_particular_school(
     return students
 
 
-class CreateStudent(BaseModel):
+class createStudent(BaseModel):
     first_name: typing.Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1)
     ]
@@ -191,7 +172,7 @@ class CreateStudent(BaseModel):
 @router.post("/students/create")
 async def create_student(
     db: DatabaseDependency,
-    body: CreateStudent,
+    body: createStudent,
     auth_context: UserAuthenticationContextDependency,
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
