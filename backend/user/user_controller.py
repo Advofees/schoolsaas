@@ -121,13 +121,13 @@ def register(
     body: RegisterRequestBody,
     db: DatabaseDependency,
 ):
-    school_user = (
+    user = (
         db.query(User)
         .filter((User.email == body.email) | (User.username == body.username))
         .first()
     )
 
-    if school_user:
+    if user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="school-with-email-or-username-already-exists",
@@ -156,13 +156,18 @@ def register(
     db.flush()
 
     school_admin_role = (
-        db.query(Role).filter(Role.name == RoleType.SCHOOL_ADMIN.name).first()
+        db.query(Role)
+        .filter(
+            Role.name == RoleType.SCHOOL_ADMIN.name, Role.school_id == new_school.id
+        )
+        .first()
     )
     if not school_admin_role:
         school_admin_role = Role(
             name=RoleType.SCHOOL_ADMIN.name,
             type=RoleType.SCHOOL_ADMIN,
             description=RoleType.SCHOOL_ADMIN.value,
+            school_id=new_school.id,
         )
 
         db.add(school_admin_role)

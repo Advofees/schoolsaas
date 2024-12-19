@@ -245,13 +245,18 @@ async def create_student(
     db.add(parent_student_association)
     db.flush()
 
-    student_role = db.query(Role).filter(Role.type == RoleType.STUDENT).first()
+    student_role = (
+        db.query(Role)
+        .filter(Role.type == RoleType.STUDENT, Role.school_id == classroom.school_id)
+        .first()
+    )
 
     if not student_role:
         student_role = Role(
             name=RoleType.STUDENT.name,
             type=RoleType.STUDENT,
             description=RoleType.STUDENT.value,
+            school_id=classroom.school_id,
         )
         db.add(student_role)
         db.flush()

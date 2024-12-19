@@ -146,11 +146,29 @@ def create_tumaini_school(db: Session):
     db.add(school_management_permission)
     db.flush()
 
+    school_admin_user = User(
+        username="principal.makena",
+        email="principal.makena@tumaini.edu.ke",
+        password_hash=hash_password("password123"),
+    )
+    db.add(school_admin_user)
+    db.flush()
+
+    tumaini_academy = School(
+        name="Tumaini Academy",
+        address="Thika Road, Juja",
+        country="Kenya",
+        school_number=str(faker.random_number(digits=6, fix_len=True)),
+        user_id=school_admin_user.id,
+    )
+    db.add(tumaini_academy)
+    db.flush()
     # Create School Admin Role
     school_admin_role = Role(
         name="SchoolRole",
         type=RoleType.SCHOOL_ADMIN,
         description="School Administrator Role",
+        school_id=tumaini_academy.id,
     )
     db.add(school_admin_role)
     db.flush()
@@ -161,26 +179,9 @@ def create_tumaini_school(db: Session):
     db.add(school_role_permission_assoc)
     db.flush()
 
-    school_admin_user = User(
-        username="principal.makena",
-        email="principal.makena@tumaini.edu.ke",
-        password_hash=hash_password("password123"),
-    )
-    db.add(school_admin_user)
-    db.flush()
-
     school_profile = create_simple_profile(
         file_path="dev/profiles/school.png", user_id=school_admin_user.id, db=db
     )
-    tumaini_academy = School(
-        name="Tumaini Academy",
-        address="Thika Road, Juja",
-        country="Kenya",
-        school_number=str(faker.random_number(digits=6, fix_len=True)),
-        user_id=school_admin_user.id,
-    )
-    db.add(tumaini_academy)
-    db.flush()
 
     school_user_permission_association = UserPermissionAssociation(
         user_id=school_admin_user.id,
@@ -270,7 +271,10 @@ def create_tumaini_school(db: Session):
     db.flush()
 
     teacher_role = Role(
-        name="TeacherRole", type=RoleType.CLASS_TEACHER, description="Teacher Role"
+        name="TeacherRole",
+        type=RoleType.CLASS_TEACHER,
+        description="Teacher Role",
+        school_id=tumaini_academy.id,
     )
     db.add(teacher_role)
     db.flush()
@@ -350,7 +354,10 @@ def create_tumaini_school(db: Session):
 
     # Create Student Role
     student_role = Role(
-        name="StudentRole", type=RoleType.STUDENT, description="Student Role"
+        name="StudentRole",
+        type=RoleType.STUDENT,
+        description="Student Role",
+        school_id=tumaini_academy.id,
     )
     db.add(student_role)
     db.flush()
@@ -541,6 +548,7 @@ def create_tumaini_school(db: Session):
         name=RoleType.PARENT.name,
         type=RoleType.PARENT,
         description=RoleType.PARENT.value,
+        school_id=tumaini_academy.id,
     )
     db.add(parent_role)
     db.flush()

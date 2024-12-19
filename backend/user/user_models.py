@@ -195,12 +195,17 @@ class Role(Base):
     school: Mapped["School"] = relationship("School", back_populates="roles")
 
     def __init__(
-        self, name: str, type: RoleType, description: typing.Optional[str] = None
+        self,
+        name: str,
+        type: RoleType,
+        school_id: uuid.UUID,
+        description: typing.Optional[str],
     ):
         super().__init__()
         self.name = name
         self.description = description
         self.type = type.value
+        self.school_id = school_id
 
 
 class User(Base):

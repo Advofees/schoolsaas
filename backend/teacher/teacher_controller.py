@@ -151,7 +151,7 @@ async def create_teacher_in_particular_school(
 
     if not user.school_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="user-be-in-a-school"
+            status_code=status.HTTP_403_FORBIDDEN, detail="user-must-be-in-a-school"
         )
 
     user_with_email = db.query(User).filter(User.email == body.email).first()
@@ -176,13 +176,15 @@ async def create_teacher_in_particular_school(
             name=RoleType.TEACHER.name,
             type=RoleType.TEACHER,
             description=RoleType.TEACHER.value,
+            school_id=user.school_id,
         )
         db.add(teacher_role)
         db.flush()
+
     teacher_role_association = UserRoleAssociation(
         user_id=new_teacher_user.id,
         role_id=teacher_role.id,
-        school_id=new_teacher_user.school_id,
+        school_id=user.school_id,
     )
     db.add(teacher_role_association)
     db.flush()
