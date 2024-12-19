@@ -257,7 +257,9 @@ async def create_student(
         db.flush()
 
     student_role_association = UserRoleAssociation(
-        user_id=new_student_user.id, role_id=student_role.id
+        user_id=new_student_user.id,
+        role_id=student_role.id,
+        school_id=classroom.school_id,
     )
     db.add(student_role_association)
     db.flush()

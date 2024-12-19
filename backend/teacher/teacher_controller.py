@@ -179,9 +179,10 @@ async def create_teacher_in_particular_school(
         )
         db.add(teacher_role)
         db.flush()
-
     teacher_role_association = UserRoleAssociation(
-        user_id=new_teacher_user.id, role_id=teacher_role.id
+        user_id=new_teacher_user.id,
+        role_id=teacher_role.id,
+        school_id=new_teacher_user.school_id,
     )
     db.add(teacher_role_association)
     db.flush()

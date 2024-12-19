@@ -98,7 +98,9 @@ def create_permission(
     db.flush()
 
     association = UserPermissionAssociation(
-        user_id=associated_user.id, user_permission_id=new_permission.id
+        user_id=associated_user.id,
+        user_permission_id=new_permission.id,
+        school_id=user.school_id,
     )
     db.add(association)
     db.flush()

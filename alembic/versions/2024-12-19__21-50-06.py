@@ -1,8 +1,8 @@
 """generated
 
-Revision ID: fd5ef5d33031
+Revision ID: 1a083bf44e60
 Revises: 
-Create Date: 2024-12-17 15:17:29.735861
+Create Date: 2024-12-19 21:50:06.859506
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'fd5ef5d33031'
+revision: str = '1a083bf44e60'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,14 +23,6 @@ def upgrade() -> None:
     op.create_table('modules',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('description', sa.String(), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
-    )
-    op.create_table('roles',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('type', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
@@ -66,15 +58,6 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('role_permission_associations',
-    sa.Column('role_id', sa.UUID(), nullable=False),
-    sa.Column('user_permission_id', sa.UUID(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
-    sa.ForeignKeyConstraint(['user_permission_id'], ['user_permissions.id'], ),
-    sa.PrimaryKeyConstraint('role_id', 'user_permission_id')
-    )
     op.create_table('school_parents',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('first_name', sa.String(), nullable=False),
@@ -107,23 +90,6 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('school_number')
-    )
-    op.create_table('user_permission_associations',
-    sa.Column('user_id', sa.UUID(), nullable=False),
-    sa.Column('user_permission_id', sa.UUID(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['user_permission_id'], ['user_permissions.id'], ),
-    sa.PrimaryKeyConstraint('user_id', 'user_permission_id')
-    )
-    op.create_table('user_role_associations',
-    sa.Column('user_id', sa.UUID(), nullable=False),
-    sa.Column('role_id', sa.UUID(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('user_id', 'role_id')
     )
     op.create_table('user_sessions',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -190,6 +156,16 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('roles',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('type', sa.String(), nullable=False),
+    sa.Column('description', sa.String(), nullable=True),
+    sa.Column('school_id', sa.UUID(), nullable=True),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
+    )
     op.create_table('school_parent_associations',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('school_id', sa.UUID(), nullable=False),
@@ -213,6 +189,17 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
+    )
+    op.create_table('user_permission_associations',
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('user_permission_id', sa.UUID(), nullable=False),
+    sa.Column('school_id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['user_permission_id'], ['user_permissions.id'], ),
+    sa.PrimaryKeyConstraint('user_id', 'user_permission_id')
     )
     op.create_table('calendar_events',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -267,6 +254,15 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('payment_id', 'user_id')
     )
+    op.create_table('role_permission_associations',
+    sa.Column('role_id', sa.UUID(), nullable=False),
+    sa.Column('user_permission_id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
+    sa.ForeignKeyConstraint(['user_permission_id'], ['user_permissions.id'], ),
+    sa.PrimaryKeyConstraint('role_id', 'user_permission_id')
+    )
     op.create_table('students',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('first_name', sa.String(), nullable=False),
@@ -306,6 +302,16 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['academic_term_id'], ['academic_terms.id'], ),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user_role_associations',
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('role_id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('school_id', sa.UUID(), nullable=True),
+    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('user_id', 'role_id')
     )
     op.create_table('attendances',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -392,30 +398,30 @@ def downgrade() -> None:
     op.drop_table('module_enrollments')
     op.drop_table('exam_results')
     op.drop_table('attendances')
+    op.drop_table('user_role_associations')
     op.drop_table('timetables')
     op.drop_table('teacher_module_association')
     op.drop_index('ix_students_search_vector', table_name='students', postgresql_using='gin')
     op.drop_table('students')
+    op.drop_table('role_permission_associations')
     op.drop_table('payment_user_associations')
     op.drop_table('exams')
     op.drop_table('class_teacher_associations')
     op.drop_table('calendar_events')
+    op.drop_table('user_permission_associations')
     op.drop_table('teachers')
     op.drop_table('school_parent_associations')
+    op.drop_table('roles')
     op.drop_table('profiles')
     op.drop_table('payments')
     op.drop_table('inventories')
     op.drop_table('classrooms')
     op.drop_table('academic_terms')
     op.drop_table('user_sessions')
-    op.drop_table('user_role_associations')
-    op.drop_table('user_permission_associations')
     op.drop_table('schools')
     op.drop_table('school_parents')
-    op.drop_table('role_permission_associations')
     op.drop_table('files')
     op.drop_table('users')
     op.drop_table('user_permissions')
-    op.drop_table('roles')
     op.drop_table('modules')
     # ### end Alembic commands ###

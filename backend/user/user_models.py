@@ -79,6 +79,10 @@ class UserPermissionAssociation(Base):
     user_permission_id: Mapped[uuid.UUID] = mapped_column(
         UUID, ForeignKey("user_permissions.id"), primary_key=True
     )
+    school_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("schools.id"), nullable=False
+    )
+    school: Mapped["School"] = relationship("School")
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )
@@ -86,10 +90,13 @@ class UserPermissionAssociation(Base):
         DateTime, onupdate=func.now(), nullable=True
     )
 
-    def __init__(self, user_id: uuid.UUID, user_permission_id: uuid.UUID):
+    def __init__(
+        self, user_id: uuid.UUID, user_permission_id: uuid.UUID, school_id: uuid.UUID
+    ):
         super().__init__()
         self.user_id = user_id
         self.user_permission_id = user_permission_id
+        self.school_id = school_id
 
 
 class RolePermissionAssociation(Base):
@@ -148,11 +155,16 @@ class UserRoleAssociation(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )
+    school: Mapped["School"] = relationship("School")
+    school_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("schools.id"), nullable=True
+    )
 
-    def __init__(self, user_id: uuid.UUID, role_id: uuid.UUID):
+    def __init__(self, user_id: uuid.UUID, role_id: uuid.UUID, school_id: uuid.UUID):
         super().__init__()
         self.user_id = user_id
         self.role_id = role_id
+        self.school_id = school_id
 
 
 class Role(Base):
@@ -176,6 +188,11 @@ class Role(Base):
         back_populates="roles",
         viewonly=True,
     )
+    school_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("schools.id"), nullable=True
+    )
+
+    school: Mapped["School"] = relationship("School", back_populates="roles")
 
     def __init__(
         self, name: str, type: RoleType, description: typing.Optional[str] = None

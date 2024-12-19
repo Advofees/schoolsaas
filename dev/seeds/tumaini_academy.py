@@ -9,9 +9,7 @@ from backend.database.all_models import get_all_models
 
 get_all_models()
 import datetime
-from sqlalchemy import MetaData, create_engine
-from alembic import command
-from alembic.config import Config
+
 import mimetypes
 import os
 import random
@@ -48,8 +46,7 @@ from backend.exam.exam_model import Exam
 from backend.exam.exam_results.exam_result_model import ExamResult
 from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.passwords import hash_password
-from backend.database.database import get_db
-from backend.database.database import DATABASE_URL
+
 from backend.payment.payment_model import (
     PaymentUserAssociation,
     Payment,
@@ -60,20 +57,7 @@ from backend.payment.payment_model import (
     PaymentUserType,
 )
 
-engine = create_engine(DATABASE_URL)
-metadata = MetaData()
-metadata.reflect(engine)
 faker = Faker()
-
-with engine.begin() as connection:
-    for table in reversed(metadata.sorted_tables):
-        if table.name == "alembic_version":
-            continue
-        connection.execute(table.delete())
-
-engine.dispose()
-alembic_cfg = Config("alembic.ini")
-command.upgrade(alembic_cfg, "head")
 
 
 def create_simple_profile(file_path: str, user_id: uuid.UUID, db: Session):
@@ -143,7 +127,8 @@ def create_simple_profile(file_path: str, user_id: uuid.UUID, db: Session):
     return profile
 
 
-with get_db() as db:
+def create_tumaini_school(db: Session):
+
     # School Admin Permissions
     school_management_permission_definition = PERMISSIONS(
         school_permissions=SchoolPermissions(
@@ -177,36 +162,30 @@ with get_db() as db:
     db.flush()
 
     school_admin_user = User(
-        username="school@app.com",
-        email="school@app.com",
+        username="principal.makena",
+        email="principal.makena@tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
     db.add(school_admin_user)
     db.flush()
-    #
-    #
-    #
 
     school_profile = create_simple_profile(
         file_path="dev/profiles/school.png", user_id=school_admin_user.id, db=db
     )
-    #
-    #
-    #
-    sunrise_academy = School(
-        name="Sunrise Academy",
-        address="123 Education Lane, Learning District",
+    tumaini_academy = School(
+        name="Tumaini Academy",
+        address="Thika Road, Juja",
         country="Kenya",
         school_number=str(faker.random_number(digits=6, fix_len=True)),
         user_id=school_admin_user.id,
     )
-    db.add(sunrise_academy)
+    db.add(tumaini_academy)
     db.flush()
 
     school_user_permission_association = UserPermissionAssociation(
         user_id=school_admin_user.id,
         user_permission_id=school_management_permission.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
     db.add(school_user_permission_association)
     db.flush()
@@ -214,51 +193,50 @@ with get_db() as db:
     school_user_role_association = UserRoleAssociation(
         user_id=school_admin_user.id,
         role_id=school_admin_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
     db.add(school_user_role_association)
     db.flush()
 
-    grade_1_mathematics_classroom = Classroom(
-        name="Grade 1 Mathematics Focus",
+    grade_1_classroom = Classroom(
+        name="Grade 1 Simba",  # Simba means Lion in Swahili
         grade_level=1,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(grade_1_mathematics_classroom)
+    db.add(grade_1_classroom)
     db.flush()
 
-    grade_2_science_classroom = Classroom(
-        name="Grade 2 Science Focus",
+    grade_2_classroom = Classroom(
+        name="Grade 2 Chui",  # Chui means Leopard in Swahili
         grade_level=2,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(grade_2_science_classroom)
+    db.add(grade_2_classroom)
     db.flush()
 
     # Create Academic Terms
-    first_academic_term_2024 = AcademicTerm(
+    term_1_2024 = AcademicTerm(
         name="Term 1 2024",
         start_date=datetime.datetime(2024, 1, 1),
         end_date=datetime.datetime(2024, 4, 30),
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    second_academic_term_2024 = AcademicTerm(
+    term_2_2024 = AcademicTerm(
         name="Term 2 2024",
         start_date=datetime.datetime(2024, 5, 1),
         end_date=datetime.datetime(2024, 8, 31),
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    third_academic_term_2024 = AcademicTerm(
+    term_3_2024 = AcademicTerm(
         name="Term 3 2024",
         start_date=datetime.datetime(2024, 9, 1),
         end_date=datetime.datetime(2024, 12, 31),
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add_all(
-        [first_academic_term_2024, second_academic_term_2024, third_academic_term_2024]
-    )
+    db.add_all([term_1_2024, term_2_2024, term_3_2024])
     db.flush()
 
+    # Create Modules
     mathematics_module = Module(
         name="Mathematics",
         description="Comprehensive mathematics curriculum including algebra and geometry",
@@ -269,23 +247,23 @@ with get_db() as db:
     additional_modules = [
         Module(
             name="Science",
-            description="Foundational physics concepts including mechanics and energy",
-        ),
-        Module(
-            name="CRE",
-            description="Introduction to chemical principles and reactions",
+            description="Foundational science concepts including physics and biology",
         ),
         Module(
             name="Kiswahili",
-            description="Study of living organisms and natural systems",
+            description="Kiswahili language and literature studies",
         ),
         Module(
-            name="English Literature",
-            description="Analysis of literary works and composition",
+            name="English",
+            description="English language and composition",
         ),
         Module(
-            name="History",
-            description="World history and historical analysis",
+            name="Social Studies",
+            description="History, geography and civic education",
+        ),
+        Module(
+            name="CRE",
+            description="Christian Religious Education",
         ),
     ]
     db.add_all(additional_modules)
@@ -296,12 +274,11 @@ with get_db() as db:
     )
     db.add(teacher_role)
     db.flush()
-    #
-    # ---
-    #
+
+    # Create Mathematics Teacher
     math_teacher_user = User(
-        username="james.thompson",
-        email="teacher.school@app.com",
+        username="teacher.wanjiku",
+        email="grace.wanjiku@tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
     db.add(math_teacher_user)
@@ -313,16 +290,16 @@ with get_db() as db:
     math_teacher_role_assoc = UserRoleAssociation(
         user_id=math_teacher_user.id,
         role_id=teacher_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
     db.add(math_teacher_role_assoc)
     db.flush()
 
     math_teacher = Teacher(
-        first_name="James",
-        last_name="Thompson",
-        email="james.thompson@app.com",
-        school_id=sunrise_academy.id,
+        first_name="Grace",
+        last_name="Wanjiku",
+        email="grace.wanjiku@tumaini.edu.ke",
+        school_id=tumaini_academy.id,
         user_id=math_teacher_user.id,
     )
     db.add(math_teacher)
@@ -330,16 +307,16 @@ with get_db() as db:
 
     math_teacher_classroom_assoc = ClassTeacherAssociation(
         teacher_id=math_teacher.id,
-        classroom_id=grade_1_mathematics_classroom.id,
+        classroom_id=grade_1_classroom.id,
         is_primary=True,
     )
     db.add(math_teacher_classroom_assoc)
     db.flush()
 
-    # Create Second Teacher (Science)
+    # Create Science Teacher
     science_teacher_user = User(
-        username="sarah.schmidt",
-        email="teacher.school@school.app",
+        username="teacher.ochieng",
+        email="peter.ochieng@tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
     db.add(science_teacher_user)
@@ -348,16 +325,16 @@ with get_db() as db:
     science_teacher_role_assoc = UserRoleAssociation(
         user_id=science_teacher_user.id,
         role_id=teacher_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
     db.add(science_teacher_role_assoc)
     db.flush()
 
     science_teacher = Teacher(
-        first_name="Sarah",
-        last_name="Schmidt",
-        email="sarah.schmidt@school.app",
-        school_id=sunrise_academy.id,
+        first_name="Peter",
+        last_name="Ochieng",
+        email="peter.ochieng@tumaini.edu.ke",
+        school_id=tumaini_academy.id,
         user_id=science_teacher_user.id,
     )
     db.add(science_teacher)
@@ -365,7 +342,7 @@ with get_db() as db:
 
     science_teacher_classroom_assoc = ClassTeacherAssociation(
         teacher_id=science_teacher.id,
-        classroom_id=grade_2_science_classroom.id,
+        classroom_id=grade_2_classroom.id,
         is_primary=True,
     )
     db.add(science_teacher_classroom_assoc)
@@ -379,207 +356,187 @@ with get_db() as db:
     db.flush()
 
     # Grade 1 Students
-    # Student 1: John Davis
-    student_john_davis_user = User(
-        username="john.davis",
-        email="student.school@app.com",
+    # Student 1: David Kamau
+    student_kamau_user = User(
+        username="david.kamau",
+        email="david.kamau@student.tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
-    db.add(student_john_davis_user)
+    db.add(student_kamau_user)
     db.flush()
 
-    student_teacher_profile = create_simple_profile(
-        file_path="dev/profiles/girl.png", user_id=student_john_davis_user.id, db=db
+    student_kamau_profile = create_simple_profile(
+        file_path="dev/profiles/girl.png", user_id=student_kamau_user.id, db=db
     )
 
-    student_john_davis_role_assoc = UserRoleAssociation(
-        user_id=student_john_davis_user.id,
+    student_kamau_role_assoc = UserRoleAssociation(
+        user_id=student_kamau_user.id,
         role_id=student_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(student_john_davis_role_assoc)
+    db.add(student_kamau_role_assoc)
     db.flush()
 
-    student_john_davis = Student(
-        first_name="John",
-        last_name="Davis",
+    student_kamau = Student(
+        first_name="David",
+        last_name="Kamau",
         date_of_birth=datetime.datetime(2017, 3, 15),
         gender=Gender.MALE.value,
         grade_level=1,
-        classroom_id=grade_1_mathematics_classroom.id,
-        user_id=student_john_davis_user.id,
+        classroom_id=grade_1_classroom.id,
+        user_id=student_kamau_user.id,
     )
-    db.add(student_john_davis)
+    db.add(student_kamau)
     db.flush()
 
-    student_john_davis_school_assoc = SchoolStudentAssociation(
-        student_id=student_john_davis.id, school_id=sunrise_academy.id
+    student_kamau_school_assoc = SchoolStudentAssociation(
+        student_id=student_kamau.id, school_id=tumaini_academy.id
     )
-    db.add(student_john_davis_school_assoc)
+    db.add(student_kamau_school_assoc)
     db.flush()
 
-    # Student 2: Michael Chang
-    student_micheal_chang = User(
-        username="michael.chang",
-        email="student.michael.chang@school.app",
+    # Student 2: Faith Muthoni
+    student_muthoni_user = User(
+        username="faith.muthoni",
+        email="faith.muthoni@student.tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
-    db.add(student_micheal_chang)
+    db.add(student_muthoni_user)
     db.flush()
 
-    student_micheal_chang_role_assoc = UserRoleAssociation(
-        user_id=student_micheal_chang.id,
+    student_muthoni_role_assoc = UserRoleAssociation(
+        user_id=student_muthoni_user.id,
         role_id=student_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(student_micheal_chang_role_assoc)
+    db.add(student_muthoni_role_assoc)
     db.flush()
 
-    student_micheal_chang = Student(
-        first_name="Michael",
-        last_name="Chang",
+    student_muthoni = Student(
+        first_name="Faith",
+        last_name="Muthoni",
         date_of_birth=datetime.datetime(2017, 5, 20),
-        gender=Gender.MALE.value,
-        grade_level=1,
-        classroom_id=grade_1_mathematics_classroom.id,
-        user_id=student_micheal_chang.id,
-    )
-    db.add(student_micheal_chang)
-    db.flush()
-
-    student_micheal_chang_school_assoc = SchoolStudentAssociation(
-        student_id=student_micheal_chang.id, school_id=sunrise_academy.id
-    )
-    db.add(student_micheal_chang_school_assoc)
-    db.flush()
-
-    # Student 3: Sofia Patel
-    student_sofia_patel_user = User(
-        username="sofia.patel",
-        email="student.sofia.patel@school.app",
-        password_hash=hash_password("password123"),
-    )
-    db.add(student_sofia_patel_user)
-    db.flush()
-
-    student_sofia_patel_role_assoc = UserRoleAssociation(
-        user_id=student_sofia_patel_user.id,
-        role_id=student_role.id,
-        school_id=sunrise_academy.id,
-    )
-    db.add(student_sofia_patel_role_assoc)
-    db.flush()
-
-    student_sofia_patel = Student(
-        first_name="Sofia",
-        last_name="Patel",
-        date_of_birth=datetime.datetime(2017, 7, 10),
         gender=Gender.FEMALE.value,
         grade_level=1,
-        classroom_id=grade_1_mathematics_classroom.id,
-        user_id=student_sofia_patel_user.id,
+        classroom_id=grade_1_classroom.id,
+        user_id=student_muthoni_user.id,
     )
-    db.add(student_sofia_patel)
+    db.add(student_muthoni)
     db.flush()
 
-    student_sofia_patel_school_assoc = SchoolStudentAssociation(
-        student_id=student_sofia_patel.id, school_id=sunrise_academy.id
+    student_muthoni_school_assoc = SchoolStudentAssociation(
+        student_id=student_muthoni.id, school_id=tumaini_academy.id
     )
-    db.add(student_sofia_patel_school_assoc)
+    db.add(student_muthoni_school_assoc)
+    db.flush()
+
+    # Student 3: James Kiprop
+    student_kiprop_user = User(
+        username="james.kiprop",
+        email="james.kiprop@student.tumaini.edu.ke",
+        password_hash=hash_password("password123"),
+    )
+    db.add(student_kiprop_user)
+    db.flush()
+
+    student_kiprop_role_assoc = UserRoleAssociation(
+        user_id=student_kiprop_user.id,
+        role_id=student_role.id,
+        school_id=tumaini_academy.id,
+    )
+    db.add(student_kiprop_role_assoc)
+    db.flush()
+
+    student_kiprop = Student(
+        first_name="James",
+        last_name="Kiprop",
+        date_of_birth=datetime.datetime(2017, 7, 10),
+        gender=Gender.MALE.value,
+        grade_level=1,
+        classroom_id=grade_1_classroom.id,
+        user_id=student_kiprop_user.id,
+    )
+    db.add(student_kiprop)
+    db.flush()
+
+    student_kiprop_school_assoc = SchoolStudentAssociation(
+        student_id=student_kiprop.id, school_id=tumaini_academy.id
+    )
+    db.add(student_kiprop_school_assoc)
     db.flush()
 
     # Grade 2 Students
-    # Student 4: David Kim
-    student_david_kim_user = User(
-        username="david.kim",
-        email="student.david.kim@school.app",
+    # Student 4: Sarah Akinyi
+    student_akinyi_user = User(
+        username="sarah.akinyi",
+        email="sarah.akinyi@student.tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
-    db.add(student_david_kim_user)
+    db.add(student_akinyi_user)
     db.flush()
 
-    student_david_kim_role_assoc = UserRoleAssociation(
-        user_id=student_david_kim_user.id,
+    student_akinyi_role_assoc = UserRoleAssociation(
+        user_id=student_akinyi_user.id,
         role_id=student_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(student_david_kim_role_assoc)
+    db.add(student_akinyi_role_assoc)
     db.flush()
 
-    student_david_kim = Student(
-        first_name="David",
-        last_name="Kim",
+    student_akinyi = Student(
+        first_name="Sarah",
+        last_name="Akinyi",
         date_of_birth=datetime.datetime(2016, 4, 25),
-        gender=Gender.MALE.value,
+        gender=Gender.FEMALE.value,
         grade_level=2,
-        classroom_id=grade_2_science_classroom.id,
-        user_id=student_david_kim_user.id,
+        classroom_id=grade_2_classroom.id,
+        user_id=student_akinyi_user.id,
     )
-    db.add(student_david_kim)
+    db.add(student_akinyi)
     db.flush()
 
-    student_david_kim_school_assoc = SchoolStudentAssociation(
-        student_id=student_david_kim.id, school_id=sunrise_academy.id
+    student_akinyi_school_assoc = SchoolStudentAssociation(
+        student_id=student_akinyi.id, school_id=tumaini_academy.id
     )
-    db.add(student_david_kim_school_assoc)
+    db.add(student_akinyi_school_assoc)
     db.flush()
 
-    # Student 5: Emily Wong
-    student_emily_wong_user = User(
-        username="emily.wong",
-        email="student.emily.wong@school.app",
+    # Student 5: Daniel Njoroge
+    student_njoroge_user = User(
+        username="daniel.njoroge",
+        email="daniel.njoroge@student.tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
-    db.add(student_emily_wong_user)
+    db.add(student_njoroge_user)
     db.flush()
 
-    student_emily_wong_role_assoc = UserRoleAssociation(
-        user_id=student_emily_wong_user.id,
+    student_njoroge_role_assoc = UserRoleAssociation(
+        user_id=student_njoroge_user.id,
         role_id=student_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(student_emily_wong_role_assoc)
+    db.add(student_njoroge_role_assoc)
     db.flush()
 
-    # Student 6: Alexander Martinez
-    student_alexander_martinez_user = User(
-        username="alexander.martinez",
-        email="student.alex.martinez@school.app",
-        password_hash=hash_password("password123"),
-    )
-    db.add(student_alexander_martinez_user)
-    db.flush()
-
-    student_alexander_martinez_role_assoc = UserRoleAssociation(
-        user_id=student_alexander_martinez_user.id,
-        role_id=student_role.id,
-        school_id=sunrise_academy.id,
-    )
-    db.add(student_alexander_martinez_role_assoc)
-    db.flush()
-
-    student_alexander_martinez = Student(
-        first_name="Alexander",
-        last_name="Martinez",
-        date_of_birth=datetime.datetime(2016, 8, 30),
+    student_njoroge = Student(
+        first_name="Daniel",
+        last_name="Njoroge",
+        date_of_birth=datetime.datetime(2016, 6, 15),
         gender=Gender.MALE.value,
         grade_level=2,
-        classroom_id=grade_2_science_classroom.id,
-        user_id=student_alexander_martinez_user.id,
+        classroom_id=grade_2_classroom.id,
+        user_id=student_njoroge_user.id,
     )
-    db.add(student_alexander_martinez)
+    db.add(student_njoroge)
     db.flush()
 
-    student_alexander_martinez_school_assoc = SchoolStudentAssociation(
-        student_id=student_alexander_martinez.id, school_id=sunrise_academy.id
+    student_njoroge_school_assoc = SchoolStudentAssociation(
+        student_id=student_njoroge.id, school_id=tumaini_academy.id
     )
-    db.add(student_alexander_martinez_school_assoc)
+    db.add(student_njoroge_school_assoc)
     db.flush()
 
-    #
-    # ---
-    #
-
+    # Create parent role
     parent_role = Role(
         name=RoleType.PARENT.name,
         type=RoleType.PARENT,
@@ -588,153 +545,156 @@ with get_db() as db:
     db.add(parent_role)
     db.flush()
 
-    # Create parent users and associations for John Davis
-    john_davis_parent_user = User(
-        username="davis.parent",
-        email="davis.parent@email.com",
+    # Create parent users and associations
+    # Parent for David Kamau
+    kamau_parent_user = User(
+        username="parent.kamau",
+        email="john.kamau@parent.tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
-    db.add(john_davis_parent_user)
+    db.add(kamau_parent_user)
     db.flush()
 
-    parent_davis_role_assoc = UserRoleAssociation(
-        user_id=john_davis_parent_user.id,
+    parent_kamau_role_assoc = UserRoleAssociation(
+        user_id=kamau_parent_user.id,
         role_id=parent_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(parent_davis_role_assoc)
+    db.add(parent_kamau_role_assoc)
     db.flush()
 
-    davis_parent = SchoolParent(
-        first_name="Robert",
-        last_name="Davis",
+    kamau_parent = SchoolParent(
+        first_name="John",
+        last_name="Kamau",
         gender="male",
-        email="davis.parent@email.com",
-        phone_number="1234567890",
-        national_id_number="ID123456",
-        user_id=john_davis_parent_user.id,
+        email="john.kamau@parent.tumaini.edu.ke",
+        phone_number="254700123456",
+        national_id_number="12345678",
+        user_id=kamau_parent_user.id,
     )
-    db.add(davis_parent)
+    db.add(kamau_parent)
     db.flush()
 
-    davis_school_association = SchoolParentAssociation(
-        school_id=sunrise_academy.id, parent_id=davis_parent.id
+    kamau_school_association = SchoolParentAssociation(
+        school_id=tumaini_academy.id, parent_id=kamau_parent.id
     )
-    db.add(davis_school_association)
+    db.add(kamau_school_association)
     db.flush()
 
-    davis_student_association = ParentStudentAssociation(
-        parent_id=davis_parent.id,
-        student_id=student_john_davis.id,
+    kamau_student_association = ParentStudentAssociation(
+        parent_id=kamau_parent.id,
+        student_id=student_kamau.id,
         relationship_type="father",
     )
-    db.add(davis_student_association)
+    db.add(kamau_student_association)
     db.flush()
 
-    patel_parent_user = User(
-        username="patel.parent",
-        email="patel.parent@email.com",
+    # Parent for Faith Muthoni
+    muthoni_parent_user = User(
+        username="parent.muthoni",
+        email="alice.muthoni@parent.tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
-    db.add(patel_parent_user)
+    db.add(muthoni_parent_user)
     db.flush()
 
-    parent_patel_role_assoc = UserRoleAssociation(
-        user_id=patel_parent_user.id,
+    parent_muthoni_role_assoc = UserRoleAssociation(
+        user_id=muthoni_parent_user.id,
         role_id=parent_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(parent_patel_role_assoc)
+    db.add(parent_muthoni_role_assoc)
     db.flush()
 
-    patel_parent = SchoolParent(
-        first_name="Priya",
-        last_name="Patel",
+    muthoni_parent = SchoolParent(
+        first_name="Alice",
+        last_name="Muthoni",
         gender="female",
-        email="patel.parent@email.com",
-        phone_number="9876543210",
-        national_id_number="ID789012",
-        user_id=patel_parent_user.id,
+        email="alice.muthoni@parent.tumaini.edu.ke",
+        phone_number="254711987654",
+        national_id_number="87654321",
+        user_id=muthoni_parent_user.id,
     )
-    db.add(patel_parent)
+    db.add(muthoni_parent)
     db.flush()
 
-    patel_school_association = SchoolParentAssociation(
-        school_id=sunrise_academy.id, parent_id=patel_parent.id
+    muthoni_school_association = SchoolParentAssociation(
+        school_id=tumaini_academy.id, parent_id=muthoni_parent.id
     )
-    db.add(patel_school_association)
+    db.add(muthoni_school_association)
     db.flush()
 
-    patel_student_association = ParentStudentAssociation(
-        parent_id=patel_parent.id,
-        student_id=student_sofia_patel.id,
+    muthoni_student_association = ParentStudentAssociation(
+        parent_id=muthoni_parent.id,
+        student_id=student_muthoni.id,
         relationship_type="mother",
     )
-    db.add(patel_student_association)
+    db.add(muthoni_student_association)
     db.flush()
 
-    chang_parent_user = User(
-        username="chang.parent",
-        email="chang.parent@email.com",
+    # Parent for James Kiprop
+    kiprop_parent_user = User(
+        username="parent.kiprop",
+        email="william.kiprop@parent.tumaini.edu.ke",
         password_hash=hash_password("password123"),
     )
-    db.add(chang_parent_user)
+    db.add(kiprop_parent_user)
     db.flush()
 
-    parent_chang_role_assoc = UserRoleAssociation(
-        user_id=chang_parent_user.id,
+    parent_kiprop_role_assoc = UserRoleAssociation(
+        user_id=kiprop_parent_user.id,
         role_id=parent_role.id,
-        school_id=sunrise_academy.id,
+        school_id=tumaini_academy.id,
     )
-    db.add(parent_chang_role_assoc)
+    db.add(parent_kiprop_role_assoc)
     db.flush()
 
-    chang_parent = SchoolParent(
-        first_name="Wei",
-        last_name="Chang",
+    kiprop_parent = SchoolParent(
+        first_name="William",
+        last_name="Kiprop",
         gender="male",
-        email="chang.parent@email.com",
-        phone_number="5555555555",
-        national_id_number="ID345678",
-        user_id=chang_parent_user.id,
+        email="william.kiprop@parent.tumaini.edu.ke",
+        phone_number="254722345678",
+        national_id_number="23456789",
+        user_id=kiprop_parent_user.id,
     )
-    db.add(chang_parent)
+    db.add(kiprop_parent)
     db.flush()
 
-    chang_school_association = SchoolParentAssociation(
-        school_id=sunrise_academy.id, parent_id=chang_parent.id
+    kiprop_school_association = SchoolParentAssociation(
+        school_id=tumaini_academy.id, parent_id=kiprop_parent.id
     )
-    db.add(chang_school_association)
+    db.add(kiprop_school_association)
     db.flush()
 
-    chang_student_association = ParentStudentAssociation(
-        parent_id=chang_parent.id,
-        student_id=student_micheal_chang.id,
+    kiprop_student_association = ParentStudentAssociation(
+        parent_id=kiprop_parent.id,
+        student_id=student_kiprop.id,
         relationship_type="father",
     )
-    db.add(chang_student_association)
+    db.add(kiprop_student_association)
     db.flush()
-    #
-    # ---
-    #
 
-    all_students: list[Student] = [
-        student_john_davis,
-        student_micheal_chang,
-        student_sofia_patel,
-        student_david_kim,
-        student_alexander_martinez,
+    # Collect all students for attendance and payments
+    all_students = [
+        student_kamau,
+        student_muthoni,
+        student_kiprop,
+        student_akinyi,
+        student_njoroge,
     ]
+
+    # Create attendance records
     attendance_months = {
-        1: (first_academic_term_2024, [8, 15, 22, 29]),  # January
-        2: (first_academic_term_2024, [5, 12, 19, 26]),  # February
-        3: (first_academic_term_2024, [4, 11, 18, 25]),  # March
-        5: (second_academic_term_2024, [6, 13, 20, 27]),  # May
-        6: (second_academic_term_2024, [3, 10, 17, 24]),  # June
-        7: (second_academic_term_2024, [1, 8, 15, 22]),  # July
-        10: (third_academic_term_2024, [7, 14, 21, 28]),  # October
-        11: (third_academic_term_2024, [4, 11, 18, 25]),  # November
-        12: (third_academic_term_2024, [2, 9, 16, 23]),  # December
+        1: (term_1_2024, [8, 15, 22, 29]),  # January
+        2: (term_1_2024, [5, 12, 19, 26]),  # February
+        3: (term_1_2024, [4, 11, 18, 25]),  # March
+        5: (term_2_2024, [6, 13, 20, 27]),  # May
+        6: (term_2_2024, [3, 10, 17, 24]),  # June
+        7: (term_2_2024, [1, 8, 15, 22]),  # July
+        10: (term_3_2024, [7, 14, 21, 28]),  # October
+        11: (term_3_2024, [4, 11, 18, 25]),  # November
+        12: (term_3_2024, [2, 9, 16, 23]),  # December
     }
 
     def create_attendance_records(
@@ -747,11 +707,8 @@ with get_db() as db:
     ):
         for student in students:
             current_date = start_date
-
             for day in range(num_days):
-                # 90% chance of being present
                 is_present = random.random() < 0.9
-
                 attendance = Attendance(
                     date=current_date,
                     status=(
@@ -766,11 +723,10 @@ with get_db() as db:
                     remarks="Regular attendance" if is_present else "Absent",
                 )
                 db.add(attendance)
-
                 current_date = current_date + datetime.timedelta(days=1)
-
         db.flush()
 
+    # Create attendance records for each month
     for month, (academic_term, mondays) in attendance_months.items():
         for day in mondays:
             start_date = datetime.datetime(2024, month, day)
@@ -778,12 +734,12 @@ with get_db() as db:
                 db,
                 students=all_students,
                 start_date=start_date,
-                school_id=sunrise_academy.id,
+                school_id=tumaini_academy.id,
                 academic_term_id=academic_term.id,
             )
 
+    # Create module enrollments
     all_modules = [mathematics_module] + additional_modules
-
     for student in all_students:
         for module in all_modules:
             module_enrollment = ModuleEnrollment(
@@ -793,7 +749,7 @@ with get_db() as db:
             db.add(module_enrollment)
     db.flush()
 
-    # Create exams for each module
+    # Create exams and results
     for module in all_modules:
         term_exams = [
             Exam(
@@ -801,46 +757,46 @@ with get_db() as db:
                 date=datetime.datetime(2024, 3, 15),
                 total_marks=100,
                 module_id=module.id,
-                academic_term_id=first_academic_term_2024.id,
+                academic_term_id=term_1_2024.id,
             ),
             Exam(
                 name=f"{module.name} Term 2 Assessment",
                 date=datetime.datetime(2024, 7, 15),
                 total_marks=100,
                 module_id=module.id,
-                academic_term_id=second_academic_term_2024.id,
+                academic_term_id=term_2_2024.id,
             ),
             Exam(
                 name=f"{module.name} Term 3 Assessment",
                 date=datetime.datetime(2024, 10, 1),
                 total_marks=100,
                 module_id=module.id,
-                academic_term_id=third_academic_term_2024.id,
+                academic_term_id=term_3_2024.id,
             ),
         ]
         db.add_all(term_exams)
         db.flush()
 
-        # Create exam results for each student
+        # Create exam results
         for student in all_students:
             for exam in term_exams:
-                # Assign different grade ranges based on student's strengths
-                base_score = 75  # Base score for average performance
+                base_score = 75
 
-                # Adjust scores based on student and subject
-                if module.name == "Advanced Mathematics" and student in [
-                    student_micheal_chang,
-                    student_sofia_patel,
-                ]:  # Michael and Sofia excel in math
+                # Adjust scores based on student strengths
+                if module.name == "Mathematics" and student in [
+                    student_muthoni,
+                    student_akinyi,
+                ]:
                     base_score += 15
-                elif module.name in ["Physics", "Chemistry"] and student in [
-                    student_david_kim,
-                ]:  # David and Emily excel in sciences
+                elif module.name == "Science" and student in [
+                    student_kiprop,
+                    student_njoroge,
+                ]:
                     base_score += 15
-                elif module.name == "English Literature" and student in [
-                    student_sofia_patel,
-                    student_alexander_martinez,
-                ]:  # Sofia and Alexander excel in literature
+                elif module.name == "English" and student in [
+                    student_kamau,
+                    student_muthoni,
+                ]:
                     base_score += 15
 
                 final_score = min(100, max(65, base_score + random.randint(-8, 8)))
@@ -855,8 +811,9 @@ with get_db() as db:
                 db.add(exam_result)
         db.flush()
 
+    # Create payments
+    # Student fee payments
     for student in all_students:
-
         term1_payment = Payment(
             amount=decimal.Decimal("15000.00"),
             date=datetime.datetime(2024, 1, 5),
@@ -864,7 +821,7 @@ with get_db() as db:
             category=PaymentCategory.TUITION,
             status=PaymentStatus.COMPLETED,
             direction=PaymentDirection.INBOUND,
-            school_id=sunrise_academy.id,
+            school_id=tumaini_academy.id,
             recorded_by_id=school_admin_user.id,
             reference_number=f"T1FEE-{uuid.uuid4().hex[:6]}",
             description=f"Term 1 2024 Tuition Fee - {student.first_name} {student.last_name}",
@@ -893,7 +850,7 @@ with get_db() as db:
             category=PaymentCategory.TUITION,
             status=PaymentStatus.COMPLETED,
             direction=PaymentDirection.INBOUND,
-            school_id=sunrise_academy.id,
+            school_id=tumaini_academy.id,
             recorded_by_id=school_admin_user.id,
             reference_number=f"T2FEE-{uuid.uuid4().hex[:6]}",
             description=f"Term 2 2024 Tuition Fee - {student.first_name} {student.last_name}",
@@ -915,10 +872,9 @@ with get_db() as db:
         db.add_all([student_payment_assoc2, recorder_payment_assoc2])
         db.flush()
 
-    # Create salary payments for teachers (school paying money)
+    # Teacher salary payments
     teachers = [math_teacher, science_teacher]
     for teacher in teachers:
-        # January salary
         jan_salary = Payment(
             amount=decimal.Decimal("45000.00"),
             date=datetime.datetime(2024, 1, 31),
@@ -926,7 +882,7 @@ with get_db() as db:
             category=PaymentCategory.OTHER,
             status=PaymentStatus.COMPLETED,
             direction=PaymentDirection.OUTBOUND,
-            school_id=sunrise_academy.id,
+            school_id=tumaini_academy.id,
             recorded_by_id=school_admin_user.id,
             reference_number=f"SAL-JAN-{uuid.uuid4().hex[:6]}",
             description=f"January 2024 Salary - {teacher.first_name} {teacher.last_name}",
@@ -940,12 +896,42 @@ with get_db() as db:
             user_id=teacher.user_id,
             type=PaymentUserType.RELATED,
         )
+
         recorder_payment_assoc = PaymentUserAssociation(
             payment_id=jan_salary.id,
             user_id=school_admin_user.id,
             type=PaymentUserType.RECORDER,
         )
         db.add_all([teacher_payment_assoc, recorder_payment_assoc])
+        db.flush()
+
+        feb_salary = Payment(
+            amount=decimal.Decimal("45000.00"),
+            date=datetime.datetime(2024, 2, 28),
+            method=PaymentMethod.BANK_TRANSFER,
+            category=PaymentCategory.OTHER,
+            status=PaymentStatus.COMPLETED,
+            direction=PaymentDirection.OUTBOUND,
+            school_id=tumaini_academy.id,
+            recorded_by_id=school_admin_user.id,
+            reference_number=f"SAL-FEB-{uuid.uuid4().hex[:6]}",
+            description=f"February 2024 Salary - {teacher.first_name} {teacher.last_name}",
+            payee=teacher.user_id,
+        )
+        db.add(feb_salary)
+        db.flush()
+
+        teacher_payment_assoc_feb = PaymentUserAssociation(
+            payment_id=feb_salary.id,
+            user_id=teacher.user_id,
+            type=PaymentUserType.RELATED,
+        )
+        recorder_payment_assoc_feb = PaymentUserAssociation(
+            payment_id=feb_salary.id,
+            user_id=school_admin_user.id,
+            type=PaymentUserType.RECORDER,
+        )
+        db.add_all([teacher_payment_assoc_feb, recorder_payment_assoc_feb])
         db.flush()
 
     db.commit()

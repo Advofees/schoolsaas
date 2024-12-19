@@ -6,7 +6,12 @@ from backend.database.base import Base
 import typing
 
 if typing.TYPE_CHECKING:
-    from backend.user.user_models import User
+    from backend.user.user_models import (
+        User,
+        Role,
+        UserRoleAssociation,
+        UserPermissionAssociation,
+    )
     from backend.student.student_model import Student
     from backend.parent.parent_model import ParentStudentAssociation
     from backend.inventory.inventory_model import Inventory
@@ -192,6 +197,14 @@ class School(Base):
     )
     attendances: Mapped[list["Attendance"]] = relationship(
         "Attendance", back_populates="school"
+    )
+
+    roles: Mapped[list["Role"]] = relationship("Role", back_populates="school")
+    user_role_associations: Mapped[list["UserRoleAssociation"]] = relationship(
+        "UserRoleAssociation", back_populates="school"
+    )
+    user_permission_associations: Mapped[list["UserPermissionAssociation"]] = (
+        relationship("UserPermissionAssociation", back_populates="school")
     )
 
     def __init__(

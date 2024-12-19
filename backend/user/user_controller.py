@@ -169,7 +169,9 @@ def register(
         db.flush()
 
     school_user_role_association = UserRoleAssociation(
-        user_id=school_admin_user.id, role_id=school_admin_role.id
+        user_id=school_admin_user.id,
+        role_id=school_admin_role.id,
+        school_id=new_school.id,
     )
     db.add(school_user_role_association)
     db.flush()
