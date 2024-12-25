@@ -15,6 +15,7 @@ from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.teacher.teacher_schemas import to_teacher_dto, TeacherResponse
 from backend.paginated_response import PaginatedResponse
 
+
 router = APIRouter()
 
 
@@ -372,10 +373,15 @@ async def create_teachers_in_bulk(
     )
 
     if existing_users:
-        existing_emails = [user.email for user in existing_users]
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Users with these emails already exist in your school: {', '.join(existing_emails)}",
+            detail={
+                "message": "The following teacher users already exist in your school",
+                "data": [
+                    {"email": existing_user.email, "username": existing_user.username}
+                    for existing_user in existing_users
+                ],
+            },
         )
 
     existing_teachers = (
@@ -384,10 +390,12 @@ async def create_teachers_in_bulk(
         .all()
     )
     if existing_teachers:
-        existing_emails = [teacher.email for teacher in existing_teachers]
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Teachers with these emails already exist: {', '.join(existing_emails)}",
+            detail={
+                "message": "Teachers with these emails already exist",
+                "data": [teacher.email for teacher in existing_teachers],
+            },
         )
 
     teacher_role = (
