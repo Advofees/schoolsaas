@@ -96,6 +96,8 @@ class StudentSortableFields(enum.Enum):
     GRADE_LEVEL = "grade_level"
     EMAIL = "email"
     DATE_OF_BIRTH = "date_of_birth"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
 
 
 class OrderBy(enum.Enum):

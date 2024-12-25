@@ -20,6 +20,8 @@ from backend.attendance.attendance_models import Attendance
 from backend.user.user_authentication import UserAuthenticationContextDependency
 import datetime
 import typing
+import enum
+from sqlalchemy import desc, asc
 
 router = APIRouter()
 
@@ -52,17 +54,32 @@ def attendance_to_dto(attendance: Attendance) -> AttendanceResponse:
     )
 
 
+class OrderBy(enum.Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+class AttendanceSortableFields(enum.Enum):
+    DATE = "date"
+    STATUS = "status"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
 @router.get("/attendance/list")
 def get_all_attendance_for_a_specific_classroom_in_a_date_range(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1),
+    order_field: typing.Optional[AttendanceSortableFields] = None,
+    order_direction: typing.Optional[OrderBy] = None,
     attendance_status: typing.Optional[AttendanceStatus] = None,
     classroom_id: typing.Optional[uuid.UUID] = None,
     academic_term_id: typing.Optional[uuid.UUID] = None,
     start_date: typing.Optional[datetime.datetime] = None,
     end_date: typing.Optional[datetime.datetime] = None,
-    page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1),
+    student_id: typing.Optional[uuid.UUID] = None,
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
@@ -70,25 +87,38 @@ def get_all_attendance_for_a_specific_classroom_in_a_date_range(
             status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
         )
 
-    query = db.query(Attendance).filter(Attendance.school_id == user.school_id)
+    query = (
+        db.query(Attendance)
+        .join(Student)
+        .filter(Attendance.school_id == user.school_id)
+    )
 
     if attendance_status:
         query = query.filter(Attendance.status == attendance_status.value)
 
     if classroom_id is not None:
-        query = query.filter(
-            Attendance.classroom_id == classroom_id,
-        )
+        query = query.filter(Attendance.classroom_id == classroom_id)
 
     if start_date is not None and end_date is not None:
         query = query.filter(Attendance.date.between(start_date, end_date))
 
     if academic_term_id is not None:
-        query = query.filter(
-            Attendance.academic_term_id == academic_term_id,
-        )
+        query = query.filter(Attendance.academic_term_id == academic_term_id)
+
+    if student_id is not None:
+        query = query.filter(Attendance.student_id == student_id)
 
     total_count = query.count()
+
+    if order_field and order_direction:
+        sort_column = getattr(Attendance, order_field.value)
+        if order_direction == OrderBy.DESC:
+            query = query.order_by(desc(sort_column))
+        else:
+            query = query.order_by(asc(sort_column))
+    else:
+
+        query = query.order_by(desc(Attendance.date))
 
     offset = (page - 1) * limit
     attendance_records = query.offset(offset).limit(limit).all()
@@ -97,10 +127,7 @@ def get_all_attendance_for_a_specific_classroom_in_a_date_range(
         total=total_count,
         page=page,
         limit=limit,
-        data=[
-            attendance_to_dto(attendance=attendance)
-            for attendance in attendance_records
-        ],
+        data=[attendance_to_dto(attendance) for attendance in attendance_records],
     )
 
 
