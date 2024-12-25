@@ -21,7 +21,7 @@ from backend.user.passwords import hash_password
 router = APIRouter()
 
 
-@router.get("/students/get-student-by-id/{student_id}")
+@router.get("/students/by-student-id/{student_id}")
 async def get_student(
     db: DatabaseDependency,
     student_id: uuid.UUID,
@@ -36,8 +36,7 @@ async def get_student(
         )
 
     if not (
-        user.has_role_type(RoleType.SUPER_ADMIN)
-        or user.has_role_type(RoleType.SCHOOL_ADMIN)
+        user.has_role_type(RoleType.SCHOOL_ADMIN)
         or user.has_role_type(RoleType.CLASS_TEACHER)
         or user.has_role_type(RoleType.TEACHER)
     ):
@@ -69,7 +68,7 @@ async def get_student(
     }
 
 
-@router.get("/students/get-students-by-classroom-id/{classroom_id}")
+@router.get("/students/by-classroom-id/{classroom_id}")
 async def get_students_in_classroom(
     db: DatabaseDependency,
     classroom_id: uuid.UUID,
@@ -84,9 +83,9 @@ async def get_students_in_classroom(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
         )
+
     if not (
-        user.has_role_type(RoleType.SUPER_ADMIN)
-        or user.has_role_type(RoleType.SCHOOL_ADMIN)
+        user.has_role_type(RoleType.SCHOOL_ADMIN)
         or user.has_role_type(RoleType.CLASS_TEACHER)
         or user.has_role_type(RoleType.TEACHER)
     ):
@@ -115,7 +114,7 @@ async def get_students_in_classroom(
     return students
 
 
-@router.get("/students/all-school-students/list")
+@router.get("/students/school-students-by-school-id/list")
 async def get_all_students_for_a_particular_school(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -129,12 +128,15 @@ async def get_all_students_for_a_particular_school(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
         )
-    if not user.has_role_type(RoleType.SCHOOL_ADMIN) or user.has_role_type(
-        RoleType.SCHOOL_ADMIN
+
+    if not (
+        user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+        or user.has_role_type(RoleType.SCHOOL_ADMIN)
     ):
+
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized",
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
 
     students = (
@@ -182,6 +184,16 @@ async def create_student(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
+        )
+
+    if not (
+        user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+        or user.has_role_type(RoleType.SCHOOL_ADMIN)
+    ):
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
 
     parent = (

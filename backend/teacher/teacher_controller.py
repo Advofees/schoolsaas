@@ -58,7 +58,7 @@ async def get_teachers_in_a_particular_school(
     return [to_teacher_dto(teacher) for teacher in teachers]
 
 
-@router.get("/teachers/{teacher_id}")
+@router.get("/teachers/by-teacher-id/{teacher_id}")
 async def get_teacher_in_particular_school_by_teacher_id(
     teacher_id: int,
     db: DatabaseDependency,
@@ -89,7 +89,7 @@ async def get_teacher_in_particular_school_by_teacher_id(
     return teacher
 
 
-@router.get("/teachers/classrooms/{classroom_id}")
+@router.get("/teachers/by-classroom-id/{classroom_id}")
 async def get_teacher_in_particular_school_classroom_by_classroom_id(
     classroom_id: uuid.UUID,
     db: DatabaseDependency,
@@ -98,11 +98,23 @@ async def get_teacher_in_particular_school_classroom_by_classroom_id(
     limit: int = Query(default=10, ge=1),
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not authorized",
         )
+
+    if not (
+        user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+        or user.has_role_type(RoleType.SCHOOL_ADMIN)
+    ):
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
+        )
+
     classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
 
     if not classroom:
@@ -144,7 +156,13 @@ async def create_teacher_in_particular_school(
             detail="User not authorized",
         )
 
-    if not user.has_role_type(RoleType.SCHOOL_ADMIN):
+    if not (
+        user.has_role_type(RoleType.SCHOOL_ADMIN)
+        or user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+        or user.has_role_type(RoleType.SUPER_ADMIN)
+    ):
+
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
