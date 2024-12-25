@@ -189,8 +189,10 @@ async def get_students_in_classroom(
 async def get_all_students_for_a_particular_school(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
+    page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1),
-    offset: int = Query(0, ge=0),
+    order_field: typing.Optional[StudentSortableFields] = None,
+    order_direction: typing.Optional[OrderBy] = None,
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
@@ -209,17 +211,34 @@ async def get_all_students_for_a_particular_school(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
-
-    students = (
+    query = (
         db.query(Student)
         .join(SchoolStudentAssociation)
-        .filter(SchoolStudentAssociation.school_id == user.school_id)
-        .offset(offset)
-        .limit(limit)
-        .all()
+        .join(User)
+        .filter(
+            SchoolStudentAssociation.school_id == user.school_id,
+            SchoolStudentAssociation.is_active == True,
+        )
     )
 
-    return students
+    total_count = query.count()
+
+    if order_field and order_direction:
+        sort_column = getattr(Student, order_field.value)
+        if order_direction == OrderBy.DESC:
+            query = query.order_by(desc(sort_column))
+        else:
+            query = query.order_by(asc(sort_column))
+
+    offset = (page - 1) * limit
+    students = query.offset(offset).limit(limit).all()
+
+    return PaginatedResponse[StudentResponse](
+        total=total_count,
+        page=page,
+        limit=limit,
+        data=[student_to_dto(student) for student in students],
+    )
 
 
 class createStudent(BaseModel):
