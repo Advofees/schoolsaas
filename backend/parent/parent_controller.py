@@ -326,6 +326,15 @@ async def delete_parent(
             detail="Parent not found in this school",
         )
     parent_association.is_active = False
+
+    db.query(ParentStudentAssociation).filter(
+        ParentStudentAssociation.parent_id == school_parent.id
+    ).delete()
+
+    db.query(SchoolParentAssociation).filter(
+        SchoolParentAssociation.parent_id == school_parent.id
+    ).delete()
+
     db.delete(school_parent)
     db.flush()
     db.commit()
