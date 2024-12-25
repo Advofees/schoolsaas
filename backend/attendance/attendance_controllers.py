@@ -1,8 +1,8 @@
 import datetime
 import uuid
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, status
-
+from fastapi import APIRouter, HTTPException, status, Query
+from backend.paginated_response import PaginatedResponse
 from backend.attendance.attendance_models import AttendanceStatus
 from backend.database.database import DatabaseDependency
 
@@ -24,6 +24,34 @@ import typing
 router = APIRouter()
 
 
+class AttendanceResponse(BaseModel):
+    id: uuid.UUID
+    date: datetime.datetime
+    status: str
+    remarks: typing.Optional[str]
+    student_id: uuid.UUID
+    school_id: uuid.UUID
+    classroom_id: uuid.UUID
+    academic_term_id: uuid.UUID
+    created_at: datetime.datetime
+    updated_at: typing.Optional[datetime.datetime]
+
+
+def attendance_to_dto(attendance: Attendance) -> AttendanceResponse:
+    return AttendanceResponse(
+        id=attendance.id,
+        date=attendance.date,
+        status=attendance.status,
+        remarks=attendance.remarks,
+        student_id=attendance.student_id,
+        school_id=attendance.school_id,
+        classroom_id=attendance.classroom_id,
+        academic_term_id=attendance.academic_term_id,
+        created_at=attendance.created_at,
+        updated_at=attendance.updated_at,
+    )
+
+
 @router.get("/attendance/list")
 def get_all_attendance_for_a_specific_classroom_in_a_date_range(
     db: DatabaseDependency,
@@ -33,12 +61,15 @@ def get_all_attendance_for_a_specific_classroom_in_a_date_range(
     academic_term_id: typing.Optional[uuid.UUID] = None,
     start_date: typing.Optional[datetime.datetime] = None,
     end_date: typing.Optional[datetime.datetime] = None,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1),
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="unauthorized"
         )
+
     query = db.query(Attendance).filter(Attendance.school_id == user.school_id)
 
     if attendance_status:
@@ -57,8 +88,20 @@ def get_all_attendance_for_a_specific_classroom_in_a_date_range(
             Attendance.academic_term_id == academic_term_id,
         )
 
-    attendance = query.all()
-    return attendance
+    total_count = query.count()
+
+    offset = (page - 1) * limit
+    attendance_records = query.offset(offset).limit(limit).all()
+
+    return PaginatedResponse[AttendanceResponse](
+        total=total_count,
+        page=page,
+        limit=limit,
+        data=[
+            attendance_to_dto(attendance=attendance)
+            for attendance in attendance_records
+        ],
+    )
 
 
 class SchoolAttendanceDTO(BaseModel):
@@ -142,7 +185,7 @@ class AttendanceUpdateDTO(BaseModel):
     date: typing.Optional[datetime.datetime]
 
 
-@router.patch("/attendance/{attendance_id}")
+@router.patch("/attendance/by-attendance-id/{attendance_id}")
 def partial_update_student_attendance(
     attendance_id: uuid.UUID,
     body: AttendanceUpdateDTO,

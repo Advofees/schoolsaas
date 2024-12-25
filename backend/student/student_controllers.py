@@ -19,17 +19,9 @@ from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.user.passwords import hash_password
 import enum
 from sqlalchemy import desc, asc
+from backend.paginated_response import PaginatedResponse
 
 router = APIRouter()
-
-T = typing.TypeVar("T")
-
-
-class PaginatedResponse(BaseModel, typing.Generic[T]):
-    total: int
-    page: int
-    limit: int
-    data: list[T]
 
 
 class StudentResponse(BaseModel):
