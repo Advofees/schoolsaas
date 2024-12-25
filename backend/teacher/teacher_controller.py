@@ -333,3 +333,108 @@ async def create_teacher_in_particular_school(
     db.commit()
 
     return {"message": "teacher-created-successfully"}
+
+
+@router.post("/teachers/bulk-create")
+async def create_teachers_in_bulk(
+    body: list[TeacherModel],
+    db: DatabaseDependency,
+    auth_context: UserAuthenticationContextDependency,
+):
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not authorized",
+        )
+
+    if not (
+        user.has_role_type(RoleType.SCHOOL_ADMIN)
+        or user.has_role_type(RoleType.CLASS_TEACHER)
+        or user.has_role_type(RoleType.TEACHER)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
+        )
+
+    if not user.school_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="user-must-be-in-a-school"
+        )
+
+    all_emails = [teacher.email for teacher in body]
+
+    existing_users = (
+        db.query(User)
+        .join(Teacher)
+        .filter(User.email.in_(all_emails), Teacher.school_id == user.school_id)
+        .all()
+    )
+
+    if existing_users:
+        existing_emails = [user.email for user in existing_users]
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Users with these emails already exist in your school: {', '.join(existing_emails)}",
+        )
+
+    existing_teachers = (
+        db.query(Teacher)
+        .filter(Teacher.email.in_(all_emails), Teacher.school_id == user.school_id)
+        .all()
+    )
+    if existing_teachers:
+        existing_emails = [teacher.email for teacher in existing_teachers]
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Teachers with these emails already exist: {', '.join(existing_emails)}",
+        )
+
+    teacher_role = (
+        db.query(Role)
+        .filter(Role.name == RoleType.TEACHER.name, Role.school_id == user.school_id)
+        .first()
+    )
+    if not teacher_role:
+        teacher_role = Role(
+            name=RoleType.TEACHER.name,
+            type=RoleType.TEACHER,
+            description=RoleType.TEACHER.value,
+            school_id=user.school_id,
+        )
+        db.add(teacher_role)
+        db.flush()
+
+    created_teachers: list[Teacher] = []
+    for teacher_data in body:
+
+        new_teacher_user = User(
+            email=teacher_data.email,
+            password_hash=hash_password(password=teacher_data.password),
+            username=teacher_data.email,
+        )
+        db.add(new_teacher_user)
+        db.flush()
+
+        teacher_role_association = UserRoleAssociation(
+            user_id=new_teacher_user.id,
+            role_id=teacher_role.id,
+            school_id=user.school_id,
+        )
+        db.add(teacher_role_association)
+        db.flush()
+
+        new_teacher = Teacher(
+            first_name=teacher_data.first_name,
+            last_name=teacher_data.last_name,
+            email=teacher_data.email,
+            school_id=user.school_id,
+            user_id=new_teacher_user.id,
+            phone_number=teacher_data.phone,
+        )
+        db.add(new_teacher)
+        created_teachers.append(new_teacher)
+
+    db.commit()
+
+    return {"message": "teachers-created-successfully", "count": len(created_teachers)}

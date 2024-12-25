@@ -1,6 +1,6 @@
 import datetime
 import typing
-from pydantic import BaseModel, StringConstraints, EmailStr
+from pydantic import BaseModel
 from dataclasses import dataclass
 import decimal
 import uuid
@@ -25,6 +25,9 @@ from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.user_models import User, RoleType
 from backend.user.user_authentication import UserAuthenticationContextDependency
+from backend.teacher.teacher_schemas import to_teacher_dto
+from backend.student.student_schemas import to_student_dto
+from backend.school.school_schemas import UpdateSchool
 
 router = APIRouter()
 
@@ -233,34 +236,6 @@ class PaymentStats(BaseModel):
         )
 
 
-def student_dto(student: Student) -> dict:
-    return {
-        "grade_level": student.grade_level,
-        "created_at": student.created_at,
-        "updated_at": student.updated_at,
-        "first_name": student.first_name,
-        "last_name": student.last_name,
-        "classroom_id": student.classroom_id,
-        "user_id": student.user_id,
-        "id": student.id,
-        "date_of_birth": student.date_of_birth,
-        "gender": student.gender,
-    }
-
-
-def teacher_dto(teacher: Teacher) -> dict:
-    return {
-        "school_id": teacher.school_id,
-        "id": teacher.id,
-        "first_name": teacher.first_name,
-        "last_name": teacher.last_name,
-        "phone_number": teacher.phone_number,
-        "email": teacher.email,
-        "created_at": teacher.created_at,
-        "updated_at": teacher.updated_at,
-    }
-
-
 def dashboard_resources_dto(
     students: list[Student],
     teachers: list[Teacher],
@@ -281,8 +256,8 @@ def dashboard_resources_dto(
         "parents_total": parents_total,
         "attendance": attendance_metrics,
         "payments": payments,
-        "teachers": [teacher_dto(teacher) for teacher in teachers],
-        "students": [student_dto(student) for student in students],
+        "teachers": [to_teacher_dto(teacher) for teacher in teachers],
+        "students": [to_student_dto(student) for student in students],
     }
 
 
@@ -496,10 +471,9 @@ def get_school(
     return schools
 
 
-@router.get("/school/{school_id}")
+@router.get("/school/by-school-id/{school_id}")
 def get_school_by_id(
     db: DatabaseDependency,
-    school_id: uuid.UUID,
     auth_context: UserAuthenticationContextDependency,
 ):
 
@@ -512,35 +486,22 @@ def get_school_by_id(
         )
 
     if not (
-        user.has_role_type(RoleType.SUPER_ADMIN)
-        or user.has_role_type(RoleType.CLASS_TEACHER)
+        user.has_role_type(RoleType.CLASS_TEACHER)
         or user.has_role_type(RoleType.TEACHER)
-        or user.has_role_type(RoleType.SUPER_ADMIN)
+        or user.has_role_type(RoleType.SCHOOL_ADMIN)
     ):
-
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
 
-    school = db.query(School).filter(School.id == school_id).first()
+    school = db.query(School).filter(School.id == user.school_id).first()
     if not school:
         raise HTTPException(status_code=404, detail="school-not-found")
 
     return school
 
 
-class UpdateSchool(BaseModel):
-    name: typing.Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
-    location: str
-    phone_number: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
-    email: typing.Annotated[
-        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
-    ]
-    website: str
-    logo: str
-
-
-@router.put("/school/{school_id}/update", status_code=status.HTTP_204_NO_CONTENT)
+@router.put("/school/by-school-id/{school_id}", status_code=status.HTTP_204_NO_CONTENT)
 def update_school(
     db: DatabaseDependency,
     body: UpdateSchool,
