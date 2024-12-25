@@ -22,6 +22,28 @@ from sqlalchemy import desc, asc
 
 router = APIRouter()
 
+T = typing.TypeVar("T")
+
+
+class PaginatedResponse(BaseModel, typing.Generic[T]):
+    total: int
+    page: int
+    limit: int
+    data: list[T]
+
+
+class StudentResponse(BaseModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str
+    date_of_birth: datetime.datetime
+    gender: str
+    grade_level: int
+    nemis_number: typing.Optional[str]
+    email: str
+    classroom_id: uuid.UUID
+    user_id: uuid.UUID
+
 
 @router.get("/students/by-student-id/{student_id}")
 async def get_student(
@@ -62,12 +84,18 @@ async def get_student(
             status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
         )
 
-    return {
-        "id": student.id,
-        "nemis_number": student.nemis_number,
-        "email": student.user.email,
-        "user_id": student.user_id,
-    }
+    return StudentResponse(
+        id=student.id,
+        first_name=student.first_name,
+        last_name=student.last_name,
+        email=student.user.email,
+        grade_level=student.grade_level,
+        date_of_birth=student.date_of_birth,
+        nemis_number=student.nemis_number,
+        gender=student.gender,
+        classroom_id=student.classroom_id,
+        user_id=student.user_id,
+    )
 
 
 class StudentSortableFields(enum.Enum):
@@ -83,16 +111,19 @@ class OrderBy(enum.Enum):
     DESC = "desc"
 
 
-def students_dto(student: Student):
-    return {
-        "id": student.id,
-        "first_name": student.first_name,
-        "last_name": student.last_name,
-        "email": student.user.email,
-        "grade_level": student.grade_level,
-        "date_of_birth": student.date_of_birth,
-        "nemis_number": student.nemis_number,
-    }
+def student_to_dto(student: Student) -> StudentResponse:
+    return StudentResponse(
+        id=student.id,
+        first_name=student.first_name,
+        last_name=student.last_name,
+        email=student.user.email,
+        grade_level=student.grade_level,
+        date_of_birth=student.date_of_birth,
+        nemis_number=student.nemis_number,
+        gender=student.gender,
+        classroom_id=student.classroom_id,
+        user_id=student.user_id,
+    )
 
 
 @router.get("/students/by-classroom-id/{classroom_id}")
@@ -146,12 +177,12 @@ async def get_students_in_classroom(
     offset = (page - 1) * limit
     students = query.offset(offset).limit(limit).all()
 
-    return {
-        "total": total_count,
-        "page": page,
-        "limit": limit,
-        "data": (students_dto(student) for student in students),
-    }
+    return PaginatedResponse[StudentResponse](
+        total=total_count,
+        page=page,
+        limit=limit,
+        data=[student_to_dto(student) for student in students],
+    )
 
 
 @router.get("/students/school-students-by-school-id/list")
