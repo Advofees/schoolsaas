@@ -1,11 +1,14 @@
 import datetime
 import uuid
+import typing
+import enum
+from sqlalchemy import desc, asc
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
+
 from backend.paginated_response import PaginatedResponse
 from backend.attendance.attendance_models import AttendanceStatus
 from backend.database.database import DatabaseDependency
-
 
 from backend.school.school_model import School
 from backend.user.user_models import (
@@ -18,10 +21,6 @@ from backend.student.student_model import Student
 from backend.attendance.attendance_models import Attendance
 
 from backend.user.user_authentication import UserAuthenticationContextDependency
-import datetime
-import typing
-import enum
-from sqlalchemy import desc, asc
 
 router = APIRouter()
 

@@ -1,9 +1,14 @@
+import datetime
+import typing
+from pydantic import BaseModel, StringConstraints, EmailStr
 from dataclasses import dataclass
 import decimal
 import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
 from sqlalchemy import func
+
+#
 from backend.classroom.classroom_model import Classroom
 from backend.database.database import DatabaseDependency
 from backend.parent.parent_model import ParentStudentAssociation
@@ -19,11 +24,7 @@ from backend.student.student_model import Student, Gender
 from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.attendance.attendance_models import Attendance, AttendanceStatus
 from backend.user.user_models import User, RoleType
-
 from backend.user.user_authentication import UserAuthenticationContextDependency
-import datetime
-import typing
-from pydantic import BaseModel, StringConstraints, EmailStr
 
 router = APIRouter()
 
@@ -111,7 +112,6 @@ def get_classroom_attendance_metrics(
     filter_type: str = "day",
     filter_date: typing.Optional[datetime.datetime] = None,
 ) -> AttendanceMetrics:
-    """Get attendance metrics for a specific classroom."""
 
     date_range_result = calculate_date_range(filter_type, filter_date)
 

@@ -1,6 +1,8 @@
 import datetime
 import typing
 import uuid
+import enum
+from sqlalchemy import desc, asc
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, StringConstraints, EmailStr
@@ -17,8 +19,6 @@ from backend.parent.parent_model import ParentRelationshipType, ParentStudentAss
 from backend.database.database import DatabaseDependency
 from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.user.passwords import hash_password
-import enum
-from sqlalchemy import desc, asc
 from backend.paginated_response import PaginatedResponse
 
 router = APIRouter()
@@ -35,6 +35,36 @@ class StudentResponse(BaseModel):
     email: str
     classroom_id: uuid.UUID
     user_id: uuid.UUID
+
+
+class StudentSortableFields(enum.Enum):
+    FIRST_NAME = "first_name"
+    LAST_NAME = "last_name"
+    GRADE_LEVEL = "grade_level"
+    EMAIL = "email"
+    DATE_OF_BIRTH = "date_of_birth"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class OrderBy(enum.Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+def student_to_dto(student: Student) -> StudentResponse:
+    return StudentResponse(
+        id=student.id,
+        first_name=student.first_name,
+        last_name=student.last_name,
+        email=student.user.email,
+        grade_level=student.grade_level,
+        date_of_birth=student.date_of_birth,
+        nemis_number=student.nemis_number,
+        gender=student.gender,
+        classroom_id=student.classroom_id,
+        user_id=student.user_id,
+    )
 
 
 @router.get("/students/by-student-id/{student_id}")
@@ -76,36 +106,6 @@ async def get_student(
             status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
         )
 
-    return StudentResponse(
-        id=student.id,
-        first_name=student.first_name,
-        last_name=student.last_name,
-        email=student.user.email,
-        grade_level=student.grade_level,
-        date_of_birth=student.date_of_birth,
-        nemis_number=student.nemis_number,
-        gender=student.gender,
-        classroom_id=student.classroom_id,
-        user_id=student.user_id,
-    )
-
-
-class StudentSortableFields(enum.Enum):
-    FIRST_NAME = "first_name"
-    LAST_NAME = "last_name"
-    GRADE_LEVEL = "grade_level"
-    EMAIL = "email"
-    DATE_OF_BIRTH = "date_of_birth"
-    CREATED_AT = "created_at"
-    UPDATED_AT = "updated_at"
-
-
-class OrderBy(enum.Enum):
-    ASC = "asc"
-    DESC = "desc"
-
-
-def student_to_dto(student: Student) -> StudentResponse:
     return StudentResponse(
         id=student.id,
         first_name=student.first_name,

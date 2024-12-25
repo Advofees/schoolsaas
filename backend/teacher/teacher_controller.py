@@ -9,21 +9,9 @@ from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
 from backend.user.passwords import hash_password
 from backend.user.user_authentication import UserAuthenticationContextDependency
+from backend.teacher.teacher_schemas import to_teacher_dto
 
 router = APIRouter()
-
-
-def to_teacher_dto(teacher: Teacher) -> dict:
-    return {
-        "id": teacher.id,
-        "first_name": teacher.first_name,
-        "last_name": teacher.last_name,
-        "email": teacher.email,
-        "phone_number": teacher.phone_number,
-        "user_id": teacher.user_id,
-        "created_at": teacher.created_at,
-        "updated_at": teacher.updated_at,
-    }
 
 
 @router.get("/teachers/list")
