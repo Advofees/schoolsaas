@@ -10,7 +10,7 @@ from backend.user.user_models import RoleType, User
 from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.classroom.classroom_model import Classroom
-from backend.teacher.teacher_schemas import to_teacher_dto
+from backend.teacher.teacher_schemas import TeacherResponse, to_teacher_dto
 from backend.paginated_response import PaginatedResponse
 
 router = APIRouter()
@@ -21,7 +21,7 @@ class classRoomResponse(BaseModel):
     school_id: uuid.UUID
     name: str
     grade_level: int
-    class_teacher: dict | None
+    class_teacher: TeacherResponse | None
     created_at: datetime.datetime
     updated_at: datetime.datetime | None
 

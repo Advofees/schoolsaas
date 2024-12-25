@@ -14,7 +14,7 @@ from backend.teacher.teacher_schemas import to_teacher_dto
 router = APIRouter()
 
 
-@router.get("/teachers/list")
+@router.get("/teachers/by-school-id/list")
 async def get_teachers_in_a_particular_school(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,
@@ -28,7 +28,7 @@ async def get_teachers_in_a_particular_school(
             detail="User not authorized",
         )
 
-    school = db.query(School).filter(School.id == user.school_user.id).first()
+    school = db.query(School).filter(School.id == user.school_id).first()
     if not school:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="School not found"
@@ -74,7 +74,7 @@ async def get_teacher_in_particular_school_by_teacher_id(
             status_code=status.HTTP_404_NOT_FOUND, detail="Teacher not found"
         )
 
-    return teacher
+    return to_teacher_dto(teacher=teacher)
 
 
 @router.get("/teachers/by-classroom-id/{classroom_id}")
@@ -117,7 +117,7 @@ async def get_teacher_in_particular_school_classroom_by_classroom_id(
         .all()
     )
 
-    return teachers
+    return [to_teacher_dto(teacher=teacher) for teacher in teachers]
 
 
 class TeacherModel(BaseModel):
