@@ -115,7 +115,7 @@ async def get_students_in_classroom(
     return students
 
 
-@router.get("/students/list")
+@router.get("/students/all-school-students/list")
 async def get_all_students_for_a_particular_school(
     db: DatabaseDependency,
     auth_context: UserAuthenticationContextDependency,

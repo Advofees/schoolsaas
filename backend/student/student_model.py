@@ -40,7 +40,7 @@ class Student(Base):
     # National Education Management Information System
     # --- nemis number is issued by the govt of kenya from the time the child starts the kenyan education system
     #
-    nemis_number: Mapped[typing.Optional[str]] = mapped_column()
+    nemis_number: Mapped[typing.Optional[str]] = mapped_column(nullable=True)
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         onupdate=func.now(), nullable=True
     )
