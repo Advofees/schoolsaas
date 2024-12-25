@@ -17,6 +17,8 @@ from backend.parent.parent_model import ParentRelationshipType, ParentStudentAss
 from backend.database.database import DatabaseDependency
 from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.user.passwords import hash_password
+import enum
+from sqlalchemy import desc, asc
 
 router = APIRouter()
 
@@ -68,13 +70,40 @@ async def get_student(
     }
 
 
+class StudentSortableFields(enum.Enum):
+    FIRST_NAME = "first_name"
+    LAST_NAME = "last_name"
+    GRADE_LEVEL = "grade_level"
+    EMAIL = "email"
+    DATE_OF_BIRTH = "date_of_birth"
+
+
+class OrderBy(enum.Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+def students_dto(student: Student):
+    return {
+        "id": student.id,
+        "first_name": student.first_name,
+        "last_name": student.last_name,
+        "email": student.user.email,
+        "grade_level": student.grade_level,
+        "date_of_birth": student.date_of_birth,
+        "nemis_number": student.nemis_number,
+    }
+
+
 @router.get("/students/by-classroom-id/{classroom_id}")
 async def get_students_in_classroom(
     db: DatabaseDependency,
     classroom_id: uuid.UUID,
     auth_context: UserAuthenticationContextDependency,
+    page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1),
-    offset: int = Query(0, ge=0),
+    order_field: typing.Optional[StudentSortableFields] = None,
+    order_direction: typing.Optional[OrderBy] = None,
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()
 
@@ -103,15 +132,26 @@ async def get_students_in_classroom(
     if not classroom:
         raise HTTPException(status_code=404, detail="Classroom not found")
 
-    students = (
-        db.query(Student)
-        .filter(Student.classroom_id == classroom.id)
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
+    query = db.query(Student).filter(Student.classroom_id == classroom.id)
 
-    return students
+    total_count = query.count()
+
+    if order_field and order_direction:
+        sort_column = getattr(Student, order_field.value)
+        if order_direction == OrderBy.DESC:
+            query = query.order_by(desc(sort_column))
+        else:
+            query = query.order_by(asc(sort_column))
+
+    offset = (page - 1) * limit
+    students = query.offset(offset).limit(limit).all()
+
+    return {
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "data": (students_dto(student) for student in students),
+    }
 
 
 @router.get("/students/school-students-by-school-id/list")
