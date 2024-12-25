@@ -284,7 +284,9 @@ async def create_student(
 
     student_role = (
         db.query(Role)
-        .filter(Role.type == RoleType.STUDENT, Role.school_id == classroom.school_id)
+        .filter(
+            Role.type == RoleType.STUDENT.value, Role.school_id == classroom.school_id
+        )
         .first()
     )
 

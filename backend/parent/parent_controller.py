@@ -6,7 +6,8 @@ from fastapi import APIRouter, HTTPException, status, Query
 from backend.database.database import DatabaseDependency
 from backend.parent.parent_model import ParentStudentAssociation
 from backend.student.student_model import Student
-from backend.user.user_models import RoleType, User
+from backend.user.passwords import hash_password
+from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
 from backend.school.school_model import School, SchoolParent, SchoolParentAssociation
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
@@ -108,8 +109,9 @@ class createParent(BaseModel):
     email: typing.Annotated[
         EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
     ]
-    role_id: uuid.UUID
     national_id_number: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
+    password: str
+    username: str
 
 
 @router.post("/parent/create", status_code=status.HTTP_201_CREATED)
@@ -166,6 +168,37 @@ async def create_parent(
     )
     db.add(school_parent_associtiaon)
 
+    parent_user = User(
+        email=body.email,
+        username=body.username,
+        password_hash=hash_password(body.password),
+    )
+    db.add(parent_user)
+    db.flush()
+
+    parent_role = (
+        db.query(Role)
+        .filter(Role.type == RoleType.PARENT.value, Role.school_id == school.id)
+        .first()
+    )
+
+    if not parent_role:
+        parent_role = Role(
+            name=RoleType.STUDENT.name,
+            type=RoleType.STUDENT,
+            description=RoleType.STUDENT.value,
+            school_id=school.id,
+        )
+        db.add(parent_role)
+        db.flush()
+
+    parent_role_association = UserRoleAssociation(
+        user_id=parent_user.id,
+        role_id=parent_role.id,
+        school_id=school.id,
+    )
+    db.add(parent_role_association)
+    db.flush()
     db.commit()
 
     return {
