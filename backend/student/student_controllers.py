@@ -21,7 +21,7 @@ from backend.user.passwords import hash_password
 router = APIRouter()
 
 
-@router.get("/students/{student_id}")
+@router.get("/students/get-student-by-id/{student_id}")
 async def get_student(
     db: DatabaseDependency,
     student_id: uuid.UUID,
@@ -69,7 +69,7 @@ async def get_student(
     }
 
 
-@router.get("/students/{classroom_id}")
+@router.get("/students/get-students-by-classroom-id/{classroom_id}")
 async def get_students_in_classroom(
     db: DatabaseDependency,
     classroom_id: uuid.UUID,
@@ -166,6 +166,7 @@ class createStudent(BaseModel):
     username: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
     classroom_id: uuid.UUID
     parent_id: uuid.UUID
+    nemis_number: typing.Optional[str]
     parent_relationship_type: ParentRelationshipType
 
 
@@ -227,6 +228,7 @@ async def create_student(
         grade_level=body.grade_level,
         classroom_id=classroom.id,
         user_id=new_student_user.id,
+        nemis_number=body.nemis_number,
     )
     db.add(student)
     db.flush()

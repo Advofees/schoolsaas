@@ -100,6 +100,7 @@ class Student(Base):
         grade_level: int,
         classroom_id: uuid.UUID,
         user_id: uuid.UUID,
+        nemis_number: typing.Optional[str] = None,
     ):
         super().__init__()
         self.first_name = first_name
@@ -109,3 +110,4 @@ class Student(Base):
         self.grade_level = grade_level
         self.classroom_id = classroom_id
         self.user_id = user_id
+        self.nemis_number = nemis_number

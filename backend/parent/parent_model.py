@@ -37,9 +37,14 @@ class ParentStudentAssociation(Base):
     relationship_type: Mapped[str] = mapped_column()
 
     def __init__(
-        self, parent_id: uuid.UUID, student_id: uuid.UUID, relationship_type: str
+        self,
+        parent_id: uuid.UUID,
+        student_id: uuid.UUID,
+        relationship_type: str,
+        is_active: bool = True,
     ):
         super().__init__()
         self.parent_id = parent_id
         self.student_id = student_id
         self.relationship_type = relationship_type
+        self.is_active = is_active
