@@ -54,7 +54,10 @@ jobs:
           
       - name: Create deployment directory
         run: |
-          ssh ${{ secrets.API_USER }}@${{ secrets.API_HOST }} 'mkdir -p /opt/api'
+          ssh ${{ secrets.API_USER }}@${{ secrets.API_HOST }} 'mkdir -p /home/api_deploy'
+      - name: Copy configuration to server
+        run: |
+          scp docker-compose.yml .env.production.* ${{ secrets.API_USER }}@${{ secrets.API_HOST }}:/home/api_deploy/
 
       - name: Create environment files
         run: |
@@ -111,11 +114,10 @@ jobs:
       - name: Deploy services
         run: |
           ssh ${{ secrets.API_USER }}@${{ secrets.API_HOST }} '
-            cd /opt/api && \
-            docker compose down && \
-            docker compose pull && \
-            docker compose up -d && \
-            echo "Waiting for services to start..." && \
-            sleep 10 && \
+            cd /home/api_deploy && 
+            docker compose down || true && 
+            docker compose pull && 
+            docker compose up -d && 
+            echo "Waiting for services to start..." && 
+            sleep 10 && 
             docker compose ps
-          '
