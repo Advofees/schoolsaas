@@ -30,7 +30,7 @@ from backend.attendance.attendance_controllers import router as attendance_route
 # ---
 app = FastAPI(docs_url="/")
 
-origins = [os.environ["FRONTEND_URL"]]
+origins = [os.environ["FRONTEND_URL"], os.environ["SECURE_FRONTEND_URL"]]
 
 app.add_middleware(
     CORSMiddleware,

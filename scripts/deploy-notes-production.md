@@ -1,0 +1,2 @@
+- security
+    - uncomment the secure httpOnly cookie in the user_controller endpoints

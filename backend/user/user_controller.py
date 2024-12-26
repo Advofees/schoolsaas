@@ -238,13 +238,13 @@ def login(
     )
 
     db.commit()
-
+    # TODO: remove the comments here
     response.set_cookie(
         key="user_access_token",
         value=access_token,
-        httponly=True,
+        # httponly=True,
         expires=60 * 60 * 24 * 365,
-        samesite="strict",
+        # samesite="strict",
     )
 
     return {
