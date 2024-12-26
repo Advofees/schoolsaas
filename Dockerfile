@@ -1,29 +1,16 @@
 FROM python:3.10
 
-ARG USER_GID=1000
-ARG USER_UID=1000
+WORKDIR /usr/src/app
 
-RUN groupadd --gid $USER_GID python && useradd --uid $USER_UID --gid $USER_GID --create-home python
+ENV PYTHONPATH=/usr/src/app
 
-ENV PATH="/home/python/.local/bin:${PATH}"
-
-USER python
-
-RUN mkdir -p /home/python/app 
-
-WORKDIR /home/python/app
-
-ENV PYTHONPATH=/home/python/app
-
-COPY requirements.txt /home/python/app/requirements.txt
+COPY requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
-COPY ./backend/ /home/python/app/backend/
-COPY ./alembic/ /home/python/app/alembic/
+COPY ./backend/ ./backend/
+COPY ./alembic/ ./alembic/
 
-COPY ./backend/start.sh \
-  ./alembic.ini \
-  /home/python/app/
+COPY ./alembic.ini .
 
 EXPOSE 8080
 
