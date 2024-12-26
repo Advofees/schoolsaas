@@ -1,38 +1,121 @@
-name: Deploy to VPS
+name: API Build and Deploy
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Debug context
+        run: |
+          pwd
+          ls -la
+          echo "GitHub workspace: $GITHUB_WORKSPACE"
+          echo "Repository: ${{ github.repository }}"
+          echo "Current location:"
+          tree -L 2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
         with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       
-      - name: Add known hosts
-        run: |
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-      
-      - name: Test SSH Connection
-        run: |
-          ssh -v deploy-postgres@${{ secrets.SERVER_IP }} "echo 'SSH connection successful'"
-      
-      - name: Deploy
-        if: success()
-        env:
-          DEPLOY_PATH: /home/schoolsaas
-        run: |
-          # Create .env file from secrets
-          cat > .env << EOL
-          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-          EOL
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: ${{ github.workspace }}
+          file: ./Dockerfile
+          push: true
+          build-args: |
+            GIT_COMMIT_SHA=${{ github.sha }}
+          tags: |
+            elimuhub/api:latest
+            elimuhub/api:${{ github.sha }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.API_SSH_KEY }}
+          known_hosts: ${{ secrets.API_SSH_KNOWN_HOSTS }}
           
+      - name: Create deployment directory
+        run: |
+          ssh ${{ secrets.API_USER }}@${{ secrets.API_HOST }} 'mkdir -p /opt/api'
+
+      - name: Create environment files
+        run: |
+          echo "${{ secrets.ENV_PRODUCTION_API }}" > .env.production.api
+          echo "${{ secrets.ENV_PRODUCTION_MINIO }}" > .env.production.minio
+
+      - name: Create docker-compose.yml
+        run: |
+          cat > docker-compose.yml << 'EOL'
+          services:
+            api:
+              image: elimuhub/api:${{ github.sha }}
+              depends_on:
+                - minio
+              ports:
+                - "8000:8000"
+              env_file:
+                - .env.production.api
+          
+            minio:
+              image: minio/minio:latest
+              ports:
+                - "9000:9000"
+                - "9001:9001"
+              env_file: .env.production.minio
+              command: server /data --console-address ":9001"
+              volumes:
+                - type: volume
+                  source: minio_data
+                  target: /data
+                  volume:
+                    nocopy: true
+              healthcheck:
+                test: ["CMD", "mc", "ready", "local"]
+                interval: 30s
+                timeout: 20s
+                retries: 3
+              deploy:
+                resources:
+                  limits:
+                    cpus: '0.5'
+                    memory: 512M
+                  reservations:
+                    memory: 256M
+          
+          volumes:
+            minio_data: {}
+          EOL
+
+      - name: Copy configuration to server
+        run: |
+          scp docker-compose.yml .env.production.* ${{ secrets.API_USER }}@${{ secrets.API_HOST }}:/opt/api/
+
+      - name: Deploy services
+        run: |
+          ssh ${{ secrets.API_USER }}@${{ secrets.API_HOST }} '
+            cd /opt/api && \
+            docker compose down && \
+            docker compose pull && \
+            docker compose up -d && \
+            echo "Waiting for services to start..." && \
+            sleep 10 && \
+            docker compose ps
+          '
