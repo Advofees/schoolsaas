@@ -1,5 +1,4 @@
-
-FROM --platform=$TARGETPLATFORM python:3.10-slim as builder
+FROM python:3.10-slim AS builder
 
 WORKDIR /usr/src/app
 
@@ -10,23 +9,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 
-FROM --platform=$TARGETPLATFORM python:3.10-slim
+FROM python:3.10-slim
 
 WORKDIR /usr/src/app
-
 
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-ENV PYTHONPATH=/usr/src/app
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
+ENV PYTHONPATH=/usr/src/app \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 COPY ./backend/ ./backend/
 COPY ./alembic/ ./alembic/
