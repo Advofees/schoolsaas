@@ -1,26 +1,48 @@
 services:
   api:
     image: elimuhub/api:latest
-    pull_policy: always
-    depends_on:
-      - minio
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        order: start-first
+      restart_policy:
+        condition: on-failure
     ports:
       - "8080:8080"
     env_file:
       - .env.production.api
-  fronted:
+    networks:
+      - app_network
+    depends_on:
+      - minio
+
+  frontend:
     image: elimuhub/api:frontend-latest
-    pull_policy: always
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        order: start-first
+      restart_policy:
+        condition: on-failure
     ports:
-      - "3000:3000"
+      - "5500:80"
+    networks:
+      - app_network
+
   minio:
     image: minio/minio:latest
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager 
     ports:
       - "9000:9000"
       - "9001:9001"
     env_file:
-      .env.production.minio
-
+      - .env.production.minio
     command: server /data --console-address ":9001"
     volumes:
       - type: volume
@@ -28,10 +50,16 @@ services:
         target: /data
         volume:
           nocopy: true
+    networks:
+      - app_network
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 30s
       timeout: 20s
-      
+
 volumes:
   minio_data: {}
+
+networks:
+  app_network:
+    driver: overlay
