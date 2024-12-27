@@ -1,0 +1,3 @@
+- for version tracking of the images on docker hub container registry or any other ECR
+    - add the following to the github action definition tags
+        - `elimuhub/api:${{ github.sha }}`

@@ -39,4 +39,4 @@ jobs:
             GIT_COMMIT_SHA=${{ github.sha }}
           tags: |
             elimuhub/api:latest
-            # elimuhub/api:${{ github.sha }}
+            
