@@ -251,7 +251,7 @@ def login(
     response.set_cookie(
         key="user_access_token",
         value=access_token,
-        httponly=False,
+        httponly=True,
         secure=True,  # Allow HTTP for local development
         samesite="none",  # More permissive for local development
         expires=60 * 60 * 24 * 365,
