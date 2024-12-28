@@ -252,7 +252,7 @@ def login(
         key="user_access_token",
         value=access_token,
         httponly=False,
-        secure=False,  # Allow HTTP for local development
+        secure=True,  # Allow HTTP for local development
         samesite="none",  # More permissive for local development
         expires=60 * 60 * 24 * 365,
     )
