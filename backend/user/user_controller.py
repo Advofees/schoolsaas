@@ -187,8 +187,12 @@ def register(
 
 
 class LoginRequestBody(BaseModel):
-    identity: str
-    password: str
+    identity: typing.Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1)
+    ]
+    password: typing.Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1)
+    ]
 
 
 @router.post("/auth/user/login", status_code=status.HTTP_200_OK)
@@ -339,7 +343,7 @@ def generate_link_to_reset_password_and_send_to_users_email(
     user = db.query(User).filter(User.email == body.email).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     token = jwt.encode(
         {
@@ -402,7 +406,7 @@ def generate_link_to_reset_password_and_send_to_authenticated_users_email(
 
 
 class ResetPasswordRequestBody(BaseModel):
-    new_password: str
+    new_password: typing.Annotated[str, StringConstraints(min_length=8, max_length=128)]
     token: str
 
 
@@ -423,7 +427,7 @@ def reset_password(
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="expired-token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid-token"
         )
 
     token_data = ResetPasswordTokenData.model_validate(raw_payload)
