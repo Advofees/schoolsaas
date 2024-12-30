@@ -259,15 +259,7 @@ def login(
         expires=60 * 60 * 24 * 365,
     )
 
-    return {
-        "access_token": access_token,
-        "session": {
-            "user_id": session.user_id,
-            "roles": user.roles,
-        },
-        "name": user.name,
-        "school_id": school_id,
-    }
+    return {"message": "logged-in-successfully"}
 
 
 @router.post("/auth/user/logout", status_code=status.HTTP_204_NO_CONTENT)
