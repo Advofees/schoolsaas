@@ -107,7 +107,7 @@ class RegisterRequestBody(BaseModel):
     email: typing.Annotated[
         EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
     ]
-    password: str
+    password: typing.Annotated[str, StringConstraints(min_length=8)]
     username: typing.Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1)
     ]
@@ -190,9 +190,7 @@ class LoginRequestBody(BaseModel):
     identity: typing.Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1)
     ]
-    password: typing.Annotated[
-        str, StringConstraints(strip_whitespace=True, min_length=1)
-    ]
+    password: typing.Annotated[str, StringConstraints(min_length=8)]
 
 
 @router.post("/auth/user/login", status_code=status.HTTP_200_OK)
@@ -406,7 +404,7 @@ def generate_link_to_reset_password_and_send_to_authenticated_users_email(
 
 
 class ResetPasswordRequestBody(BaseModel):
-    new_password: typing.Annotated[str, StringConstraints(min_length=8, max_length=128)]
+    new_password: typing.Annotated[str, StringConstraints(min_length=8)]
     token: str
 
 
