@@ -77,6 +77,8 @@ async def get_student(
         gender=student.gender,
         classroom_id=student.classroom_id,
         user_id=student.user_id,
+        created_at=student.created_at,
+        updated_at=student.updated_at,
     )
 
 

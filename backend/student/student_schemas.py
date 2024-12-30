@@ -39,6 +39,8 @@ class StudentResponse(BaseModel):
     email: str
     classroom_id: uuid.UUID
     user_id: uuid.UUID
+    created_at: datetime.datetime
+    updated_at: datetime.datetime | None
 
 
 class StudentSortableFields(enum.Enum):
@@ -68,4 +70,6 @@ def to_student_dto(student: Student) -> StudentResponse:
         gender=student.gender,
         classroom_id=student.classroom_id,
         user_id=student.user_id,
+        created_at=student.created_at,
+        updated_at=student.updated_at,
     )
