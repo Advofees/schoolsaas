@@ -197,6 +197,14 @@ async def get_all_students_for_a_particular_school(
     )
 
 
+"""
+-student - details 
+-parents - details
+-student - health - details
+-file - upload - details
+"""
+
+
 @router.post("/students/create")
 async def create_student(
     db: DatabaseDependency,

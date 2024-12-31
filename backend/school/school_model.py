@@ -13,7 +13,7 @@ if typing.TYPE_CHECKING:
         UserPermissionAssociation,
     )
     from backend.student.student_model import Student
-    from backend.parent.parent_model import ParentStudentAssociation
+    from backend.student.parent.parent_model import ParentStudentAssociation
     from backend.inventory.inventory_model import Inventory
     from backend.teacher.teacher_model import Teacher
     from backend.payment.payment_model import Payment
