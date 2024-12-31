@@ -25,6 +25,13 @@ class Gender(enum.Enum):
     FEMALE = "female"
 
 
+class StudentDocumentsUploads(enum.Enum):
+    PASSPORT_PHOTO_UPLOAD = "passport_photo_upload"
+    BIRTH_CERTIFICATE = "birth_certificate"
+    PARENT_ID_PHOTO = "parent_photo_id"
+    GUARDIAN_ID_PHOTO = "guardian_photo_id"
+
+
 class Student(Base):
     __tablename__ = "students"
 
@@ -85,8 +92,12 @@ class Student(Base):
         back_populates="students",
         viewonly=True,
     )
+    health_record: Mapped["StudentHealthRecord"] = relationship(
+        "StudentHealthRecord", back_populates="student", uselist=False
+    )
 
     search_vector: Mapped[typing.Optional[str]] = mapped_column(TSVECTOR, nullable=True)
+
     __table_args__ = (
         Index("ix_students_search_vector", "search_vector", postgresql_using="gin"),
     )
@@ -111,3 +122,33 @@ class Student(Base):
         self.classroom_id = classroom_id
         self.user_id = user_id
         self.nemis_number = nemis_number
+
+
+class StudentHealthRecord(Base):
+    __tablename__ = "student_health_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("students.id"))
+    blood_type: Mapped[typing.Optional[str]] = mapped_column(String, nullable=True)
+    # allergies: Mapped[typing.Optional[list]] = mapped_column(JSONB, nullable=True)
+    # medical_conditions: Mapped[typing.Optional[list]] = mapped_column(
+    #     JSONB, nullable=True
+    # )
+    # medications: Mapped[typing.Optional[list]] = mapped_column(JSONB, nullable=True)
+    insurance_provider: Mapped[typing.Optional[str]] = mapped_column(nullable=True)
+    insurance_policy_number: Mapped[typing.Optional[str]] = mapped_column(nullable=True)
+    primary_doctor: Mapped[typing.Optional[str]] = mapped_column(nullable=True)
+    doctor_phone: Mapped[typing.Optional[str]] = mapped_column(nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        onupdate=func.now(), nullable=True
+    )
+
+    student: Mapped["Student"] = relationship("Student", back_populates="health_record")
+
+    def __init__(self, student_id: uuid.UUID, blood_type: str):
+        super().__init__()
+        self.student_id = student_id
+        self.blood_type = blood_type
