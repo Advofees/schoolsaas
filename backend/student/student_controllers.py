@@ -11,7 +11,7 @@ from backend.school.school_model import (
 from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
 from backend.student.student_model import Student
 from backend.classroom.classroom_model import Classroom
-from backend.parent.parent_model import ParentStudentAssociation
+from backend.student.parent.parent_model import ParentStudentAssociation
 from backend.database.database import DatabaseDependency
 from backend.user.user_authentication import UserAuthenticationContextDependency
 from backend.user.passwords import hash_password

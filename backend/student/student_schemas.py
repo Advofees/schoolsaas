@@ -3,7 +3,7 @@ import datetime
 import typing
 import enum
 from pydantic import BaseModel, StringConstraints, EmailStr
-from backend.parent.parent_model import ParentRelationshipType
+from backend.student.parent.parent_model import ParentRelationshipType
 from backend.student.student_model import Student
 
 

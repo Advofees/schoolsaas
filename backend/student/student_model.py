@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy import Index
 
 
-from backend.parent.parent_model import ParentStudentAssociation
+from backend.student.parent.parent_model import ParentStudentAssociation
 from backend.attendance.attendance_models import Attendance
 from backend.classroom.classroom_model import Classroom
 from backend.school.school_model import School, SchoolParent, SchoolStudentAssociation

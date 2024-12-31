@@ -15,7 +15,7 @@ from backend.user.user_controller import router as authentication_router
 from backend.user.permissions.permission_controller import router as permissions_router
 from backend.school.school_controller import router as school_router
 from backend.teacher.teacher_controller import router as teacher_router
-from backend.parent.parent_controller import router as parent_router
+from backend.student.parent.parent_controller import router as parent_router
 from backend.student.student_controllers import router as student_router
 from backend.payment.payment_controller import router as payment_router
 from backend.lesson_plan.lesson_plan_controller import router as lesson_plan_router

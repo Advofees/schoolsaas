@@ -15,10 +15,13 @@ from backend.school.school_model import (
     SchoolParentAssociation,
     SchoolStudentAssociation,
 )
-from backend.parent.parent_model import ParentStudentAssociation
+from backend.student.parent.parent_model import (
+    ParentStudentAssociation,
+    ParentStudentAssociation,
+)
 from backend.file.file_model import File
 from backend.student.student_model import Student
-from backend.parent.parent_model import ParentStudentAssociation
+
 from backend.inventory.inventory_model import Inventory
 from backend.teacher.teacher_model import (
     Teacher,

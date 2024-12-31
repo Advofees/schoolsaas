@@ -38,7 +38,7 @@ from backend.s3.aws_s3_service import init_s3_client
 from backend.s3.s3_constants import BUCKET_NAME
 from backend.module.module_model import Module, ModuleEnrollment
 from backend.school.school_model import School, SchoolParent, SchoolParentAssociation
-from backend.parent.parent_model import ParentStudentAssociation
+from backend.student.parent.parent_model import ParentStudentAssociation
 from backend.student.student_model import Student, Gender
 from backend.teacher.teacher_model import ClassTeacherAssociation, Teacher
 from backend.classroom.classroom_model import Classroom

@@ -4,7 +4,7 @@ from pydantic import BaseModel, StringConstraints, EmailStr
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
 from backend.database.database import DatabaseDependency
-from backend.parent.parent_model import ParentStudentAssociation
+from backend.student.parent.parent_model import ParentStudentAssociation
 from backend.student.student_model import Student
 from backend.user.passwords import hash_password
 from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
