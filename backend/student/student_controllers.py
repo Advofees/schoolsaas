@@ -21,7 +21,7 @@ from backend.student.student_schemas import (
     StudentResponse,
     OrderBy,
     StudentSortableFields,
-    createStudent,
+    createStudentFullInfo,
 )
 
 router = APIRouter()
@@ -208,7 +208,7 @@ async def get_all_students_for_a_particular_school(
 @router.post("/students/create")
 async def create_student(
     db: DatabaseDependency,
-    body: createStudent,
+    body: createStudentFullInfo,
     auth_context: UserAuthenticationContextDependency,
 ):
     user = db.query(User).filter(User.id == auth_context.user_id).first()

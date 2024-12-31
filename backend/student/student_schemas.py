@@ -5,6 +5,7 @@ import enum
 from pydantic import BaseModel, StringConstraints, EmailStr
 from backend.student.parent.parent_model import ParentRelationshipType
 from backend.student.student_model import Student
+from backend.student.parent.parent_controller import createParent
 
 
 class createStudent(BaseModel):
@@ -73,3 +74,18 @@ def to_student_dto(student: Student) -> StudentResponse:
         created_at=student.created_at,
         updated_at=student.updated_at,
     )
+
+
+class createstudentHealthInfo(BaseModel):
+    pass
+
+
+class createStudentDocumentUploads(BaseModel):
+    pass
+
+
+class createStudentFullInfo(BaseModel):
+    student_info: createStudent
+    student_parent_info: createParent
+    student_health_info: createstudentHealthInfo
+    student_documents_upload: createStudentDocumentUploads
