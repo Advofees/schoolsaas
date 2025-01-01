@@ -5,7 +5,7 @@ import enum
 from pydantic import BaseModel, StringConstraints, EmailStr
 from backend.student.parent.parent_model import ParentRelationshipType
 from backend.student.student_model import Student
-from backend.student.parent.parent_controller import createParent
+from backend.student.parent.parent_schemas import createParent
 
 
 class createStudent(BaseModel):

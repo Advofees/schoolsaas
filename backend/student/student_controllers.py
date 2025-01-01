@@ -4,6 +4,7 @@ from sqlalchemy import desc, asc
 from fastapi import APIRouter, HTTPException, status, Query
 
 from backend.school.school_model import (
+    School,
     SchoolParent,
     SchoolParentAssociation,
     SchoolStudentAssociation,
@@ -197,14 +198,6 @@ async def get_all_students_for_a_particular_school(
     )
 
 
-"""
--student - details 
--parents - details
--student - health - details
--file - upload - details
-"""
-
-
 @router.post("/students/create")
 async def create_student(
     db: DatabaseDependency,
@@ -228,52 +221,113 @@ async def create_student(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
         )
-
-    parent = (
+    #
+    # --- create parent
+    #
+    school_parent = (
         db.query(SchoolParent)
-        .join(SchoolParentAssociation)
         .filter(
-            SchoolParent.id == body.parent_id,
-            SchoolParentAssociation.school_id == user.school_id,
-            SchoolParentAssociation.is_active == True,
+            SchoolParent.email == body.student_parent_info.email,
+            SchoolParent.national_id_number
+            == body.student_parent_info.national_id_number,
         )
         .first()
     )
 
-    if not parent:
+    if school_parent:
         raise HTTPException(
-            status_code=404,
-            detail="Parent not found or not associated with this school",
+            status_code=status.HTTP_409_CONFLICT, detail="School Parent already exists"
         )
+    school = db.query(School).filter(School.user_id == user.id).first()
+
+    if not school:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    student_parent = SchoolParent(
+        first_name=body.student_parent_info.first_name,
+        last_name=body.student_parent_info.last_name,
+        phone_number=body.student_parent_info.phone_number,
+        email=body.student_parent_info.email,
+        gender=body.student_parent_info.gender,
+        national_id_number=body.student_parent_info.national_id_number,
+        user_id=user.id,
+    )
+
+    db.add(student_parent)
+    db.flush()
+
+    school_parent_associtiaon = SchoolParentAssociation(
+        school_id=school.id, parent_id=student_parent.id
+    )
+    db.add(school_parent_associtiaon)
+
+    parent_user = User(
+        email=body.student_info.email,
+        username=body.student_info.username,
+        password_hash=hash_password(body.student_info.password),
+    )
+    db.add(parent_user)
+    db.flush()
+
+    parent_role = (
+        db.query(Role)
+        .filter(Role.type == RoleType.PARENT.value, Role.school_id == school.id)
+        .first()
+    )
+
+    if not parent_role:
+        parent_role = Role(
+            name=RoleType.STUDENT.name,
+            type=RoleType.STUDENT,
+            description=RoleType.STUDENT.value,
+            school_id=school.id,
+        )
+        db.add(parent_role)
+        db.flush()
+
+    parent_role_association = UserRoleAssociation(
+        user_id=parent_user.id,
+        role_id=parent_role.id,
+        school_id=school.id,
+    )
+    db.add(parent_role_association)
+    db.flush()
+
+    #
+    # ---
+    #
 
     classroom = (
         db.query(Classroom)
         .filter(
-            Classroom.id == body.classroom_id, Classroom.school_id == user.school_id
+            Classroom.id == body.student_info.classroom_id,
+            Classroom.school_id == user.school_id,
         )
         .first()
     )
 
     if not classroom:
         raise HTTPException(status_code=404, detail="Classroom not found")
-
+    #
+    # --- create student
+    #
     new_student_user = User(
-        email=body.email,
-        username=body.username,
-        password_hash=hash_password(body.password),
+        email=body.student_info.email,
+        username=body.student_info.username,
+        password_hash=hash_password(body.student_info.password),
     )
     db.add(new_student_user)
     db.flush()
 
     student = Student(
-        first_name=body.first_name,
-        last_name=body.last_name,
-        date_of_birth=body.date_of_birth,
-        gender=body.gender,
-        grade_level=body.grade_level,
+        first_name=body.student_info.first_name,
+        last_name=body.student_info.last_name,
+        date_of_birth=body.student_info.date_of_birth,
+        gender=body.student_info.gender,
+        grade_level=body.student_info.grade_level,
         classroom_id=classroom.id,
         user_id=new_student_user.id,
-        nemis_number=body.nemis_number,
+        nemis_number=body.student_info.nemis_number,
     )
     db.add(student)
     db.flush()
@@ -285,9 +339,9 @@ async def create_student(
     db.flush()
 
     parent_student_association = ParentStudentAssociation(
-        parent_id=body.parent_id,
+        parent_id=student_parent.id,
         student_id=student.id,
-        relationship_type=body.parent_relationship_type.value,
+        relationship_type=body.student_info.parent_relationship_type.value,
     )
     db.add(parent_student_association)
     db.flush()
@@ -317,6 +371,18 @@ async def create_student(
     )
     db.add(student_role_association)
     db.flush()
+
+    #
+    # ---create student health details
+    #
+
+    #
+    # ---
+    #
+
+    #
+    # --- create student upload files
+    #
 
     db.commit()
 

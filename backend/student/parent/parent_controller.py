@@ -1,13 +1,11 @@
 import uuid
-import typing
-from pydantic import BaseModel, StringConstraints, EmailStr
+
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Query
 from backend.database.database import DatabaseDependency
 from backend.student.parent.parent_model import ParentStudentAssociation
 from backend.student.student_model import Student
-from backend.user.passwords import hash_password
-from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
+from backend.user.user_models import RoleType, User
 from backend.school.school_model import School, SchoolParent, SchoolParentAssociation
 from backend.user.user_authentication import UserAuthenticationContextDependency
 
@@ -99,111 +97,6 @@ async def get_student_parents(
     )
 
     return parents
-
-
-class createParent(BaseModel):
-    first_name: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
-    last_name: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
-    phone_number: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
-    gender: str
-    email: typing.Annotated[
-        EmailStr, StringConstraints(strip_whitespace=True, to_lower=True)
-    ]
-    national_id_number: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
-    password: str
-    username: str
-
-
-@router.post("/parent/create", status_code=status.HTTP_201_CREATED)
-async def create_parent(
-    auth_context: UserAuthenticationContextDependency,
-    db: DatabaseDependency,
-    body: createParent,
-):
-    user = db.query(User).filter(User.id == auth_context.user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User not authorized",
-        )
-
-    if not (user.has_role_type(RoleType.SCHOOL_ADMIN)):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
-        )
-
-    school_parent = (
-        db.query(SchoolParent)
-        .filter(
-            SchoolParent.email == body.email,
-            SchoolParent.national_id_number == body.national_id_number,
-        )
-        .first()
-    )
-
-    if school_parent:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="School Parent already exists"
-        )
-    school = db.query(School).filter(School.user_id == user.id).first()
-
-    if not school:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    new_school_parent = SchoolParent(
-        first_name=body.first_name,
-        last_name=body.last_name,
-        phone_number=body.phone_number,
-        email=body.email,
-        gender=body.gender,
-        national_id_number=body.national_id_number,
-        user_id=user.id,
-    )
-
-    db.add(new_school_parent)
-    db.flush()
-
-    school_parent_associtiaon = SchoolParentAssociation(
-        school_id=school.id, parent_id=new_school_parent.id
-    )
-    db.add(school_parent_associtiaon)
-
-    parent_user = User(
-        email=body.email,
-        username=body.username,
-        password_hash=hash_password(body.password),
-    )
-    db.add(parent_user)
-    db.flush()
-
-    parent_role = (
-        db.query(Role)
-        .filter(Role.type == RoleType.PARENT.value, Role.school_id == school.id)
-        .first()
-    )
-
-    if not parent_role:
-        parent_role = Role(
-            name=RoleType.STUDENT.name,
-            type=RoleType.STUDENT,
-            description=RoleType.STUDENT.value,
-            school_id=school.id,
-        )
-        db.add(parent_role)
-        db.flush()
-
-    parent_role_association = UserRoleAssociation(
-        user_id=parent_user.id,
-        role_id=parent_role.id,
-        school_id=school.id,
-    )
-    db.add(parent_role_association)
-    db.flush()
-    db.commit()
-
-    return {
-        "message": "School Parent created successfully",
-    }
 
 
 class updateParent(BaseModel):
