@@ -3,8 +3,9 @@ import datetime
 import typing
 import enum
 from pydantic import BaseModel, StringConstraints, EmailStr
-from backend.parent.parent_model import ParentRelationshipType
-from backend.student.student_model import Student
+from backend.student.parent.parent_model import ParentRelationshipType
+from backend.student.student_model import HealthItemType, Severity, Student
+from backend.student.parent.parent_schemas import createParent
 
 
 class createStudent(BaseModel):
@@ -23,7 +24,6 @@ class createStudent(BaseModel):
     ]
     username: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
     classroom_id: uuid.UUID
-    parent_id: uuid.UUID
     nemis_number: typing.Optional[str]
     parent_relationship_type: ParentRelationshipType
 
@@ -73,3 +73,30 @@ def to_student_dto(student: Student) -> StudentResponse:
         created_at=student.created_at,
         updated_at=student.updated_at,
     )
+
+
+class HealthItem(BaseModel):
+    name: str
+    type: HealthItemType
+    severity: Severity
+    notes: str
+
+
+class createstudentHealthInfo(BaseModel):
+    blood_type: str | None
+    insurance_provider: str | None
+    insurance_policy_number: str | None
+    primary_doctor: str | None
+    doctor_phone: str | None
+    health_items: list[HealthItem] | None
+
+
+class createStudentDocumentUploads(BaseModel):
+    pass
+
+
+class createStudentFullInfo(BaseModel):
+    student_info: createStudent
+    student_parent_info: createParent
+    student_health_info: createstudentHealthInfo
+    # student_documents_upload: createStudentDocumentUploads

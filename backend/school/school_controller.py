@@ -11,7 +11,7 @@ from sqlalchemy import func
 #
 from backend.classroom.classroom_model import Classroom
 from backend.database.database import DatabaseDependency
-from backend.parent.parent_model import ParentStudentAssociation
+from backend.student.parent.parent_model import ParentStudentAssociation
 from backend.payment.payment_model import Payment
 from backend.raise_exception import raise_exception
 from backend.school.school_model import (
