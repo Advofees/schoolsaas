@@ -3,7 +3,7 @@
 ## Before opening a Pull Request
 - [ ] I have run the 
     ```bash
-    ./typechecker.sh
+    ./typecheck.sh
     ```
 - [ ] I have reviewed the code changes thoroughly
 - [ ] My code follows the project's coding style guidelines
