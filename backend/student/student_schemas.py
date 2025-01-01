@@ -4,7 +4,7 @@ import typing
 import enum
 from pydantic import BaseModel, StringConstraints, EmailStr
 from backend.student.parent.parent_model import ParentRelationshipType
-from backend.student.student_model import Student
+from backend.student.student_model import HealthItemType, Severity, Student
 from backend.student.parent.parent_schemas import createParent
 
 
@@ -76,8 +76,21 @@ def to_student_dto(student: Student) -> StudentResponse:
     )
 
 
+class HealthItem(BaseModel):
+    name: str
+    type: HealthItemType
+    severity: Severity
+    notes: str
+    student_health_record_id: uuid.UUID
+
+
 class createstudentHealthInfo(BaseModel):
-    pass
+    blood_type: str | None
+    insurance_provider: str | None
+    insurance_policy_number: str | None
+    primary_doctor: str | None
+    doctor_phone: str | None
+    health_items: list[HealthItem] | None
 
 
 class createStudentDocumentUploads(BaseModel):

@@ -10,7 +10,7 @@ from backend.school.school_model import (
     SchoolStudentAssociation,
 )
 from backend.user.user_models import Role, RoleType, User, UserRoleAssociation
-from backend.student.student_model import Student
+from backend.student.student_model import HealthItem, Student
 from backend.classroom.classroom_model import Classroom
 from backend.student.parent.parent_model import ParentStudentAssociation
 from backend.database.database import DatabaseDependency
@@ -24,6 +24,7 @@ from backend.student.student_schemas import (
     StudentSortableFields,
     createStudentFullInfo,
 )
+from backend.student.student_model import StudentHealthRecord
 
 router = APIRouter()
 
@@ -376,6 +377,28 @@ async def create_student(
     # ---create student health details
     #
 
+    new_student_health = StudentHealthRecord(
+        student_id=student.id,
+        blood_type=body.student_health_info.blood_type,
+        insurance_provider=body.student_health_info.insurance_provider,
+        insurance_policy_number=body.student_health_info.insurance_policy_number,
+        primary_doctor=body.student_health_info.primary_doctor,
+        doctor_phone=body.student_health_info.doctor_phone,
+    )
+    db.add(new_student_health)
+    db.flush()
+
+    if body.student_health_info.health_items:
+        for item in body.student_health_info.health_items:
+            health_item = HealthItem(
+                name=item.name,
+                type=item.type.value,
+                severity=item.severity.value,
+                notes=item.notes,
+                student_health_record_id=new_student_health.id,
+            )
+            db.add(health_item)
+        db.flush()
     #
     # ---
     #

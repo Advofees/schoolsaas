@@ -6,8 +6,6 @@ from backend.database.base import Base
 import typing
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy import Index
-
-
 from backend.student.parent.parent_model import ParentStudentAssociation
 from backend.attendance.attendance_models import Attendance
 from backend.classroom.classroom_model import Classroom
@@ -124,17 +122,57 @@ class Student(Base):
         self.nemis_number = nemis_number
 
 
+class HealthItemType(enum.Enum):
+    ALLERGY = "allergy"
+    MEDICAL_CONDITION = "medical_condition"
+    MEDICATION = "medication"
+
+
+class Severity(enum.Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class HealthItem(Base):
+    __tablename__ = "health_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
+    notes: Mapped[typing.Optional[str]] = mapped_column(String, nullable=True)
+    severity: Mapped[typing.Optional[str]] = mapped_column(String, nullable=True)
+    type: Mapped[str] = mapped_column(String, nullable=False)
+    student_health_record_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey("student_health_records.id")
+    )
+
+    student_health_record: Mapped["StudentHealthRecord"] = relationship(
+        "StudentHealthRecord", back_populates="health_items"
+    )
+
+    def __init__(
+        self,
+        name: str,
+        type: str,
+        student_health_record_id: uuid.UUID,
+        notes: str | None = None,
+        severity: str | None = None,
+    ):
+        super().__init__()
+        self.name = name
+        self.type = type
+        self.student_health_record_id = student_health_record_id
+        self.notes = notes
+        self.severity = severity
+
+
 class StudentHealthRecord(Base):
     __tablename__ = "student_health_records"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     student_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("students.id"))
     blood_type: Mapped[typing.Optional[str]] = mapped_column(String, nullable=True)
-    # allergies: Mapped[typing.Optional[list]] = mapped_column(JSONB, nullable=True)
-    # medical_conditions: Mapped[typing.Optional[list]] = mapped_column(
-    #     JSONB, nullable=True
-    # )
-    # medications: Mapped[typing.Optional[list]] = mapped_column(JSONB, nullable=True)
     insurance_provider: Mapped[typing.Optional[str]] = mapped_column(nullable=True)
     insurance_policy_number: Mapped[typing.Optional[str]] = mapped_column(nullable=True)
     primary_doctor: Mapped[typing.Optional[str]] = mapped_column(nullable=True)
@@ -147,8 +185,47 @@ class StudentHealthRecord(Base):
     )
 
     student: Mapped["Student"] = relationship("Student", back_populates="health_record")
+    health_items: Mapped[list["HealthItem"]] = relationship(
+        "HealthItem", back_populates="student_health_record"
+    )
 
-    def __init__(self, student_id: uuid.UUID, blood_type: str):
+    @property
+    def allergies(self) -> list[HealthItem]:
+        return [
+            item
+            for item in self.health_items
+            if item.type == HealthItemType.ALLERGY.value
+        ]
+
+    @property
+    def medical_conditions(self) -> list[HealthItem]:
+        return [
+            item
+            for item in self.health_items
+            if item.type == HealthItemType.MEDICAL_CONDITION.value
+        ]
+
+    @property
+    def medications(self) -> list[HealthItem]:
+        return [
+            item
+            for item in self.health_items
+            if item.type == HealthItemType.MEDICATION.value
+        ]
+
+    def __init__(
+        self,
+        student_id: uuid.UUID,
+        blood_type: str | None = None,
+        insurance_provider: str | None = None,
+        insurance_policy_number: str | None = None,
+        primary_doctor: str | None = None,
+        doctor_phone: str | None = None,
+    ):
         super().__init__()
         self.student_id = student_id
         self.blood_type = blood_type
+        self.insurance_provider = insurance_provider
+        self.insurance_policy_number = insurance_policy_number
+        self.primary_doctor = primary_doctor
+        self.doctor_phone = doctor_phone
