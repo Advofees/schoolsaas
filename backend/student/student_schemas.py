@@ -24,7 +24,6 @@ class createStudent(BaseModel):
     ]
     username: typing.Annotated[str, StringConstraints(strip_whitespace=True)]
     classroom_id: uuid.UUID
-    parent_id: uuid.UUID
     nemis_number: typing.Optional[str]
     parent_relationship_type: ParentRelationshipType
 
@@ -81,7 +80,6 @@ class HealthItem(BaseModel):
     type: HealthItemType
     severity: Severity
     notes: str
-    student_health_record_id: uuid.UUID
 
 
 class createstudentHealthInfo(BaseModel):
@@ -101,4 +99,4 @@ class createStudentFullInfo(BaseModel):
     student_info: createStudent
     student_parent_info: createParent
     student_health_info: createstudentHealthInfo
-    student_documents_upload: createStudentDocumentUploads
+    # student_documents_upload: createStudentDocumentUploads
