@@ -262,9 +262,17 @@ async def create_student(
     )
     db.add(school_parent_associtiaon)
 
+    existing_parent_user = (
+        db.query(User).filter(User.email == body.student_parent_info.email).first()
+    )
+    if existing_parent_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Parent email already exists"
+        )
+
     parent_user = User(
-        email=body.student_info.email,
-        username=body.student_info.username,
+        email=body.student_parent_info.email,
+        username=body.student_parent_info.username,
         password_hash=hash_password(body.student_info.password),
     )
     db.add(parent_user)
@@ -312,6 +320,14 @@ async def create_student(
     #
     # --- create student
     #
+    existing_student_user = (
+        db.query(User).filter(User.email == body.student_info.email).first()
+    )
+    if existing_student_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Student email already exists"
+        )
+
     new_student_user = User(
         email=body.student_info.email,
         username=body.student_info.username,
