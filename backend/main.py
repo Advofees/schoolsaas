@@ -22,8 +22,8 @@ from backend.lesson_plan.lesson_plan_controller import router as lesson_plan_rou
 from backend.exam.exam_results.exam_result_controller import (
     router as exam_result_router,
 )
-
-# from backend.file.file_controller import router as file_router
+from backend.timetable.timetabling_controllers import router as timetabling_router
+from backend.file.file_controller import router as file_router
 from backend.classroom.classroom_controller import router as classroom_router
 from backend.attendance.attendance_controllers import router as attendance_router
 
@@ -47,16 +47,23 @@ app.include_router(permissions_router, tags=["permissions"])
 # ---
 app.include_router(school_router, tags=["school"])
 app.include_router(teacher_router, tags=["teacher"])
-app.include_router(attendance_router, tags=["attendance"])
-
-app.include_router(classroom_router, tags=["classroom"])
-app.include_router(exam_result_router, tags=["exam-results"])
-
 app.include_router(parent_router, tags=["parent"])
 app.include_router(student_router, tags=["student"])
+app.include_router(classroom_router, tags=["classroom"])
+
+#
+# ---
+#
+app.include_router(attendance_router, tags=["attendance"])
+app.include_router(exam_result_router, tags=["exam-results"])
+
+#
+# ---
+#
 app.include_router(payment_router, tags=["payment"])
 app.include_router(lesson_plan_router, tags=["lesson-plans"])
-# app.include_router(file_router)
+app.include_router(timetabling_router, tags=["time-tables"])
+app.include_router(file_router, tags=["files"])
 
 
 @app.get("/health", tags=["health"])
