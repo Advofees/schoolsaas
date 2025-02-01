@@ -196,16 +196,6 @@ def search_payments(
     return (transform_payment(payment) for payment in payments)
 
 
-@router.get("/payment/payment-id/{payment_id}")
-def get_payment_by_id():
-    pass
-
-
-@router.get("/payment/student-id/{student_id}")
-def get_payment_by_student_id():
-    pass
-
-
 class createPayment(BaseModel):
     amount: str
     student_id: uuid.UUID
@@ -237,5 +227,29 @@ def update_payment():
 
 
 @router.delete("/payment/delete/{payment_id}")
-def delete_payment():
-    pass
+def delete_payment(
+    db: DatabaseDependency,
+    auth_context: UserAuthenticationContextDependency,
+    payment_id: uuid.UUID,
+):
+    user = db.query(User).filter(User.id == auth_context.user_id).first()
+
+    if not user or not user.has_role_type(RoleType.SCHOOL_ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete payments",
+        )
+
+    payment = (
+        db.query(Payment)
+        .filter(Payment.id == payment_id, Payment.school_id == user.school_id)
+        .first()
+    )
+    if not payment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found"
+        )
+
+    db.delete(payment)
+    db.commit()
+    return {"message": "Payment deleted successfully"}
